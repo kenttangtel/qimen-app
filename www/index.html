@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>奇門大師</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f8fafc">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        body { -webkit-tap-highlight-color: transparent; overflow-x: hidden; transition: background-color 0.3s, color 0.3s; }
+        .glass-header { background: rgba(248, 250, 252, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); z-index: 40;}
+        .dark .glass-header { background: rgba(15, 23, 42, 0.85); border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .glass-tabbar { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(0,0,0,0.05); padding-bottom: env(safe-area-inset-bottom); z-index: 40;}
+        .dark .glass-tabbar { background: rgba(15, 23, 42, 0.95); border-top: 1px solid rgba(255,255,255,0.1); }
+        .glass-overlay { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 60;}
+
+        /* 🌟 按鈕物理回饋：消除點擊遲鈍感 */
+        button, .tab-btn, [onclick] {
+            transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), filter 0.1s !important;
+            -webkit-tap-highlight-color: transparent; 
+        }
+        button:active, .tab-btn:active, [onclick]:active {
+            transform: scale(0.95) !important; /* 按下時微縮 5% */
+            filter: brightness(0.9) !important; /* 按下時稍微變暗 */
+        }
+      
+        /* ✨ 升級版：護眼高對比五行色彩 (九宮格專用) ✨ */
+        .wx-wood { color: #15803d; text-shadow: 0 0 2px rgba(21,128,61,0.2); } 
+        .wx-fire { color: #dc2626; text-shadow: 0 0 2px rgba(220,38,38,0.2); } 
+        .wx-earth { color: #8b4513; text-shadow: 0 0 2px rgba(139,69,19,0.2); } /* 土: 咖啡色 */
+        .wx-metal { color: #d97706; text-shadow: 0 0 2px rgba(217,119,6,0.2); } /* 金: 橙黃色 */
+        .wx-water { color: #2563eb; text-shadow: 0 0 2px rgba(37,99,235,0.2); } 
+        .wx-none { color: #64748b; }   
+        
+        /* 深夜模式自動適配 */
+        .dark .wx-wood { color: #4ade80; text-shadow: 0 0 4px rgba(74,222,128,0.4); } 
+        .dark .wx-fire { color: #f87171; text-shadow: 0 0 4px rgba(248,113,113,0.4); } 
+        .dark .wx-earth { color: #d97706; text-shadow: 0 0 4px rgba(217,119,6,0.4); } 
+        .dark .wx-metal { color: #fbbf24; text-shadow: 0 0 4px rgba(251,191,36,0.4); } 
+        .dark .wx-water { color: #60a5fa; text-shadow: 0 0 4px rgba(96,165,250,0.4); }
+        
+        .view-section { display: none; animation: fadeIn 0.3s ease-out; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ✨ 升級版：長輩友善極限榨乾排版 ✨ */
+        .qimen-grid { 
+            display: grid;
+            grid-template-areas: "巽 離 坤" "震 中 兌" "艮 坎 乾"; 
+            grid-template-columns: repeat(3, minmax(0, 1fr)); 
+            gap: 2px; /* 極限縮小縫隙，當作格線 */
+            max-width: 100%; 
+            margin: 0 auto; 
+            background-color: #cbd5e1; /* 讓縫隙變成清晰的格線 */
+            border: 2px solid #cbd5e1;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+        .dark .qimen-grid { background-color: #334155; border-color: #334155; }
+        
+        .palace-card { 
+            display: flex;
+            flex-direction: column; 
+            justify-content: space-between; 
+            position: relative; 
+            min-height: 135px; /* 微調高度，讓長輩不用一直滑動螢幕 */
+            cursor: pointer; 
+            background-color: #ffffff; /* 搭配背景變成優雅格線 */
+            padding: 4px; /* 極限縮小內邊距，把空間還給字體 */
+            padding-bottom: 1.2rem;
+        }
+        .dark .palace-card { background-color: #1e293b; }
+        .bg-center { background-color: #fffbeb !important; } 
+        .dark .bg-center { background-color: #451a03 !important; }
+        
+        .tiny-tag { font-size: 10px; color: #ef4444; font-weight: 900; margin-left: 2px; padding: 0 2px; background: #fee2e2; border-radius: 3px; line-height: 1.2;}
+        .tiny-tag-door { font-size: 10px; color: #ef4444; font-weight: 900; margin-left: 3px; padding: 1px 3px; background: #fee2e2; border-radius: 3px; transform: scale(0.95); display: inline-block;}
+        .dark .tiny-tag, .dark .tiny-tag-door { background: #7f1d1d; color: #fca5a5; }
+
+        .unified-input { width: 100% !important; height: 52px !important; box-sizing: border-box !important; padding: 0 16px !important; border-radius: 0.75rem !important; font-size: 0.875rem !important; font-weight: 700 !important; outline: none !important; border: 2px solid #f1f5f9 !important; background-color: #f8fafc !important; appearance: none; -webkit-appearance: none; }
+        .dark .unified-input { border-color: #475569 !important; background-color: #334155 !important; color: #e2e8f0 !important; }
+
+        /* ✨ 報告專屬：中國風強制白底深字 ✨ */
+        .master-content-wrapper { background-color: #ffffff !important; color: #1e293b !important; padding: 0; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
+        .master-content { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; line-height: 1.8; font-size: 1.05rem; padding: 25px; background: white !important; }
+        
+        /* 標題對齊：深靛色 */
+        .report-header h1 { font-size: 1.8rem; font-weight: 900; color: #1e3a8a !important; text-align: center; margin-bottom: 20px; }
+        .master-content h2 { font-size: 1.3rem; font-weight: 900; color: #1e3a8a !important; margin-top: 30px; margin-bottom: 15px; border-left: 6px solid #1e3a8a !important; padding-left: 15px; background: #f1f5f9 !important; }
+        .master-content h3 { font-size: 1.1rem; font-weight: 900; color: #334155 !important; margin-top: 20px; }
+        
+        /* 內容字體強化 */
+        .master-content p, .master-content li { color: #1e293b !important; text-align: justify; }
+        .master-content blockquote { background: #f8fafc !important; border-left: 4px solid #94a3b8 !important; color: #475569 !important; font-weight: bold; margin: 15px 0; padding: 12px; border: 1px solid #e2e8f0; border-left-width: 4px; }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .tab-active { color: #4f46e5 !important; font-weight: 900; }
+        .dark .tab-active { color: #818cf8 !important; }
+
+        /* ✨ 報告匯出與分頁專用：極致高對比度強化樣式 ✨ */
+        .html2pdf__page-break { page-break-before: always !important; display: block; width: 100%; height: 0; border: none; margin: 0; padding: 0; clear: both; }
+        
+        .report-print-mode { 
+            background: #ffffff !important; 
+            color: #000000 !important; 
+            padding: 20px !important; 
+            box-shadow: none !important; 
+            border: none !important;
+        }
+        
+        /* 1. 解決「細」的問題：強制 PDF 內所有文字極致加粗 */
+        .report-print-mode * {
+            font-weight: 800 !important;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        /* 2. 解決「暗」的問題：強化五行色彩飽和度，確保印刷清晰 */
+        .report-print-mode .wx-wood { color: #059669 !important; } /* 深綠 */
+        .report-print-mode .wx-fire { color: #dc2626 !important; } /* 深紅 */
+        .report-print-mode .wx-earth { color: #92400e !important; } /* 深褐 */
+        .report-print-mode .wx-metal { color: #b45309 !important; } /* 深橙金 */
+        .report-print-mode .wx-water { color: #1e40af !important; } /* 深藍 */
+        
+        /* 3. 強化九宮格：確保邊框清晰不模糊 */
+        .report-print-mode .pdf-cover-page { page-break-after: always; overflow: hidden; }
+        .report-print-mode .qimen-grid { 
+            gap: 1px !important; 
+            border: 2px solid #000000 !important;
+        }
+        .report-print-mode .palace-card { 
+            min-height: 95px !important; 
+            padding: 4px !important; 
+            padding-bottom: 10px !important; 
+            border: 1px solid #000000 !important;
+            background-color: #ffffff !important;
+        }
+        .report-print-mode .bg-center { background-color: #fffbeb !important; }
+        
+        /* 4. 修正字體大小與對齊 */
+        .report-print-mode .palace-card .text-2xl { font-size: 1.2rem !important; }
+        .report-print-mode .palace-card .text-xl { font-size: 1.0rem !important; }
+        .report-print-mode .report-board-section { padding: 12px !important; margin-bottom: 0 !important; }
+        
+        /* 5. 針對左側資訊強化：將原本暗淡的灰色改為深色 */
+        .report-print-mode #qimenInfoGrid { 
+            font-size: 0.75rem !important; 
+            display: flex !important; 
+            flex-direction: column !important; 
+            gap: 3px !important; 
+            color: #000000 !important; 
+        }
+        .report-print-mode #baziTable { 
+            transform: scale(0.95); 
+            transform-origin: top left; 
+            margin-bottom: 12px !important;
+        }
+        
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-200 min-h-screen">
+
+    <div id="toastMessage" class="fixed top-[max(1rem,env(safe-area-inset-top))] left-1/2 transform -translate-x-1/2 bg-slate-800 dark:bg-slate-700 text-white px-6 py-3 rounded-full shadow-2xl transition-all duration-300 opacity-0 translate-y-[-20px] pointer-events-none z-[100] font-bold text-sm flex items-center gap-2 whitespace-nowrap">
+        <i id="toastIcon" class="fa-solid fa-circle-info text-indigo-400"></i>
+        <span id="toastText">提示訊息</span>
+    </div>
+
+    <header class="fixed top-0 w-full glass-header px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-3 flex justify-between items-center shadow-sm">
+        <div class="font-black text-xl text-indigo-900 dark:text-indigo-200 tracking-wider flex items-center gap-2">
+            <span class="text-2xl drop-shadow-sm">🔮</span> 奇門大師
+        </div>
+        <div id="headerCredits" style="display: none;" class="items-center gap-1.5 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-700/50 px-3 py-1.5 rounded-full shadow-sm cursor-pointer active:scale-95 transition" onclick="triggerVibration(); switchView('view-profile', document.getElementById('tabProfile'))">
+            <span class="text-amber-500 text-sm">💎</span>
+            <span id="userCredits" class="font-black text-amber-700 dark:text-amber-400 text-sm">0</span>
+        </div>
+    </header>
+
+    <main id="view-matrix" class="view-section active max-w-4xl mx-auto px-4 pt-[calc(env(safe-area-inset-top)+4.5rem)] pb-[calc(env(safe-area-inset-bottom)+6rem)]">
+        
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6">
+            <div class="flex items-center justify-center gap-2 text-base font-black text-slate-600 dark:text-slate-300 mb-4 tracking-wide"><i class="fa-solid fa-sun text-amber-500 text-lg"></i> 今日運程預測</div>
+            <div class="flex gap-3">
+                <button onclick="triggerVibration(); openFreeDailyModal()" class="w-1/2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3.5 rounded-xl font-black shadow-sm active:scale-95 transition text-[0.9rem] flex flex-col items-center justify-center border border-slate-200 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-600">
+                    免費版吉凶
+                </button>
+                <button onclick="triggerVibration(); openSeekerSelectionModal('daily')" class="w-1/2 bg-gradient-to-tr from-amber-500 to-orange-500 text-white py-3.5 rounded-xl font-black shadow-md active:scale-95 transition text-[0.9rem] flex flex-col items-center justify-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-white/20 w-1/2 skew-x-12 -translate-x-full animate-[shimmer_3s_infinite]"></div>
+                    深度分析
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6">
+            <div class="flex items-center justify-center gap-2 text-sm font-black text-indigo-800 dark:text-indigo-400 mb-4 bg-indigo-50 dark:bg-slate-900 py-2.5 rounded-xl border border-indigo-100 dark:border-slate-700">
+                <i class="fa-solid fa-clock"></i> 盤局時間：<span id="displayTimeText">載入中...</span>
+            </div>
+            
+            <div class="flex gap-3 relative">
+                <button id="calcNowBtn" onclick="triggerVibration(); calculateNow()" class="w-1/2 bg-indigo-600 dark:bg-indigo-500 text-white py-4 rounded-2xl font-black shadow-md active:scale-95 transition flex items-center justify-center gap-2 text-[1rem]">
+                    <i class="fa-solid fa-bolt"></i> 立即排盤
+                </button>
+                
+                <div class="w-1/2 relative">
+                   <button class="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95 transition pointer-events-none">
+                      <i class="fa-regular fa-calendar-days"></i> 自選日期
+                   </button>
+                   <input type="datetime-local" id="timeInput" class="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="handleTimeChange()">
+               </div>
+          </div>
+          
+        <div id="initialLoading" class="text-center py-10 text-slate-400 hidden">
+            <i class="fa-solid fa-spinner fa-spin text-3xl mb-3 text-indigo-500"></i>
+            <p id="loadingMsg" class="text-sm font-bold">正在校準天體磁場，請稍候...</p>
+        </div>
+
+        <div id="infoBox" class="bg-white dark:bg-slate-800 border-l-4 border-indigo-500 shadow-sm p-4 rounded-2xl mb-6 hidden">
+            <div class="flex flex-col gap-4">
+                <div id="baziTable" class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-700 w-full"></div>
+                <div class="grid grid-cols-2 gap-x-2 gap-y-2 text-[0.8rem] w-full" id="qimenInfoGrid"></div>
+            </div>
+        </div>
+
+        <div id="gridContainer" class="qimen-grid hidden relative"></div>
+        
+        <div id="legendBox" class="mt-5 mb-8 p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 hidden flex flex-wrap justify-center items-center gap-2.5 font-black text-[0.85rem]">
+            <span class="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg shadow-sm">空亡</span> 
+            <span class="px-3 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-lg shadow-sm border border-amber-100 dark:border-amber-800/50">🐎驛馬</span> 
+            <span class="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg shadow-sm">入墓</span> 
+            <span class="px-3 py-1 bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 rounded-lg shadow-sm border border-rose-100 dark:border-rose-800/50">門迫</span> 
+            <span class="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 rounded-lg shadow-sm border border-indigo-100 dark:border-indigo-800/50">擊刑</span>
+        </div>
+
+        <div id="askTriggerBox" class="hidden mt-8 space-y-4">
+            <button onclick="triggerVibration(); openSeekerSelectionModal('divination')" class="w-full bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white py-4 rounded-2xl font-black shadow-lg active:scale-95 transition flex justify-center items-center gap-2 text-lg tracking-wide">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> 大師解盤
+            </button>
+        </div>
+    </main>
+
+    <main id="view-destiny" class="view-section max-w-4xl mx-auto px-4 pt-[calc(env(safe-area-inset-top)+4.5rem)] pb-[calc(env(safe-area-inset-bottom)+6rem)]">
+        <button onclick="triggerVibration(); openDestinyModal()" class="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-4 rounded-2xl font-black shadow-md active:scale-95 transition flex justify-center items-center gap-2 mb-6">
+            <i class="fa-solid fa-plus"></i> 新增命盤
+        </button>
+
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-slate-700">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-50 dark:border-slate-700 pb-3">
+                <h3 class="text-lg font-black text-slate-800 dark:text-slate-200 flex items-center gap-2"><i class="fa-solid fa-book-journal-whills text-blue-500"></i> 我的命盤庫</h3>
+                <button onclick="triggerVibration(); fetchHistoryAndSync()" class="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full active:scale-90 transition"><i class="fa-solid fa-rotate-right"></i> 刷新</button>
+            </div>
+            <div id="destinyHistoryList" class="space-y-3 max-h-[50vh] overflow-y-auto pr-1 no-scrollbar">
+                <div class="text-center text-slate-400 py-10 text-sm font-bold">請先登入帳號以查看歷史紀錄。</div>
+            </div>
+        </div>
+    </main>
+
+    <main id="view-report" class="view-section max-w-4xl mx-auto px-4 pt-[calc(env(safe-area-inset-top)+4.5rem)] pb-[calc(env(safe-area-inset-bottom)+6rem)]">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-slate-700">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-50 dark:border-slate-700 pb-3">
+                <h3 class="text-lg font-black text-slate-800 dark:text-slate-200 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-blue-500"></i> 問事紀錄</h3>
+                <button onclick="triggerVibration(); fetchHistoryAndSync()" class="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full active:scale-90 transition"><i class="fa-solid fa-rotate-right"></i> 刷新</button>
+            </div>
+            <div id="reportHistoryList" class="space-y-3 max-h-[50vh] overflow-y-auto pr-1 no-scrollbar">
+                <div class="text-center text-slate-400 py-10 text-sm font-bold">請先登入帳號以查看歷史紀錄。</div>
+            </div>
+        </div>
+    </main>
+
+    <main id="view-profile" class="view-section max-w-4xl mx-auto px-4 pt-[calc(env(safe-area-inset-top)+4.5rem)] pb-[calc(env(safe-area-inset-bottom)+6rem)]">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
+            <div id="profileGuest" class="text-center py-10">
+                <div class="w-20 h-20 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-5"><i class="fa-solid fa-user-lock"></i></div>
+                <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 mb-2">專屬個人中心</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-8 font-medium">登入解鎖大師深度推演、無限儲存命盤、及專屬本命人功能。</p>
+                <button onclick="triggerVibration(); openAuthModal();" class="w-full max-w-xs mx-auto bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition block">立即登入 / 註冊</button>
+            </div>
+
+            <div id="profileUser" style="display: none;" class="flex-col gap-6">
+                <div class="flex items-center gap-5 border-b border-slate-100 dark:border-slate-700 pb-6">
+                    <div class="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-3xl font-black"><i class="fa-solid fa-user"></i></div>
+                    <div>
+                        <div id="profileUsername" class="font-black text-2xl text-slate-800 dark:text-slate-200">使用者</div>
+                        <div id="vipBadge" class="text-xs font-bold text-slate-400 mt-1 bg-slate-100 dark:bg-slate-700 inline-block px-2 py-0.5 rounded-md">免費會員</div>
+                    </div>
+                </div>
+                              
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-5 rounded-3xl border border-amber-100 dark:border-amber-800/30 text-center">
+                        <div class="text-xs text-amber-600 dark:text-amber-400 font-black mb-1">推演能量</div>
+                        <div class="text-4xl font-black text-amber-700 dark:text-amber-500 flex justify-center items-baseline gap-1"><span id="profileCreditsView">0</span><span class="text-sm">點</span></div>
+                    </div>
+                    <button onclick="triggerVibration(); openTopupModal();" class="bg-white dark:bg-slate-800 border-[3px] border-amber-400 dark:border-amber-600 p-5 rounded-3xl text-center shadow-sm active:scale-95 transition flex flex-col items-center justify-center gap-2">
+                        <i class="fa-solid fa-bolt text-amber-500 text-3xl"></i>
+                        <span class="text-sm font-black text-amber-800 dark:text-amber-500">補充能量</span>
+                    </button>
+                </div>
+
+                <div class="mt-4 space-y-3">
+                    <button onclick="triggerVibration(); toggleDarkMode()" class="w-full p-4 bg-slate-50 dark:bg-slate-700 rounded-2xl flex justify-between items-center active:scale-[0.98] transition">
+                        <div class="flex items-center gap-3 text-sm font-black text-slate-700 dark:text-slate-200"><i class="fa-solid fa-moon text-indigo-500 w-5"></i> 切換深夜模式</div>
+                        <i class="fa-solid fa-repeat text-slate-400 text-xs"></i>
+                    </button>
+                    
+                    <button onclick="triggerVibration(); logout();" class="w-full p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl flex justify-between items-center active:scale-[0.98] transition">
+                        <div class="flex items-center gap-3 text-sm font-black text-rose-600 dark:text-rose-400"><i class="fa-solid fa-right-from-bracket w-5"></i> 安全登出</div>
+                        <i class="fa-solid fa-chevron-right text-rose-300 text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <nav class="fixed bottom-0 w-full glass-tabbar flex justify-around items-center pt-2 pb-1 text-[0.65rem] text-slate-400 font-bold shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)]">
+        <button onclick="triggerVibration(); switchView('view-matrix', this); window.scrollTo({top:0, behavior:'smooth'});" class="tab-btn tab-active flex flex-col items-center justify-center gap-1 w-1/4 h-12 transition-all">
+            <i class="fa-solid fa-compass text-xl mb-0.5"></i> 排盤
+        </button>
+        <button onclick="triggerVibration(); switchView('view-report', this); window.scrollTo({top:0, behavior:'smooth'});" class="tab-btn flex flex-col items-center justify-center gap-1 w-1/4 h-12 transition-all"><i class="fa-solid fa-file-signature text-xl mb-0.5"></i> 報告</button>
+        <button onclick="triggerVibration(); switchView('view-destiny', this); window.scrollTo({top:0, behavior:'smooth'});" class="tab-btn flex flex-col items-center justify-center gap-1 w-1/4 h-12 transition-all"><i class="fa-solid fa-book-journal-whills text-xl mb-0.5"></i> 命盤</button>
+        <button id="tabProfile" onclick="triggerVibration(); switchView('view-profile', this); window.scrollTo({top:0, behavior:'smooth'});" class="tab-btn flex flex-col items-center justify-center gap-1 w-1/4 h-12 transition-all">
+            <i class="fa-solid fa-user text-xl mb-0.5"></i> 我的
+        </button>
+    </nav>
+
+    <div id="masterResultBoxContainer" class="hidden">
+        <div id="masterResultBox" class="master-content-wrapper shadow-xl mb-8 relative max-w-4xl mx-auto mt-4">
+            <div id="masterContent" class="master-content">
+                <div class='text-center py-20 text-slate-400 font-bold'>
+                    <i class='fa-solid fa-folder-open text-4xl mb-3 opacity-30'></i><p>大師正在推演中,請稍候片刻...</p>
+                </div>
+            </div>
+            <div id="resultActions" class="mt-0 p-6 flex flex-col md:flex-row justify-center gap-3 border-t border-slate-100 bg-slate-50 hidden no-print">
+                
+                <div class="flex items-center bg-indigo-500 rounded-xl shadow-md transition-all" id="voiceBtnGroup">
+                    <button id="voiceBtn" onclick="triggerVibration(); toggleVoice()" class="text-white px-4 py-3 font-bold active:scale-95 transition flex-grow flex justify-center items-center gap-2 border-r border-indigo-400">
+                        <i class="fa-solid fa-volume-high"></i> 語音播報
+                    </button>
+                    <div class="relative flex items-center">
+                        <select id="voiceLang" onchange="triggerVibration(); saveVoiceLang()" class="bg-transparent text-white font-bold pl-3 pr-6 py-3 outline-none cursor-pointer appearance-none text-sm z-10">
+                            <option value="zh-HK" class="text-slate-800">🇭🇰 粵語</option>
+                            <option value="zh-TW" class="text-slate-800">🇹🇼 國語</option>
+                        </select>
+                        <i class="fa-solid fa-caret-down text-indigo-200 text-xs absolute right-2 z-0"></i>
+                    </div>
+                </div>
+                
+                <button id="igBtn" onclick="triggerVibration(); sharePrediction()" class="bg-gradient-to-r from-pink-500 to-orange-500 text-white px-6 py-3 rounded-xl font-bold shadow-md active:scale-95 transition flex justify-center items-center gap-2"><i class="fa-solid fa-share-nodes"></i> 分享</button>
+                <button id="pdfBtn" onclick="triggerVibration(); downloadPDF()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold shadow-md active:scale-95 transition flex justify-center items-center gap-2"><i class="fa-solid fa-file-pdf"></i> 儲存 PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="freeDailyModal" class="hidden fixed inset-0 glass-overlay flex justify-center items-center z-[70] p-4 transition-opacity">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl relative animate-[slideUp_0.2s_ease-out] overflow-y-auto max-h-[90vh]">
+            <button onclick="closeFreeDailyModal()" class="absolute top-4 right-5 text-slate-400 font-bold text-xl"><i class="fa-solid fa-xmark"></i></button>
+            <div class="text-center mb-4"><i class="fa-solid fa-sun text-4xl text-emerald-500"></i></div>
+            <h3 class="text-xl font-black text-slate-800 dark:text-slate-200 mb-2 text-center">今日運勢與方位</h3>
+            <p id="freeDailyDate" class="text-center text-xs font-bold text-slate-400 mb-5"></p>
+            <div class="bg-slate-50 dark:bg-slate-900 rounded-2xl p-4 text-sm text-slate-600 dark:text-slate-300 space-y-3">
+                <div id="freeDailyBazi" class="font-black text-center text-lg text-indigo-700 dark:text-indigo-400 mb-2 border-b border-slate-200 dark:border-slate-700 pb-2">載入中...</div>
+                <div class="space-y-3 mt-2" id="fdContainer"></div>
+            </div>
+            <button onclick="closeFreeDailyModal()" class="w-full mt-6 bg-slate-800 dark:bg-slate-700 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition">知道了</button>
+        </div>
+    </div>
+
+    <div id="seekerSelectionModal" class="hidden fixed inset-0 glass-overlay flex justify-center items-end md:items-center z-50 p-0 md:p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-t-[2rem] md:rounded-[2rem] p-6 pb-[calc(env(safe-area-inset-bottom)+2rem)] md:pb-6 w-full max-w-md shadow-2xl relative animate-[slideUp_0.3s_ease-out]">
+            <button onclick="closeSeekerSelectionModal()" class="absolute top-4 right-5 text-slate-300 font-bold text-2xl bg-slate-50 dark:bg-slate-700 w-8 h-8 rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-xl font-black text-indigo-800 dark:text-indigo-400 mb-2 text-center mt-2 flex items-center justify-center gap-2"><i class="fa-solid fa-user-astronaut"></i> 確認推演資訊</h3>
+            <p class="text-xs text-center text-slate-400 font-bold mb-5">可加入「本命人」八字進行深度推演</p>
+            
+            <div id="seekerSelectionList" class="space-y-2 max-h-[30vh] overflow-y-auto no-scrollbar mb-5 border border-slate-100 dark:border-slate-700 p-2 rounded-2xl bg-slate-50 dark:bg-slate-900/50"></div>
+
+            <div id="categorySelectionArea" class="hidden">
+                <div class="grid grid-cols-3 gap-2.5 mb-4" id="catGrid"></div>
+                <div class="mb-5"><textarea id="userQuestion" placeholder="輸入想問的具體細節 (選填)..." class="unified-input resize-none h-20"></textarea></div>
+            </div>
+            <button onclick="triggerVibration(); confirmSeekerAndPrepare()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition flex justify-center items-center gap-2 text-lg"><i class="fa-solid fa-crystal-ball"></i> 確認推演</button>
+        </div>
+    </div>
+
+    <div id="destinyModal" class="hidden fixed inset-0 glass-overlay flex justify-center items-end md:items-center z-50 p-0 md:p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-t-[2rem] md:rounded-[2rem] p-6 pb-[calc(env(safe-area-inset-bottom)+2rem)] md:pb-6 w-full max-w-md shadow-2xl relative border-t-4 border-blue-500 animate-[slideUp_0.3s_ease-out] flex flex-col">
+            <button onclick="closeDestinyModal()" class="absolute top-4 right-5 text-slate-300 font-bold text-2xl bg-slate-50 dark:bg-slate-700 w-8 h-8 rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-xl font-black text-blue-800 dark:text-blue-400 mb-6 text-center mt-2 flex items-center justify-center gap-2"><i class="fa-solid fa-book-journal-whills"></i> 終身命盤解析</h3>
+            <div class="space-y-4 mb-8 w-full flex-grow">
+                <div class="w-full"><label class="block text-xs font-bold text-slate-400 mb-1 ml-1">姓名 (必填)</label><input type="text" id="d_name" placeholder="請輸入姓名" class="w-full box-border unified-input"></div>
+                <div class="w-full mb-3">
+                    <label class="block text-xs font-bold text-slate-400 mb-1 ml-1">出生日期與時辰</label>
+                    <div class="flex gap-2 mb-2">
+                        <input type="date" id="d_date" class="w-2/3 bg-slate-50 dark:bg-slate-700 border-none rounded-xl p-3 text-slate-700 dark:text-slate-200">
+                        <select id="d_time_select" class="w-1/3 bg-slate-50 dark:bg-slate-700 border-none rounded-xl p-3 text-slate-700 dark:text-slate-200 text-sm" onchange="document.getElementById('d_unknown_box').style.display = this.value === 'unknown' ? 'block' : 'none'">
+                            <option value="00:00">子 (23-1)</option>
+                            <option value="02:00">丑 (1-3)</option>
+                            <option value="04:00">寅 (3-5)</option>
+                            <option value="06:00">卯 (5-7)</option>
+                            <option value="08:00">辰 (7-9)</option>
+                            <option value="10:00">巳 (9-11)</option>
+                            <option value="12:00">午 (11-13)</option>
+                            <option value="14:00">未 (13-15)</option>
+                            <option value="16:00">申 (15-17)</option>
+                            <option value="18:00">酉 (17-19)</option>
+                            <option value="20:00">戌 (19-21)</option>
+                            <option value="22:00">亥 (21-23)</option>
+                            <option value="unknown" class="text-red-500 font-bold">時辰未知</option>
+                        </select>
+                    </div>
+                    <div id="d_unknown_box" style="display:none;" class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-xl border border-blue-100 dark:border-blue-800 mt-2">
+                        <label class="block text-xs font-bold text-blue-700 dark:text-blue-300 mb-2">【移星換斗】請憑直覺選一個數字：</label>
+                        <select id="d_random_num" class="w-full bg-white dark:bg-slate-800 border-none rounded-lg p-2 text-sm text-slate-700 dark:text-slate-200">
+                            <option value="00:00">數字 1 (借象子時)</option><option value="02:00">數字 2 (借象丑時)</option>
+                            <option value="04:00">數字 3 (借象寅時)</option><option value="06:00">數字 4 (借象卯時)</option>
+                            <option value="08:00">數字 5 (借象辰時)</option><option value="10:00">數字 6 (借象巳時)</option>
+                            <option value="12:00">數字 7 (借象午時)</option><option value="14:00">數字 8 (借象未時)</option>
+                            <option value="16:00">數字 9 (借象申時)</option><option value="18:00">數字 10 (借象酉時)</option>
+                            <option value="20:00">數字 11 (借象戌時)</option><option value="22:00">數字 12 (借象亥時)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="w-full"><label class="block text-xs font-bold text-slate-400 mb-1 ml-1">性別</label><select id="destinyGender" class="w-full box-border unified-input"><option value="男">男性</option><option value="女">女性</option></select></div>
+                <div class="w-full"><label class="block text-xs font-bold text-slate-400 mb-1 ml-1">現況</label><select id="destinyStatus" class="w-full box-border unified-input"><option value="學生">學生</option><option value="就業">就業</option><option value="老闆">老闆</option><option value="無業">無業</option></select></div>
+            </div>
+            <button onclick="triggerVibration(); prepareInterpretation('destiny')" class="w-full box-border bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition flex justify-center items-center gap-2 text-lg shrink-0 mt-auto"><span>開始推演</span></button>
+        </div>
+    </div>
+
+    <div id="confirmCalcModal" class="hidden fixed inset-0 glass-overlay flex justify-center items-center z-[80] p-4 transition-opacity">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl relative animate-[slideUp_0.2s_ease-out]">
+            <button onclick="closeConfirmModal()" class="absolute top-4 right-5 text-slate-400 font-bold text-xl"><i class="fa-solid fa-xmark"></i></button>
+            <div class="text-center mb-4"><i class="fa-solid fa-scale-balanced text-4xl text-indigo-500"></i></div>
+            <h3 class="text-xl font-black text-slate-800 dark:text-slate-200 mb-4 text-center">起卦推演確認</h3>
+            <div class="bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl p-4 text-sm text-slate-600 dark:text-slate-300 space-y-3 text-left"><p><strong>🔮 無事不測：</strong>意念明確皆能入卦指引。</p><p><strong>🎯 一事一測：</strong>專一才精準，針對同一主題首卦最準。</p><p><strong>⚠️ 切忌重測：</strong>反覆詢問同一問題會導致磁場混亂。</p></div>
+            <div class="text-center text-xs font-black text-indigo-500 mt-4 mb-2 bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-xl">系統將自動判定您的免費權益 or 能量扣除</div>
+            <button onclick="triggerVibration(); executeInterpretation()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition">開始深度推演</button>
+        </div>
+    </div>
+
+    <div id="palaceModal" class="hidden fixed inset-0 glass-overlay flex justify-center items-center z-50 p-4"><div class="bg-white dark:bg-slate-800 rounded-3xl p-5 md:p-6 max-w-sm w-full shadow-2xl relative flex flex-col max-h-[85vh] animate-[slideUp_0.2s_ease-out]"><button onclick="closeModal()" class="absolute top-4 right-5 text-slate-400 font-bold text-xl z-10 bg-white/80 dark:bg-slate-700/80 rounded-full w-8 h-8 flex items-center justify-center backdrop-blur shadow-sm"><i class="fa-solid fa-xmark"></i></button><h3 id="modalTitle" class="text-xl md:text-2xl font-black text-indigo-800 dark:text-indigo-400 mb-4 pb-3 text-center tracking-widest shrink-0 border-b border-slate-100 dark:border-slate-700"></h3><div id="modalContent" class="text-sm md:text-base text-slate-700 dark:text-slate-300 w-full overflow-y-auto no-scrollbar flex-grow pb-2"></div></div></div>
+
+    <div id="shareFallbackModal" class="hidden fixed inset-0 glass-overlay flex justify-center items-center z-[70] p-4 transition-opacity">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl relative flex flex-col max-h-[90vh] animate-[slideUp_0.2s_ease-out]">
+            <button onclick="closeShareModal()" class="absolute top-4 right-5 text-slate-400 hover:text-slate-600 font-bold text-xl bg-slate-50 dark:bg-slate-700 w-8 h-8 rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-xl font-black text-indigo-800 dark:text-indigo-400 mb-4 text-center">📸 儲存與分享預測</h3>
+            <div class="overflow-y-auto no-scrollbar flex-grow text-center rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 p-2"><img id="shareImagePreview" src="" class="w-full rounded-lg shadow-sm" alt="分享圖卡"><p class="text-xs text-slate-400 mt-2 font-bold"><i class="fa-solid fa-mobile-screen"></i> 手機版可長按圖片直接儲存</p></div>
+            <div class="mt-4 grid grid-cols-2 gap-2"><a id="downloadShareBtn" href="" download="奇門大師預測.jpg" class="bg-slate-800 dark:bg-slate-700 text-white font-bold py-3 rounded-xl shadow-md text-center text-sm flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> 下載圖片</a><button onclick="triggerVibration(); copyShareText()" class="bg-indigo-600 text-white font-bold py-3 rounded-xl shadow-md text-center text-sm flex items-center justify-center gap-2 active:scale-95 transition"><i class="fa-solid fa-copy"></i> 複製測文</button></div>
+            <div class="mt-3 grid grid-cols-3 gap-2"><a id="shareLineBtn" href="#" target="_blank" class="bg-[#06C755] text-white text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-1 active:scale-95 transition"><i class="fa-brands fa-line text-lg"></i> LINE</a><a id="shareFbBtn" href="#" target="_blank" class="bg-[#1877F2] text-white text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-1 active:scale-95 transition"><i class="fa-brands fa-facebook text-lg"></i> FB</a><a id="shareXBtn" href="#" target="_blank" class="bg-black text-white text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-1 active:scale-95 transition"><i class="fa-brands fa-x-twitter text-lg"></i> X</a><button onclick="shareToApp('ig')" class="bg-gradient-to-tr from-[#fd5949] to-[#d6249f] text-white text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-1 active:scale-95 transition"><i class="fa-brands fa-instagram text-lg"></i> IG</button><a id="shareThreadsBtn" href="#" target="_blank" class="bg-black text-white text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-1 active:scale-95 transition"><i class="fa-brands fa-threads text-lg"></i> Threads</a><button onclick="shareToApp('wechat')" class="bg-[#07C160] text-white text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-1 active:scale-95 transition"><i class="fa-brands fa-weixin text-lg"></i> WeChat</button></div>
+        </div>
+    </div>
+
+    <div id="igCardContainer" style="position: fixed; top: -9999px; left: -9999px; width: 1080px; height: 1440px; background: linear-gradient(135deg, #0f172a, #1e1b4b, #312e81); color: white; padding: 100px; box-sizing: border-box; font-family: 'PingFang TC', sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;"><div style="font-size: 70px; font-weight: 900; margin-bottom: 60px; display: flex; align-items: center; justify-content: center; gap: 20px;"><span>🔮</span> 奇門大師</div><div id="igCardTitle" style="font-size: 55px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); padding: 25px 60px; border-radius: 50px; margin-bottom: 70px; font-weight: bold; color: #cbd5e1;">主題 : 今日財運</div><div id="igCardContent" style="font-size: 60px; line-height: 1.5; font-weight: 900; text-align: center; width: 90%; background: rgba(0,0,0,0.3); padding: 70px; border-radius: 40px; border: 4px solid #6366f1; color: #fde047; box-shadow: 0 10px 30px rgba(0,0,0,0.3); word-wrap: break-word; white-space: pre-wrap;">測文 : 大吉，財星高照，放手一搏。</div><div style="position: absolute; bottom: 80px; font-size: 35px; opacity: 0.5; font-weight: bold; letter-spacing: 2px;">天體磁場演算法生成</div></div>
+
+    <div id="mysticalLoading" class="hidden fixed inset-0 z-[100] bg-slate-900/90 flex flex-col justify-center items-center backdrop-blur-md transition-all duration-300 opacity-0">
+    <div class="relative w-28 h-28 flex justify-center items-center">
+        <div class="absolute inset-0 border-2 border-dashed border-indigo-500/40 rounded-full animate-[spin_6s_linear_reverse_infinite]"></div>
+        <div class="absolute inset-2 border-4 border-t-indigo-400 border-r-transparent border-b-purple-500 border-l-transparent rounded-full animate-spin"></div>
+        <div class="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-purple-400 rounded-full animate-pulse shadow-[0_0_25px_rgba(129,140,248,0.8)]"></div>
+    </div>
+    
+    <div id="loadingText" class="mt-8 text-indigo-300 font-black tracking-[0.25em] animate-pulse text-lg text-center shadow-indigo-500/50 drop-shadow-md">
+        大師推演中
+    </div>
+    <div class="mt-2 text-xs text-indigo-400/60 font-medium tracking-widest">
+        正在共振宇宙磁場，請稍候...
+    </div>
+</div>
+  <div id="topupModal" class="hidden fixed inset-0 glass-overlay flex justify-center items-end md:items-center z-[100] p-0 md:p-4 transition-opacity">
+        <div class="bg-slate-50 dark:bg-slate-900 rounded-t-[2rem] md:rounded-[2rem] p-6 pb-[calc(env(safe-area-inset-bottom)+2rem)] md:pb-6 w-full max-w-md shadow-2xl relative animate-[slideUp_0.3s_ease-out] max-h-[90vh] flex flex-col">
+            <button onclick="closeTopupModal()" class="absolute top-4 right-5 text-slate-400 hover:text-slate-600 font-bold text-2xl bg-white dark:bg-slate-800 w-8 h-8 rounded-full flex items-center justify-center shadow-sm z-10"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div class="text-center mb-4 shrink-0 mt-2">
+                <div class="inline-block bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40 p-3 rounded-full mb-2">
+                    <i class="fa-solid fa-store text-3xl text-amber-500"></i>
+                </div>
+                <h3 class="text-xl font-black text-slate-800 dark:text-slate-200 tracking-wide">升級特權與補充能量</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-bold">解鎖更多專業功能，維持磁場共振</p>
+            </div>
+            
+            <div class="overflow-y-auto no-scrollbar flex-grow pt-4 pb-2 space-y-4 mt-0">
+                <button onclick="triggerVibration(); buyProduct('vip_monthly')" class="w-full bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border-2 border-indigo-400 p-5 rounded-3xl flex justify-between items-center relative shadow-sm hover:bg-indigo-100 active:scale-[0.98] transition-all text-left">
+                    <div class="absolute -top-3 right-4 bg-indigo-600 text-white text-[0.7rem] font-black px-3 py-1 rounded-full shadow-md tracking-wider">👑 尊享月費</div>
+                    <div class="flex items-center gap-4"><div class="w-12 h-12 shrink-0 bg-indigo-100 dark:bg-indigo-800/50 rounded-full flex items-center justify-center text-xl">🌟</div><div><div class="font-black text-indigo-800 dark:text-indigo-300 text-lg">月費會員</div><div class="text-[0.65rem] text-indigo-600 dark:text-indigo-400 font-bold mt-0.5 leading-tight">每日免費專屬推演1次<br>解鎖「本命人」設定</div></div></div>
+                    <div class="font-black text-2xl text-indigo-700 dark:text-indigo-400 shrink-0">HK$ 38<span class="text-[0.6rem]">/月</span></div>
+                </button>
+            
+                <button onclick="triggerVibration(); buyProduct('vip_lifetime')" class="w-full bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-2 border-amber-500 p-5 rounded-3xl flex justify-between items-center relative shadow-sm hover:bg-amber-100 active:scale-[0.98] transition-all text-left">
+                    <div class="absolute -top-3 right-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[0.7rem] font-black px-3 py-1 rounded-full shadow-md tracking-wider">✨ 終身解鎖</div>
+                    <div class="flex items-center gap-4"><div class="w-12 h-12 shrink-0 bg-amber-200 dark:bg-amber-700/50 rounded-full flex items-center justify-center text-xl">🏆</div><div><div class="font-black text-amber-900 dark:text-amber-300 text-lg">永久會員</div><div class="text-[0.65rem] text-amber-700 dark:text-amber-400 font-bold mt-0.5 leading-tight">一次付費，終身享有<br>VIP 每日免費與專屬功能</div></div></div>
+                    <div class="font-black text-2xl text-amber-600 shrink-0">HK$ 138</div>
+                </button>
+            
+                <button onclick="triggerVibration(); buyProduct('topup_15')" class="w-full bg-rose-50 dark:bg-rose-900/20 border-2 border-rose-400 p-5 rounded-3xl flex justify-between items-center relative shadow-sm hover:bg-rose-100 active:scale-[0.98] transition-all text-left">
+                    <div class="absolute -top-3 right-4 bg-rose-500 text-white text-[0.7rem] font-black px-3 py-1 rounded-full shadow-md tracking-wider">🔥 深度首選</div>
+                    <div class="flex items-center gap-4"><div class="w-12 h-12 shrink-0 bg-rose-200 dark:bg-rose-800/50 rounded-full flex items-center justify-center text-xl">💎</div><div><div class="font-black text-rose-800 dark:text-rose-400 text-lg">深度能量</div><div class="text-[0.65rem] text-rose-600 dark:text-rose-400 font-bold mt-0.5 leading-tight">內含 15 點推演能量<br>適合高頻率深度解盤</div></div></div>
+                    <div class="font-black text-2xl text-rose-700 dark:text-rose-500 shrink-0">HK$ 390</div>
+                </button>
+            
+                <button onclick="triggerVibration(); buyProduct('topup_5')" class="w-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-600 p-5 rounded-3xl flex justify-between items-center hover:border-slate-400 active:scale-[0.98] transition-all text-left shadow-sm">
+                    <div class="flex items-center gap-4"><div class="w-12 h-12 shrink-0 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center text-xl">🔮</div><div><div class="font-black text-slate-700 dark:text-slate-200 text-lg">基礎能量</div><div class="text-[0.65rem] text-slate-500 font-bold mt-0.5 leading-tight">內含 5 點推演能量</div></div></div>
+                    <div class="font-black text-xl text-slate-800 dark:text-slate-200 shrink-0">HK$ 150</div>
+                </button>
+            </div>
+        </div>
+    </div>
+      
+    <div id="authModal" class="hidden fixed inset-0 glass-overlay flex justify-center items-center z-[110] p-4 transition-opacity">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 w-full max-w-md shadow-2xl relative border border-slate-100 dark:border-slate-700">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-5 text-slate-400 hover:text-slate-600 transition text-2xl font-bold">&times;</button>
+            
+            <h2 id="authTitle" class="text-2xl font-black text-slate-800 dark:text-slate-100 mb-6 text-center">歡迎回來</h2>
+            
+            <div class="mb-4">
+                <label class="block text-slate-400 text-xs font-bold mb-2 ml-1">使用者帳號</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-user"></i></span>
+                    <input type="text" id="auth_user" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-10 pr-4 text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition" placeholder="請輸入帳號">
+                </div>
+            </div>
+
+            <div class="mb-1">
+    <label class="block text-slate-400 text-xs font-bold mb-2 ml-1">密碼</label>
+    <div class="relative">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-lock"></i></span>
+        <input type="password" id="auth_pass" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-10 pr-12 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition" placeholder="請輸入密碼">
+        <span class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer text-slate-400 hover:text-purple-500 transition" onclick="togglePasswordVisibility('auth_pass', this)">
+            <i class="fa-solid fa-eye"></i>
+        </span>
+    </div>
+</div>
+
+<div id="confirmPasswordField" class="hidden mb-1 mt-3">
+    <label class="block text-slate-400 text-xs font-bold mb-2 ml-1">確認密碼</label>
+    <div class="relative">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-lock"></i></span>
+        <input type="password" id="reg_pass_confirm" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-10 pr-12 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition" placeholder="請再次確認密碼">
+        <span class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer text-slate-400 hover:text-purple-500 transition" onclick="togglePasswordVisibility('reg_pass_confirm', this)">
+            <i class="fa-solid fa-eye"></i>
+        </span>
+    </div>
+</div>
+
+            <div id="forgotPasswordBtn" class="flex justify-end mb-4">
+                <button type="button" onclick="openForgotPasswordModal()" class="text-[11px] text-purple-500 hover:text-purple-400 font-bold transition">忘記密碼？</button>
+            </div>
+
+            <div id="emailField" class="hidden mb-6">
+                <label class="block text-slate-400 text-xs font-bold mb-2 ml-1">電子郵件 (用於找回密碼)</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-envelope"></i></span>
+                    <input type="email" id="reg_email" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-10 pr-4 text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition" placeholder="example@gmail.com">
+                </div>
+            </div>
+
+            <button onclick="handleAuth()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black py-4 rounded-xl shadow-lg shadow-purple-500/30 hover:scale-[1.02] active:scale-95 transition-all mb-6">確認送出</button>
+            
+            <p class="text-center text-sm text-slate-500 font-bold">
+                <span id="authSwitchText">還沒有帳號嗎？</span>
+                <button onclick="toggleAuthMode()" id="authSwitchBtn" class="text-purple-600 hover:underline ml-1">立即註冊</button>
+            </p>
+        </div>
+    </div>
+              
+<script>
+// ==========================================
+// 🌟 1. 全域變數與核心字典
+// ==========================================
+let currentMatrixData = [];
+let currentBazi = {};
+let selectedCategory = '';
+let currentReportTitle = '';
+let pendingInterpretationType = '';
+let tempSelectedSeekerId = null;
+// 🌟 補回自選日期後的連動處理神經
+function handleTimeChange() {
+    const input = document.getElementById('timeInput');
+    const dText = document.getElementById('displayTimeText');
+    if (!input || !input.value) return;
+    
+    // 1. 更新畫面上方的「盤局時間」文字
+    const dateObj = new Date(input.value);
+    const pad = (n) => String(n).padStart(2, '0');
+    if (dText) {
+        dText.innerText = `${dateObj.getFullYear()}年${pad(dateObj.getMonth()+1)}月${pad(dateObj.getDate())}日 ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}`;
+    }
+    
+    // 2. 觸發按鍵震動回饋
+    if (navigator.vibrate) navigator.vibrate(50);
+    
+    // 3. 自動呼叫核心引擎重新排盤
+    if (typeof fetchData === 'function') {
+        const loader = document.getElementById('initialLoading');
+        if (loader) loader.classList.remove('hidden');
+        fetchData(false, true); // 呼叫您的排盤引擎
+    }
+}
+const areaMap = { "巽宮":"巽", "離宮":"離", "坤宮":"坤", "震宮":"震", "中宮":"中", "兌宮":"兌", "艮宮":"艮", "坎宮":"坎", "乾宮":"乾" };
+const numMap = { "坎宮":1, "坤宮":2, "震宮":3, "巽宮":4, "中宮":5, "乾宮":6, "兌宮":7, "艮宮":8, "離宮":9 };
+const qimenDict = { "值符":"貴人、名譽", "騰蛇":"虛驚、變動", "太陰":"庇護、女性", "六合":"合作、姻緣", "白虎":"凶災、阻礙", "玄武":"小人、欺騙", "九地":"堅固、遲緩", "九天":"威嚴、張揚", "休門":"貴人、休整", "生門":"財富、生機", "傷門":"破壞、受傷", "杜門":"隱藏、防守", "景門":"消息、虛幻", "死門":"停滯、凶災", "驚門":"官非、口舌", "開門":"事業、開創", "天蓬星":"大盜、破財", "天芮星":"疾病、問題", "天衝星":"衝動、武力", "天輔星":"文化、學業", "天禽星":"方正、穩重", "天心星":"管理、醫藥", "天柱星":"破壞、口舌", "天任星":"固執、任勞", "天英星":"烈火、名氣" };
+
+function getWuxingClass(str) {
+    if (!str) return 'wx-none';
+    if (['甲','乙','寅','卯','震宮','巽宮','天衝星','天輔星','傷門','杜門'].some(x => str.includes(x))) return 'wx-wood';
+    if (['丙','丁','巳','午','離宮','天英星','景門'].some(x => str.includes(x))) return 'wx-fire';
+    if (['戊','己','辰','戌','丑','未','坤宮','艮宮','中宮','天芮星','天禽星','天任星','生門','死門'].some(x => str.includes(x))) return 'wx-earth';
+    if (['庚','辛','申','酉','乾宮','兌宮','天心星','天柱星','開門','驚門'].some(x => str.includes(x))) return 'wx-metal';
+    if (['壬','癸','亥','子','坎宮','天蓬星','休門'].some(x => str.includes(x))) return 'wx-water';
+    return 'wx-none';
+}
+function colorizeStem(stem) { return stem; }
+
+// ==========================================
+// 🚀 2. 系統啟動與時間控制
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("🔮 奇門系統啟動中...");
+    if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+    try { initTime(); } catch (e) { console.error(e); }
+
+    if (typeof fetchUserInfo === 'function') {
+        fetchUserInfo().then(() => {
+            const initialLoading = document.getElementById('initialLoading');
+            if (initialLoading) initialLoading.classList.add('hidden');
+            if (typeof fetchData === 'function') fetchData(false, true);
+        }).catch(e => {
+            console.error(e);
+            const initialLoading = document.getElementById('initialLoading');
+            if (initialLoading) initialLoading.classList.add('hidden');
+            if (typeof fetchData === 'function') fetchData(false, true);
+        });
+    }
+});
+
+function initTime() {
+    const i = document.getElementById('timeInput');
+    const dText = document.getElementById('displayTimeText');
+    if (i) {
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2,'0');
+        const formatted = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        i.value = formatted;
+        if (dText) dText.innerText = `${now.getFullYear()}年${pad(now.getMonth()+1)}月${pad(now.getDate())}日 ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    }
+}
+
+function handleTimeChange() {
+    const i = document.getElementById('timeInput');
+    const dText = document.getElementById('displayTimeText');
+    if (i && dText && i.value) {
+        const d = new Date(i.value);
+        const pad = (n) => String(n).padStart(2,'0');
+        dText.innerText = `${d.getFullYear()}年${pad(d.getMonth()+1)}月${pad(d.getDate())}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+}
+function calculateNow() { fetchData(false, false); }
+
+// ==========================================
+// 🎨 3. UI 互動與動畫模組
+// ==========================================
+function triggerVibration() { if (navigator.vibrate) navigator.vibrate(50); }
+
+function showToast(msg, isError = false) {
+    const toast = document.getElementById('toastMessage');
+    const toastText = document.getElementById('toastText');
+    const toastIcon = document.getElementById('toastIcon');
+    if (!toast) return;
+    
+    toast.style.zIndex = "9999"; 
+    if (toastText) toastText.innerText = msg;
+    if (toastIcon) {
+        toastIcon.className = isError ? "fa-solid fa-circle-exclamation text-rose-400" : "fa-solid fa-circle-check text-emerald-400";
+    }
+    toast.classList.remove('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
+    toast.classList.add('opacity-100', 'translate-y-0');
+    setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
+    }, 3000);
+}
+
+function showLoading(text = "大師推演中") {
+    const loader = document.getElementById('mysticalLoading');
+    const loaderText = document.getElementById('loadingText');
+    if (loaderText) loaderText.innerText = text;
+    if (loader) {
+        loader.classList.remove('hidden');
+        setTimeout(() => { loader.classList.remove('opacity-0'); loader.classList.add('opacity-100'); }, 10);
+    }
+}
+
+function hideLoading() {
+    const loader = document.getElementById('mysticalLoading');
+    if (loader) {
+        loader.classList.remove('opacity-100'); loader.classList.add('opacity-0');
+        setTimeout(() => { loader.classList.add('hidden'); }, 300);
+    }
+}
+
+function switchView(viewId, btnEl = null) {
+    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+    document.getElementById(viewId).classList.add('active');
+    if (btnEl) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active', 'text-indigo-600', 'dark:text-indigo-400'));
+        btnEl.classList.add('tab-active', 'text-indigo-600', 'dark:text-indigo-400');
+    }
+}
+function toggleDarkMode() {
+    const html = document.documentElement;
+    html.classList.toggle('dark');
+    localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+}
+
+// ==========================================
+// 🔐 4. 會員認證與用戶資訊
+// ==========================================
+function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
+function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
+
+// ==========================================
+// 👁️ 新增：眼仔切換密碼顯示功能
+// ==========================================
+function togglePasswordVisibility(inputId, icon) {
+    const input = document.getElementById(inputId);
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+    } else {
+        input.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+    }
+}
+
+// ==========================================
+// 🔄 更新：切換登入/註冊模式 (加入確認密碼欄位的顯示控制)
+// ==========================================
+function toggleAuthMode() {
+    const authTitle = document.getElementById('authTitle');
+    const authSwitchText = document.getElementById('authSwitchText');
+    const authSwitchBtn = document.getElementById('authSwitchBtn');
+    const emailField = document.getElementById('emailField');
+    const confirmPasswordField = document.getElementById('confirmPasswordField'); // 👈 新增這個
+    const forgotBtn = document.getElementById('forgotPasswordBtn');
+
+    if (authTitle.innerText === '歡迎回來') {
+        // 切換到【註冊模式】
+        authTitle.innerText = '加入會員';
+        authSwitchText.innerText = '已經有帳號了？';
+        authSwitchBtn.innerText = '立即登入';
+        if(emailField) emailField.classList.remove('hidden');
+        if(confirmPasswordField) confirmPasswordField.classList.remove('hidden'); // 顯示確認密碼
+        if(forgotBtn) forgotBtn.classList.add('hidden');
+    } else {
+        // 切換到【登入模式】
+        authTitle.innerText = '歡迎回來';
+        authSwitchText.innerText = '還沒有帳號嗎？';
+        authSwitchBtn.innerText = '立即註冊';
+        if(emailField) emailField.classList.add('hidden');
+        if(confirmPasswordField) confirmPasswordField.classList.add('hidden'); // 隱藏確認密碼
+        if(forgotBtn) forgotBtn.classList.remove('hidden');
+    }
+}
+
+// ==========================================
+// 🚀 更新：處理登入與註冊邏輯
+// ==========================================
+async function handleAuth() {
+    const u = document.getElementById('auth_user').value;
+    const p = document.getElementById('auth_pass').value;
+    const authTitle = document.getElementById('authTitle').innerText;
+    
+    const isRegister = (authTitle === '加入會員');
+    const email = isRegister ? document.getElementById('reg_email').value : null;
+    const p_confirm = isRegister ? document.getElementById('reg_pass_confirm').value : null; // 👈 獲取確認密碼
+
+    if (!u || !p) { showToast("請填寫帳號與密碼", true); return; }
+    if (isRegister && !email) { showToast("註冊請填寫 Email", true); return; }
+    
+    // 🛡️ 檢查兩次密碼是否一致
+    if (isRegister && p !== p_confirm) { 
+        showToast("兩次密碼輸入不一致", true); 
+        return; 
+    }
+
+    const endpoint = isRegister ? '/api/v1/auth/register' : '/api/v1/auth/login';
+    const payload = { username: u, password: p };
+    if (isRegister) payload.email = email;
+
+    try {
+        const res = await fetch(endpoint, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            if (isRegister) {
+                // 🎉 註冊成功後的完美體驗
+                showToast("註冊成功！請登入");
+                document.getElementById('auth_pass').value = ''; // 清空密碼，確保安全
+                document.getElementById('reg_pass_confirm').value = '';
+                toggleAuthMode(); // 👈 直接切換回登入畫面 (解決圖2的問題)
+            } else {
+                // 🔑 登入成功邏輯
+                localStorage.setItem('qimen_token', data.token);
+                showToast("歡迎回來！");
+                closeAuthModal();
+                fetchUserInfo(); 
+            }
+        } else {
+            showToast(data.message || "認證失敗", true);
+        }
+    } catch (e) { 
+        showToast("伺服器連線失敗", true);
+    }
+}
+
+async function openForgotPasswordModal() {
+    const email = prompt("請輸入您的註冊 Email：");
+    if (!email) return;
+    showToast("郵件處理中...");
+    try {
+        const res = await fetch('/api/v1/auth/forgot-password', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email })
+        });
+        const data = await res.json(); alert(data.message);
+    } catch (e) { showToast("發送失敗", true); }
+}
+
+async function fetchUserInfo() {
+    const t = localStorage.getItem('qimen_token');
+    if (!t) return;
+    try {
+        const res = await fetch('/api/v1/user/info', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: t })
+        });
+        const d = await res.json();
+        if (d.status === 'success') {
+            const creditsEl = document.getElementById('headerCredits');
+            const creditsVal = document.getElementById('userCredits');
+            const profileCredits = document.getElementById('profileCreditsView');
+            if (creditsEl) creditsEl.style.display = 'flex';
+            if (creditsVal) creditsVal.innerText = d.credits;
+            if (profileCredits) profileCredits.innerText = d.credits;
+            
+            const pGuest = document.getElementById('profileGuest');
+            const pUser = document.getElementById('profileUser');
+            if (pGuest) pGuest.style.display = 'none';
+            if (pUser) pUser.style.display = 'flex';
+            
+            const pName = document.getElementById('profileUsername');
+            if (pName) pName.innerText = d.username;
+            window.isVipUser = d.is_vip;
+
+            if (typeof fetchHistoryAndSync === 'function') fetchHistoryAndSync(true); 
+
+        } else {
+            localStorage.removeItem('qimen_token');
+        }
+    } catch (e) { console.error("UserInfo 抓取失敗"); }
+}
+
+function logout() {
+    localStorage.removeItem('qimen_token');
+    showToast("已安全登出");
+    location.reload();
+}
+
+// ==========================================
+// 🔮 5. 核心排盤與渲染
+// ==========================================
+async function fetchData(keepMasterBox = false, isSilent = false) {
+    const timeEl = document.getElementById('timeInput');
+    if (!timeEl || !timeEl.value) { initTime(); }
+    const rawTime = timeEl.value;
+    const btn = document.getElementById('calcNowBtn');
+    
+    if (!isSilent && btn) { btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 推演中...'; btn.disabled = true; }
+    if (!isSilent) showLoading("排盤中...");
+
+    try {
+        const response = await fetch('/api/v1/divination/calculate', { 
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ time: rawTime.replace('T', ' ') }) 
+        });
+        const data = await response.json();
+        
+        const dirMap = { "坎宮":"正北", "艮宮":"東北", "震宮":"正東", "巽宮":"東南", "離宮":"正南", "坤宮":"西南", "兌宮":"正西", "乾宮":"西北" };
+        
+        let gridItems = '';
+        if(data.qimen_matrix) {
+            data.qimen_matrix.forEach(p => {
+                const dir = dirMap[p.palace_id] || '中宮';
+                
+                const getActionText = (purpose, dirName) => `
+                    <div class="space-y-4 text-left mt-3">
+                        <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                            <strong>📍 奇門原理：</strong>出門見客取的是「當下時辰」的空間吉氣。此時【${dirName}】正是最能助旺您<strong>${purpose}</strong>的方位。
+                        </p>
+                        <div class="bg-rose-50 dark:bg-rose-900/20 p-4 rounded-xl border border-rose-100 dark:border-rose-800/30">
+                            <p class="font-black text-rose-600 dark:text-rose-400 mb-2">🚶‍♂️ 實戰出行訣（折返借氣法）：</p>
+                            <ul class="list-disc pl-5 space-y-1.5 text-sm text-rose-700 dark:text-rose-300 font-medium">
+                                <li>出門第一步，請先向<strong>【${dirName}】</strong>步行或開車前進 10-15 分鐘。</li>
+                                <li>在當地的咖啡廳或路邊稍作停留（約 5-10 分鐘），喝口水定神，此謂「納吉氣」。</li>
+                                <li>吸收吉氣後，再前往客戶實際所在地。就算客戶在凶方，您也已完成了「借方奪氣」，能讓事情事半功倍！</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+
+                const addGridItem = (icon, title, purpose, coreDesc) => {
+                    const fullDesc = `<p class="text-sm font-bold text-indigo-700 dark:text-indigo-400 mb-2">${coreDesc}</p>` + getActionText(purpose, dir);
+                    const safeDesc = encodeURIComponent(fullDesc); 
+                    gridItems += `
+                        <div onclick="triggerVibration(); window.showFdDetail('${icon} ${title}', '${dir}', '${safeDesc}')" class="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-800/30 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-800/50 active:scale-95 transition shadow-sm">
+                            <div class="text-4xl mb-2">${icon}</div>
+                            <div class="text-[0.95rem] font-black text-slate-700 dark:text-slate-200">${title}</div>
+                            <div class="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-2 bg-white dark:bg-slate-800 px-3 py-1 rounded-lg shadow-sm border border-indigo-100 dark:border-indigo-700">${dir}</div>
+                        </div>
+                    `;
+                };
+
+                if ((p.door || "").includes("生門")) {
+                    addGridItem("💰", "生門・求財", "直接談錢、利潤與資產", `此時【生門】落於 ${dir} (${p.palace_id})。利於直接談錢、爭取利潤、資產或產值評估。`);
+                }
+                if ((p.door || "").includes("開門")) {
+                    addGridItem("💼", "開門・事業", "談公司業務、簽約與展現專業", `此時【開門】落於 ${dir} (${p.palace_id})。利於談公司業務、簽署重要合同、展現專業度與拓展事業。`);
+                }
+                if ((p.door || "").includes("休門")) {
+                    addGridItem("❤️", "休門・和合", "拉近關係、和諧溝通與化解敵意", `此時【休門】落於 ${dir} (${p.palace_id})。極度利於拉近關係、和諧溝通、吃茶敘舊、化解雙方敵意。`);
+                }
+                if ((p.deity || "").includes("六合")) {
+                    addGridItem("🤝", "六合・談判", "尋求共識、談判與締結盟約", `此時【六合】貴神落於 ${dir} (${p.palace_id})。在此方位進行溝通、談判或尋求雙方共識最為有利。`);
+                }
+            });
+        }
+
+        const fdC = document.getElementById('fdContainer');
+        if(fdC) {
+            fdC.innerHTML = `
+                <div id="fdGrid" class="grid grid-cols-2 gap-3">${gridItems}</div>
+                <div id="fdDetail" class="hidden flex-col items-center justify-center text-center animate-[fadeIn_0.2s_ease-out]">
+                    <h4 id="fdDetailTitle" class="text-xl font-black text-slate-800 dark:text-slate-200 mb-3"></h4>
+                    <div class="bg-indigo-100 dark:bg-indigo-900/50 w-full py-4 rounded-2xl mb-4 border border-indigo-200 dark:border-indigo-800">
+                        <div class="text-xs font-bold text-indigo-500 mb-1">大吉方位</div>
+                        <div id="fdDetailDir" class="text-4xl font-black text-indigo-700 dark:text-indigo-400 tracking-wider"></div>
+                    </div>
+                    <div id="fdDetailText" class="w-full"></div>
+                    <button onclick="triggerVibration(); document.getElementById('fdDetail').classList.add('hidden'); document.getElementById('fdGrid').classList.remove('hidden');" class="mt-6 text-sm font-black text-slate-500 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 px-8 py-3 rounded-full active:scale-95 transition shadow-sm"><i class="fa-solid fa-arrow-left mr-1"></i> 返回選單</button>
+                </div>
+            `;
+        }
+
+        const baziEl = document.getElementById('freeDailyBazi');
+        if(data.bazi && baziEl) baziEl.innerText = `今日干支：${data.bazi.year} ${data.bazi.month} ${data.bazi.day}`;
+        
+        renderUI(data);
+    } catch (e) {
+        if (!isSilent) showToast("排盤失敗，請檢查網路", true);
+    } finally {
+        if(!isSilent) hideLoading();
+        if(!isSilent && btn) { btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 立即排盤'; btn.disabled = false; }
+    }
+}
+
+function renderUI(data) {
+    if (!data) return;
+    currentMatrixData = data.qimen_matrix || []; currentBazi = data.bazi || {};
+    const infoBox = document.getElementById('infoBox'); if(infoBox) infoBox.classList.remove('hidden'); 
+    const gridContainer = document.getElementById('gridContainer'); if(gridContainer) gridContainer.classList.remove('hidden'); 
+    const legendBox = document.getElementById('legendBox'); if(legendBox) legendBox.classList.remove('hidden'); 
+    const askTriggerBox = document.getElementById('askTriggerBox'); if(askTriggerBox) askTriggerBox.classList.remove('hidden');
+    
+    if (data.qimen_info) {
+        const qimenGrid = document.getElementById('qimenInfoGrid');
+        if (qimenGrid) {
+            qimenGrid.innerHTML = `<div class="flex items-center"><span class="text-slate-400 w-10">選局:</span><span class="text-indigo-700 dark:text-indigo-400 font-black ml-1">${data.qimen_info.description || ''}</span></div><div class="flex items-center"><span class="text-slate-400 w-10">值符:</span><span class="font-black dark:text-slate-200 ml-1">${data.qimen_info.zhi_fu || ''}</span></div><div class="flex items-center"><span class="text-slate-400 w-10">旬首:</span><span class="font-black dark:text-slate-200 ml-1">${data.qimen_info.hour_xun || ''}</span></div><div class="flex items-center"><span class="text-slate-400 w-10">值使:</span><span class="font-black dark:text-slate-200 ml-1">${data.qimen_info.zhi_shi || ''}</span></div><div class="flex items-center col-span-1"><span class="text-slate-400 w-10">空亡:</span><span class="text-rose-500 font-bold ml-1 text-[0.7rem]">時:<span>${data.bazi.day_empty || ''}</span> 日:<span>${data.qimen_info.ri_kong || ''}</span></span></div><div class="flex items-center"><span class="text-slate-400 w-10">節氣:</span><span class="font-black dark:text-slate-200 ml-1">${data.qimen_info.solar_term || ''}</span></div>`;
+        }
+    }
+    
+    const bz = [ data.bazi.year || "  ", data.bazi.month || "  ", data.bazi.day || "  ", data.bazi.hour || "  " ];
+    const baziTable = document.getElementById('baziTable');
+    if (baziTable) {
+        baziTable.innerHTML = `<div class="flex flex-col gap-1 text-center font-bold text-xs"><div class="grid grid-cols-4 gap-2 text-slate-400 border-b border-slate-200 dark:border-slate-700 pb-1"><span>年</span><span>月</span><span>日</span><span>時</span></div><div class="grid grid-cols-4 gap-2 text-sm md:text-lg">${bz.map(v => `<span class="${getWuxingClass(v[0])}">${v[0] || ' '}</span>`).join('')}</div><div class="grid grid-cols-4 gap-2 text-sm md:text-lg">${bz.map(v => `<span class="${getWuxingClass(v[1])}">${v[1] || ' '}</span>`).join('')}</div></div>`;
+    }
+
+    if (gridContainer && currentMatrixData) {
+        gridContainer.innerHTML = '';
+        currentMatrixData.forEach(p => {
+            const s = p.logic_states || {}; 
+            let marksHtml = (s.is_empty?'空 ':'') + (s.is_horse?'🐎 ':'');
+            let doorWarn = p.door_strength === '迫' ? `<span class="tiny-tag-door">迫</span>` : `<span class="text-[0.5rem] opacity-50 ml-0.5">${p.door_strength || ''}</span>`;
+            let firstPattern = p.pattern ? p.pattern.split('、')[0] : '';
+            let bottomBadgeHtml = firstPattern ? `<span class="bg-indigo-100 dark:bg-indigo-900/80 text-indigo-700 dark:text-indigo-200 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-700 shadow-sm">${firstPattern}</span>` : '';
+            let marksBadgeHtml = marksHtml ? `<span class="text-rose-500">${marksHtml}</span>` : '';
+            let combinedBottom = (bottomBadgeHtml || marksBadgeHtml) ? `<div class="absolute bottom-1 left-1/2 transform -translate-x-1/2 text-[0.55rem] font-bold whitespace-nowrap flex items-center gap-1 z-20">${marksBadgeHtml}${bottomBadgeHtml}</div>` : '';
+            
+            gridContainer.innerHTML += `
+                <div class="palace-card ${p.palace_id === '中宮' ? 'bg-center' : ''} relative" style="grid-area: ${areaMap[p.palace_id] || ''};" onclick="triggerVibration(); openModal('${p.palace_id}')">
+                    <div class="flex justify-between items-start w-full leading-none z-10">
+                        <div class="font-black text-lg md:text-xl ${getWuxingClass(p.deity)}">${p.deity || ''}</div>
+                        <div class="flex flex-col items-end text-right"><div class="flex items-baseline gap-0.5"><span class="text-[0.6rem] text-slate-400 font-bold">${p.heaven_stem_state || ''}</span><span class="font-black text-2xl ${getWuxingClass(p.heaven_stem)}">${colorizeStem(p.heaven_stem)}</span></div></div>
+                    </div>
+                    <div class="flex flex-col items-center justify-center flex-grow w-full py-1 z-10">
+                        <div class="font-black text-xl md:text-2xl ${getWuxingClass(p.star)} flex items-center gap-0.5 leading-none">${(p.star || "").replace('星','')}</div>
+                        <div class="text-[0.7rem] font-bold text-slate-400 mt-1">${colorizeStem(p.hidden_stem)}</div>
+                    </div>
+                    <div class="flex justify-between items-end w-full mb-1 leading-none z-10">
+                        <div class="flex flex-col items-start">
+                            <div class="text-[0.6rem] text-slate-400 font-bold mb-0.5">${numMap[p.palace_id] || ''}</div>
+                            <div class="font-black text-lg md:text-xl ${getWuxingClass(p.door)} flex items-center">${p.door || ''}${doorWarn}</div>
+                        </div>
+                        <div class="flex flex-col items-end text-right"><div class="flex items-baseline gap-0.5"><span class="text-[0.6rem] text-slate-400 font-bold">${p.earth_stem_state || ''}</span><span class="font-black text-xl text-slate-700 dark:text-slate-300">${p.earth_stem || ''}</span></div></div>
+                    </div>
+                    ${combinedBottom}
+                </div>`;
+        });
+    }
+}
+
+function openModal(id) {
+    const p = currentMatrixData.find(x => x.palace_id === id);
+    if (!p) return; 
+    document.getElementById('modalTitle').innerHTML = `📍 ${p.palace_id}`;
+    
+    let harmsArr = (p.logic_states && p.logic_states.description !== '正常') ? p.logic_states.description.split('，') : [];
+    let harmsHtml = harmsArr.map(h => `<span class="bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-300 px-2 py-0.5 rounded text-xs font-bold border border-rose-200 dark:border-rose-800">${h}</span>`).join('');
+    let patternArr = p.pattern ? p.pattern.split('、') : [];
+    let patternHtml = patternArr.map(pt => `<span class="bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded text-xs font-bold border border-purple-200 dark:border-purple-800">${pt}</span>`).join('');
+    let topBadges = `<div class="col-span-2 flex flex-wrap justify-center gap-2 mb-3">${harmsHtml}${patternHtml}</div>`;
+    let modalDoorWarn = p.door_strength === '迫' ? `<span class="bg-rose-200 dark:bg-rose-800 text-rose-800 dark:text-rose-200 text-[0.6rem] px-1 rounded font-bold">迫</span>` : `<span class="bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 text-[0.6rem] px-1 rounded">${p.door_strength || ''}</span>`;
+    
+    let html = `${(harmsArr.length > 0 || patternArr.length > 0) ? topBadges : ''}
+        <div class="grid grid-cols-2 gap-3 shrink-0">
+            <div class="bg-slate-50 dark:bg-slate-700 p-3 rounded-2xl text-center flex flex-col justify-center"><div class="text-[0.65rem] text-slate-400 font-bold mb-1">八神</div><div class="font-black text-indigo-700 dark:text-indigo-400 text-lg">${p.deity || ''}</div><div class="text-[0.65rem] text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">${qimenDict[p.deity] || ''}</div></div>
+            <div class="bg-slate-50 dark:bg-slate-700 p-3 rounded-2xl text-center flex flex-col justify-center"><div class="text-[0.65rem] text-slate-400 font-bold mb-1">九星</div><div class="font-black text-emerald-700 dark:text-emerald-400 text-lg flex justify-center items-center gap-1">${p.star || ''} <span class="bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-[0.6rem] px-1 rounded">${p.star_strength || ''}</span></div><div class="text-[0.65rem] text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">${qimenDict[p.star] || ''}</div></div>
+            <div class="bg-slate-50 dark:bg-slate-700 p-3 rounded-2xl text-center flex flex-col justify-center"><div class="text-[0.65rem] text-slate-400 font-bold mb-1">八門</div><div class="font-black text-amber-700 dark:text-amber-400 text-lg flex justify-center items-center gap-1">${p.door || ''} ${modalDoorWarn}</div><div class="text-[0.65rem] text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">${qimenDict[p.door] || ''}</div></div>
+            <div class="bg-slate-50 dark:bg-slate-700 p-3 rounded-2xl text-center flex flex-col justify-center"><div class="text-[0.65rem] text-slate-400 font-bold mb-1">天盤</div><div class="font-black text-rose-700 dark:text-rose-400 text-lg flex justify-center items-center gap-1">${p.heaven_stem || ''} <span class="bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 text-[0.6rem] px-1 rounded">${p.heaven_stem_state || ''}</span></div><div class="text-[0.65rem] text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">${qimenDict[p.heaven_stem] || ''}</div></div>
+            <div class="bg-slate-100 dark:bg-slate-900 p-3 rounded-2xl text-center col-span-2 flex flex-col justify-center"><div class="text-[0.65rem] text-slate-500 font-bold mb-1">地盤</div><div class="font-black text-slate-800 dark:text-slate-300 text-lg flex justify-center items-center gap-1">${p.earth_stem || ''} <span class="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-400 text-[0.6rem] px-1 rounded">${p.earth_stem_state || ''}</span></div><div class="text-[0.65rem] text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">${qimenDict[p.earth_stem] || ''}</div></div>
+        </div>`;
+    document.getElementById('modalContent').innerHTML = html;
+    document.getElementById('palaceModal').classList.remove('hidden');
+}
+function closeModal() { document.getElementById('palaceModal').classList.add('hidden'); }
+
+// ==========================================
+// 📜 6. 歷史紀錄與本命人管理
+// ==========================================
+async function fetchHistoryAndSync(isSilent = false) {
+    const t = localStorage.getItem('qimen_token');
+    if(!t) return;
+    try {
+        if (!isSilent) {
+            document.getElementById('destinyHistoryList').innerHTML = '<div class="text-center text-slate-400 py-10 text-sm font-bold"><i class="fa-solid fa-spinner fa-spin"></i> 載入中...</div>';
+            document.getElementById('reportHistoryList').innerHTML = '<div class="text-center text-slate-400 py-10 text-sm font-bold"><i class="fa-solid fa-spinner fa-spin"></i> 載入中...</div>';
+        }
+        
+        const res = await fetch('/api/v1/history/list',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:t})});
+        const d = await res.json();
+        
+        if(d.status==='success') {
+            const dbDestinyRecords = d.data.filter(h => h.category && h.category.startsWith('「命盤」'));
+
+            window.destinySeekers = dbDestinyRecords.map(r => {
+                let sName = r.category.replace('「命盤」', '').trim();
+                return { id: r.id, name: sName, time: r.record_time };
+            });
+            let pid = localStorage.getItem('qimen_primary_id');
+            if (!window.destinySeekers.find(s => s.id === pid) && window.destinySeekers.length > 0) {
+                pid = window.destinySeekers[0].id;
+                localStorage.setItem('qimen_primary_id', pid);
+            }
+            
+            renderHistoryList('divination', d.data.filter(h => !h.category || !h.category.startsWith('「命盤」')));
+            renderHistoryList('destiny', dbDestinyRecords, pid);
+        }
+    } catch(e) { console.error("同步失敗", e); }
+}
+
+function renderHistoryList(type, dataList, pid = null) {
+    const targetId = type === 'destiny' ? 'destinyHistoryList' : 'reportHistoryList';
+    const container = document.getElementById(targetId);
+    if (dataList.length === 0) { 
+        container.innerHTML = '<div class="text-center py-10 opacity-30">尚無紀錄</div>'; return; 
+    }
+
+    let batchBar = `
+        <div class="flex justify-end items-center mb-4 px-2 h-8">
+            <div id="edit-controls-${type}" class="hidden flex items-center gap-4 w-full justify-between animate-[fadeIn_0.2s_ease-out]">
+                <label class="text-xs font-bold text-slate-500 flex items-center gap-2 cursor-pointer py-2">
+                    <input type="checkbox" class="w-4 h-4 rounded border-slate-300 dark:border-slate-600" onclick="window.toggleSelectAll('${type}', this.checked)"> 全選
+                </label>
+                <button id="batch-del-btn-${type}" onclick="window.deleteSelected('${type}')" class="text-xs bg-rose-500/10 text-rose-500 px-3 py-1.5 rounded-lg font-black border border-rose-500/20 active:scale-95 transition opacity-50 pointer-events-none">確認刪除</button>
+            </div>
+            <button id="toggle-edit-btn-${type}" onclick="window.toggleEditMode('${type}')" class="text-xs text-slate-400 hover:text-rose-500 px-2 py-2 rounded-lg font-black transition whitespace-nowrap"><i class="fa-solid fa-trash-can"></i> 刪除</button>
+        </div>`;
+    
+    let items = dataList.map(h => {
+        // 🛡️ 點擊熱區終極強化：放大為 w-12 h-12，加入 cursor-pointer，點擊盾牌時自動切換內部 checkbox 狀態！
+        let cbHtml = `
+            <div class="cb-item-${type}-wrapper w-12 h-12 flex items-center justify-center shrink-0 -ml-3 mr-1 hidden cursor-pointer" onclick="event.stopPropagation(); const cb = this.querySelector('input'); cb.checked = !cb.checked; window.checkSelectStatus('${type}');">
+                <input type="checkbox" value="${h.id}" class="cb-item-${type} w-5 h-5 rounded border-slate-300 dark:border-slate-600 pointer-events-none" tabindex="-1">
+            </div>`;
+
+        if (type === 'destiny') {
+            let sName = (h.category || "").replace('「命盤」', '').trim();
+            const isPrimary = (h.id === pid);
+            const primaryBtn = `<button onclick="event.stopPropagation(); triggerVibration(); window.setPrimarySeeker('${h.id}')" class="text-[11px] font-bold ${isPrimary ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 dark:bg-slate-700 text-slate-400 hover:text-indigo-500'} px-3 py-2 rounded-lg transition shadow-sm whitespace-nowrap"><i class="fa-solid fa-user"></i> ${isPrimary ? '本命人' : '設為本命人'}</button>`;
+            return `
+                <div class="bg-white dark:bg-slate-800 p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center transition cursor-pointer mb-3" onclick="viewHistoryDetail('${h.id}')">
+                    ${cbHtml}
+                    <div class="flex-grow min-w-0"><div class="font-black text-slate-700 dark:text-slate-200 text-lg truncate">${sName}</div></div>
+                    <div class="flex items-center ml-2">${primaryBtn}</div>
+                </div>`;
+        } else {
+            let displayCategory = h.category || "未分類";
+            if (displayCategory.startsWith('「事盤」')) displayCategory = displayCategory.replace('「事盤」', '').trim();
+            let extractedQ = "";
+            if (h.report_text) { const qMatch = h.report_text.match(/<div class="[^"]*q-preview[^"]*">(.*?)<\/div>/); if (qMatch) extractedQ = qMatch[1]; }
+            let qDisplay = extractedQ ? `<div class="text-[0.75rem] text-slate-500 dark:text-slate-400 mt-1 truncate">${extractedQ}</div>` : '';
+            return `
+                <div class="bg-white dark:bg-slate-800 p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center transition cursor-pointer mb-3" onclick="viewHistoryDetail('${h.id}')">
+                    ${cbHtml}
+                    <div class="flex-grow min-w-0"><div class="font-black text-slate-700 dark:text-slate-200 text-lg">${displayCategory}</div>${qDisplay}<div class="text-[11px] font-bold text-slate-400 mt-1">${h.record_time}</div></div>
+                    <div class="flex items-center ml-2"><i class="fa-solid fa-chevron-right text-slate-300"></i></div>
+                </div>`;
+        }
+    }).join('');
+    container.innerHTML = batchBar + items;
+}
+
+// 🛡️ 編輯模式：同時控制大點擊熱區 wrapper 的隱藏與顯示，保證平常不佔空間，點擊時 100% 準確安全
+window.toggleEditMode = function(type) {
+    const controls = document.getElementById(`edit-controls-${type}`);
+    const toggleBtn = document.getElementById(`toggle-edit-btn-${type}`);
+    const checkboxes = document.querySelectorAll(`.cb-item-${type}`);
+    const wrappers = document.querySelectorAll(`.cb-item-${type}-wrapper`);
+    
+    if (controls.classList.contains('hidden')) {
+        controls.classList.remove('hidden'); 
+        toggleBtn.innerHTML = '取消'; 
+        toggleBtn.classList.add('text-slate-500'); 
+        wrappers.forEach(w => w.classList.remove('hidden'));
+    } else {
+        controls.classList.add('hidden'); 
+        toggleBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i> 刪除'; 
+        toggleBtn.classList.remove('text-slate-500'); 
+        checkboxes.forEach(cb => { cb.checked = false; }); 
+        wrappers.forEach(w => w.classList.add('hidden')); 
+        window.checkSelectStatus(type);
+    }
+};
+
+window.toggleSelectAll = function(type, isChecked) { document.querySelectorAll(`.cb-item-${type}`).forEach(cb => cb.checked = isChecked); window.checkSelectStatus(type); };
+window.checkSelectStatus = function(type) {
+    const checkedCount = document.querySelectorAll(`.cb-item-${type}:checked`).length;
+    const delBtn = document.getElementById(`batch-del-btn-${type}`);
+    if (delBtn) {
+        if (checkedCount > 0) { delBtn.classList.remove('opacity-50', 'pointer-events-none'); delBtn.innerHTML = `<i class="fa-solid fa-trash-can"></i> 確認刪除 (${checkedCount})`; } 
+        else { delBtn.classList.add('opacity-50', 'pointer-events-none'); delBtn.innerHTML = `確認刪除`; }
+    }
+};
+
+window.deleteSelected = async function(type) {
+    const selectedItems = Array.from(document.querySelectorAll(`.cb-item-${type}:checked`));
+    if (selectedItems.length === 0) return;
+    if (!confirm(`確定要刪除這 ${selectedItems.length} 筆紀錄嗎？`)) return;
+    const t = localStorage.getItem('qimen_token'); let currentPid = localStorage.getItem('qimen_primary_id');
+    for (let cb of selectedItems) {
+        const id = cb.value;
+        await fetch('/api/v1/history/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: t, record_id: id }) });
+        if (currentPid === id) localStorage.removeItem('qimen_primary_id');
+    }
+    showToast(`已成功刪除 ${selectedItems.length} 筆紀錄`); fetchHistoryAndSync();
+};
+
+window.setPrimarySeeker = function(id) {
+    if (window.isVipUser === false) { showToast("「本命人」為月費專屬功能，請先開通", true); setTimeout(openTopupModal, 1500); return; }
+    localStorage.setItem('qimen_primary_id', id); fetchHistoryAndSync(); showToast("已成功設定為本命人");
+};
+
+window.renderModalSeekerList = function() {
+    const container = document.getElementById('seekerSelectionList');
+    if (!container || !window.destinySeekers || window.destinySeekers.length === 0) return;
+    const pid = localStorage.getItem('qimen_primary_id');
+    let sortedSeekers = [...window.destinySeekers].sort((a, b) => (b.id === pid ? 1 : 0) - (a.id === pid ? 1 : 0));
+    container.innerHTML = sortedSeekers.map((s) => {
+        const isSelected = s.id === tempSelectedSeekerId;
+        return `
+            <div onclick="triggerVibration(); window.toggleSeekerSelection('${s.id}')" class="cursor-pointer flex justify-between items-center p-3 rounded-xl border transition mb-2 ${isSelected ? 'ring-2 ring-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-700' : 'border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600'}">
+                <div class="flex items-center gap-2"><div class="font-black ${isSelected ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-200'}">${s.name}</div>${s.id === pid ? `<span class="text-[0.65rem] font-bold bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full"><i class="fa-solid fa-crown"></i> 本命人</span>` : ``}</div>
+                <div class="w-5 h-5 rounded flex items-center justify-center transition-all ${isSelected ? 'border-2 border-indigo-500 bg-indigo-500' : 'border-2 border-slate-300 dark:border-slate-500'}">${isSelected ? '<i class="fa-solid fa-check text-white text-xs"></i>' : ''}</div>
+            </div>`;
+    }).join('');
+};
+
+window.toggleSeekerSelection = function(id) {
+    if (tempSelectedSeekerId === id) tempSelectedSeekerId = null; else tempSelectedSeekerId = id;
+    window.renderModalSeekerList();
+};
+
+async function openSeekerSelectionModal(type) {
+    const token = localStorage.getItem('qimen_token');
+    if (!token) { openAuthModal(); return; }
+    
+    pendingInterpretationType = type;
+    const container = document.getElementById('seekerSelectionList'); 
+    const catArea = document.getElementById('categorySelectionArea');
+    if (type === 'divination') { catArea.classList.remove('hidden'); } else { catArea.classList.add('hidden'); selectedCategory = "專屬每日運程"; } 
+    
+    document.getElementById('seekerSelectionModal').classList.remove('hidden');
+
+    if (!window.isVipUser) {
+        if(container) {
+            container.innerHTML = `
+                <div class="text-center py-5 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl border border-indigo-100 dark:border-indigo-800 shadow-inner">
+                    <i class="fa-solid fa-lock text-indigo-400 text-3xl mb-2"></i>
+                    <div class="text-sm font-black text-indigo-800 dark:text-indigo-300">專屬本命人功能</div>
+                    <div class="text-[0.7rem] font-bold text-indigo-600 dark:text-indigo-400 mt-1 px-4 leading-relaxed">
+                        加入本命人八字，能加強大師推演深度。<br>升級 VIP 即可解鎖無限綁定。
+                    </div>
+                    <button onclick="triggerVibration(); closeSeekerSelectionModal(); openTopupModal();" class="mt-4 text-xs font-black bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-full active:scale-95 transition shadow-md">
+                        了解 VIP 特權
+                    </button>
+                </div>
+            `;
+        }
+        tempSelectedSeekerId = null; 
+    } else {
+        if (!window.destinySeekers || window.destinySeekers.length === 0) { 
+            if(container) container.innerHTML = '<div class="text-center text-slate-400 py-6 text-sm font-bold"><i class="fa-solid fa-spinner fa-spin text-indigo-500 text-2xl mb-3"></i><br>正在同步命盤資料...</div>';
+            await fetchHistoryAndSync(true); 
+        }
+        
+        if(!window.destinySeekers || window.destinySeekers.length === 0) {
+            if(container) container.innerHTML = '<div class="text-center text-slate-400 py-4 text-xs font-bold">尚未建立任何命盤，本次將以純局勢推演。<br>算過「終身命盤」後即可於此處選擇。</div>'; 
+            tempSelectedSeekerId = null;
+        } else { 
+            tempSelectedSeekerId = null; 
+            window.renderModalSeekerList(); 
+        }
+    }
+    
+    const catGrid = document.getElementById('catGrid');
+    if (catGrid) {
+        const cats = ['財運與投資', '事業與升遷', '婚姻與感情', '健康與疾病', '學業與考試', '官司與訴訟', '出行與旅遊', '尋物與尋人', '其他'];
+        catGrid.innerHTML = cats.map(c => `<button onclick="triggerVibration(); selectCategory(this, '${c}')" class="cat-btn py-2.5 bg-slate-50 text-slate-600 dark:bg-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 rounded-xl font-bold text-sm shadow-sm active:scale-95 transition whitespace-nowrap overflow-hidden text-ellipsis">${c}</button>`).join('');
+    }
+}
+
+function closeSeekerSelectionModal() { 
+    document.getElementById('seekerSelectionModal').classList.add('hidden'); 
+}
+
+function selectCategory(b,c){ selectedCategory=c; document.querySelectorAll('.cat-btn').forEach(x=>{ x.classList.remove('bg-purple-600','text-white','border-purple-600'); x.classList.add('bg-slate-50','text-slate-600','dark:bg-slate-700','dark:text-slate-300','dark:border-slate-600'); }); b.classList.remove('bg-slate-50','text-slate-600','dark:bg-slate-700','dark:text-slate-300','dark:border-slate-600'); b.classList.add('bg-purple-600','text-white','border-purple-600'); }
+
+function confirmSeekerAndPrepare() {
+    if (pendingInterpretationType === 'divination' && (!selectedCategory || selectedCategory === '')) { showToast("請選擇一個問測主題！", true); return; }
+    closeSeekerSelectionModal(); prepareInterpretation(pendingInterpretationType, tempSelectedSeekerId);
+}
+
+function prepareInterpretation(type, selectedSeekerId = null) {
+    const t = localStorage.getItem('qimen_token');
+    if (!t) { openAuthModal(); return; }
+    if (type === 'destiny') {
+        const n = document.getElementById('d_name').value; const dt = document.getElementById('d_date').value;
+        if (!n || !dt) { showToast("請填寫姓名與出生日期！", true); return; }
+    }
+    if (selectedSeekerId) tempSelectedSeekerId = selectedSeekerId;
+    pendingInterpretationType = type;
+    if (type === 'destiny') { executeInterpretation(); } else { document.getElementById('confirmCalcModal').classList.remove('hidden'); }
+}
+function closeConfirmModal() { document.getElementById('confirmCalcModal').classList.add('hidden'); }
+
+// ==========================================
+// 🧠 7. 大師 AI 深度推演
+// ==========================================
+async function executeInterpretation() {
+    showLoading("大師推演中...");
+    document.getElementById('masterResultBoxContainer').classList.remove('hidden');
+    await new Promise(resolve => setTimeout(resolve, 50));
+    closeConfirmModal();
+    
+    const type = pendingInterpretationType;
+    const t = localStorage.getItem('qimen_token');
+    let req = { token: t };
+    // 🌟 修正：只有在總監有明確打勾 (tempSelectedSeekerId) 時才加入本命人，不自動塞入預設第一人！
+    let targetSeeker = (window.destinySeekers && tempSelectedSeekerId) ? window.destinySeekers.find(s => s.id === tempSelectedSeekerId) : null;
+    let sName = targetSeeker ? targetSeeker.name : "";
+    let shortQ = "";
+
+    if (type === 'divination') {
+        req.time = document.getElementById('timeInput').value.replace('T', ' '); req.category = `「事盤」${selectedCategory}`;
+        let rawQ = document.getElementById('userQuestion').value.trim(); shortQ = rawQ ? rawQ.substring(0, 20) : '未提供細節';
+        req.question = targetSeeker ? `(求測人：${sName}) ${rawQ}` : rawQ; req.main_title = '奇門大師深度推演';
+    } else if (type === 'daily') {
+        req.time = document.getElementById('timeInput').value.replace('T', ' '); req.category = `「事盤」專屬每日運程`;
+        req.question = targetSeeker ? `(求測人：${sName}) 今日運程建議` : "今日整體運程建議"; req.main_title = '奇門大師深度推演';
+    } else if (type === 'destiny') {
+        const n = document.getElementById('d_name').value; let d = document.getElementById('d_date').value; let tv = document.getElementById('d_time_select').value;
+        if (tv === 'unknown') tv = document.getElementById('d_random_num').value;
+        req.time = d + " " + tv; req.category = `「命盤」${n}`; req.gender = document.getElementById('destinyGender').value; req.status = document.getElementById('destinyStatus').value; req.main_title = '命理深度解析報告'; sName = n;
+        closeDestinyModal();
+    }
+            
+    try {
+        const calcRes = await fetch('/api/v1/divination/calculate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ time: req.time }) });
+        const calcData = await calcRes.json(); renderUI(calcData); 
+    } catch (e) { console.error("盤局抓取失敗", e); }
+
+    setTimeout(async () => {
+        if (type === 'destiny') { 
+            switchView('view-destiny', document.querySelectorAll('.tab-btn')[2]); 
+            if(window.moveResultBoxTo) window.moveResultBoxTo('view-destiny');
+        }
+        else { 
+            switchView('view-report', document.querySelectorAll('.tab-btn')[1]); 
+            if(window.moveResultBoxTo) window.moveResultBoxTo('view-report');
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+   
+        try {
+            const res = await fetch('/api/v1/divination/interpret', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(req) });
+            const reader = res.body.getReader(); const decoder = new TextDecoder(); let full = "";
+            while(true){
+                const {done,value} = await reader.read(); if(done) break;
+                full += decoder.decode(value);
+                
+                let goldenText = '磁場感應中...';
+                let rawHtml = marked.parse(full).replace(/[\u{1F000}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+                let gsMatch = rawHtml.match(/<h[23][^>]*>.*?斷語.*?<\/h[23]>\s*<blockquote[^>]*>([\s\S]*?)<\/blockquote>/i);
+                if (gsMatch) { goldenText = gsMatch[1].replace(/<[^>]+>/g, '').trim(); rawHtml = rawHtml.replace(/<h[23][^>]*>.*?斷語.*?<\/h[23]>\s*<blockquote[^>]*>[\s\S]*?<\/blockquote>/i, ''); } 
+                else { let altMatch = full.match(/斷語.*?\n> (.*)/); if (altMatch && altMatch[1]) { goldenText = altMatch[1].replace(/（.*?）/g, '').replace(/\(.*?\)/g, '').trim(); rawHtml = rawHtml.replace(/<h[23][^>]*>.*?斷語.*?<\/h[23]>/i, ''); } }
+
+                let sections = rawHtml.split(/(?=<h2)/i);
+                let formattedBody = sections.map(sec => `<div style="page-break-inside: avoid; margin-bottom: 15px;">${sec}</div>`).join('');
+                let qHtml = shortQ ? `<div style="margin-top:5px; border-top:1px dashed #cbd5e1; padding-top:5px;"><b>所問：</b>${shortQ}</div>` : '';
+                
+                let rawInfoBox = document.getElementById('infoBox') ? document.getElementById('infoBox').innerHTML : '';
+                let rawGrid = document.getElementById('gridContainer') ? document.getElementById('gridContainer').innerHTML : '';
+                const cleanForPrint = (html) => { return html.replace(/dark:[^\s"']+/g, '').replace(/text-slate-400/g, 'text-slate-600').replace(/text-slate-300/g, 'text-slate-800').replace(/text-slate-200/g, 'text-slate-800').replace(/text-indigo-400/g, 'text-indigo-700'); };
+                let infoBoxHtml = cleanForPrint(rawInfoBox); let gridHtml = cleanForPrint(rawGrid); let finalReportHtml = "";
+
+                if (type === 'destiny') {
+                    let bzYear = currentBazi.year || "未知"; let bzMonth = currentBazi.month || "未知"; let bzDay = currentBazi.day || "未知"; let bzHour = currentBazi.hour || "未知";
+                    let destinyStyle = `<style>@media (min-width: 640px) { .destiny-report-wrapper { padding: 40px 20px !important; box-shadow: inset 0 0 0 1px #e5dfd3, inset 0 0 0 10px #fdfbf7, inset 0 0 0 11px #e5dfd3 !important; } } .destiny-report-wrapper h1, .destiny-report-wrapper h2, .destiny-report-wrapper h3 { font-family: 'Noto Serif TC', serif; } .destiny-report-wrapper .chinese-seal { font-family: 'Noto Serif TC', serif; color: #8b2626; border: 2px solid #8b2626; border-radius: 4px; padding: 4px 8px; display: inline-block; font-weight: bold; letter-spacing: 2px; transform: rotate(-3deg); opacity: 0.85; } #aiInterpretationText h2 { color: #8b2626; border-bottom: 2px solid #8b2626; display: inline-block; padding-bottom: 4px; margin-bottom: 1.5rem; position: relative; font-size: 1.4rem; margin-top: 2rem; border-left: none !important; background: transparent !important;} #aiInterpretationText h2::after { content: ''; position: absolute; bottom: -6px; left: 0; width: 30px; height: 2px; background-color: #c4a661; } #aiInterpretationText p { margin-bottom: 1rem; line-height: 1.8; text-align: justify; } #aiInterpretationText ul { list-style: none; padding-left: 1rem; border-left: 2px solid #e5dfd3; margin-bottom: 1.5rem; } #aiInterpretationText li { margin-bottom: 0.75rem; } #aiInterpretationText strong { color: #8b2626; } #aiInterpretationText table { width: 100%; text-align: left; border-collapse: collapse; background: white; margin-top: 1rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 0.9rem; } #aiInterpretationText th { background-color: #f4f0e6; color: #8b2626; border-bottom: 2px solid #c4a661; padding: 12px; font-family: 'Noto Serif TC', serif; } #aiInterpretationText td { padding: 12px; border-bottom: 1px solid #e5dfd3; vertical-align: top; }</style>`;
+                    let coverHtml = `
+                    <div class="pdf-cover-page" style="padding-bottom: 15px;">
+                        <header style="text-align: center; margin-bottom: 30px;">
+                            <div style="margin-bottom: 20px; display: flex; justify-content: center;"><span class="chinese-seal" style="font-size: 1rem;">知命<br>造運</span></div>
+                            <h1 style="font-size: 1.7rem; font-weight: bold; letter-spacing: 0.05em; color: #2b2b2b; margin-bottom: 12px; line-height: 1.3;">${req.main_title}</h1>
+                            <p style="font-size: 0.95rem; color: #4b5563; margin-bottom: 24px; text-align: center; width: 100%; display: block;">${req.gender}命・生於 ${req.time} (香港)</p>
+                            <div style="display: flex; justify-content: center; gap: 16px; margin-bottom: 24px;">
+                                <div style="text-align: center;"><div style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 2px;">時柱</div><div style="font-weight: bold; color: #2b2b2b; font-size: 1.1rem; font-family: 'Noto Serif TC', serif;">${bzHour}</div></div>
+                                <div style="text-align: center;"><div style="font-size: 0.75rem; color: #8b2626; font-weight: bold; margin-bottom: 2px;">日主</div><div style="font-weight: bold; color: #8b2626; font-size: 1.1rem; font-family: 'Noto Serif TC', serif;">${bzDay}</div></div>
+                                <div style="text-align: center;"><div style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 2px;">月柱</div><div style="font-weight: bold; color: #2b2b2b; font-size: 1.1rem; font-family: 'Noto Serif TC', serif;">${bzMonth}</div></div>
+                                <div style="text-align: center;"><div style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 2px;">年柱</div><div style="font-weight: bold; color: #2b2b2b; font-size: 1.1rem; font-family: 'Noto Serif TC', serif;">${bzYear}</div></div>
+                            </div>
+                            <div style="width: 64px; height: 1px; background-color: #c4a661; margin: 0 auto;"></div>
+                        </header>
+                        
+                        <div style="margin-bottom: 10px; padding: 20px 10px 15px; background: #fff; border: 1px solid #c4a661; border-radius: 8px; position: relative;">
+                            <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #fdfbf7; padding: 0 10px; color: #c4a661; font-weight: bold; font-family: 'Noto Serif TC', serif; font-size: 0.9rem;">奇門盤局</div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: stretch; margin-top: 10px;">
+                                <div style="flex: 1 1 200px; min-width: 30%;">
+                                    ${infoBoxHtml}
+                                </div>
+                                <div style="flex: 2 1 350px; min-width: 60%;">
+                                    <div class="qimen-grid" style="pointer-events: none; border-color: #c4a661 !important; background-color: #f4f0e6 !important; height: 100%;">
+                                        ${gridHtml}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+
+                    finalReportHtml = `
+                    <div class="destiny-report-wrapper" style="background-color: #fdfbf7; color: #2b2b2b; font-family: 'Noto Sans TC', sans-serif; padding: 20px 10px; border-radius: 12px; position: relative; overflow: hidden; box-shadow: inset 0 0 0 1px #e5dfd3, inset 0 0 0 6px #fdfbf7, inset 0 0 0 7px #e5dfd3;">
+                        ${destinyStyle}
+                        ${coverHtml}
+                        <div id="aiInterpretationText">${formattedBody}</div>
+                        <footer style="margin-top: 50px; text-align: center;"><div style="width: 64px; height: 1px; background-color: #c4a661; margin: 0 auto 16px;"></div><p style="font-size: 0.7rem; color: #9ca3af; letter-spacing: 0.1em; text-transform: uppercase;">Destiny Analysis Report</p></footer>
+                    </div>`;
+                } else {
+                    let visualBoardHtml = `<div class="report-board-section" style="padding: 12px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;"><h3 style="color:#1e3a8a; font-size: 1rem; font-weight: 900; margin-bottom: 12px; text-align: center; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px;">【 盤局參數與九宮圖 】</h3><div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: stretch;"><div style="flex: 1 1 200px; min-width: 30%;">${infoBoxHtml}</div><div style="flex: 2 1 350px; min-width: 60%;"><div class="qimen-grid" style="pointer-events: none; height: 100%;">${gridHtml}</div></div></div></div>`;
+                    let headerHtml = `<div style="border-bottom:2px solid #cbd5e1; padding-bottom:12px; margin-bottom:12px;"><h1 style="color:#1e3a8a; margin-bottom:10px; text-align:center; font-size: 1.4rem;">${req.main_title}</h1><div style="display:flex; gap:12px; text-align:left;"><div style="flex:1; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:12px;"><b>主題：</b>${req.category}<br><b>求測：</b>${sName}<br><b>時間：</b>${req.time}${qHtml}</div><div style="flex:1; background:#fffbeb; padding:10px; border-radius:8px; border:1px solid #fde68a; font-size:13px; color:#78350f;"><b style="color:#b45309; display:block; margin-bottom:4px;">斷語金句</b>${goldenText}</div></div></div>`;
+                    finalReportHtml = `<div class="pdf-cover-page">${headerHtml}${visualBoardHtml}</div><div id="aiInterpretationText">${formattedBody}</div>`;
+                }
+                document.getElementById('masterContent').innerHTML = beautifyQimenText(finalReportHtml);
+            }
+            document.getElementById('resultActions').classList.remove('hidden');
+            await fetch('/api/v1/history/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:t,category:req.category,record_time:req.time,report_text: document.getElementById('masterContent').innerHTML})});
+            fetchUserInfo(); fetchHistoryAndSync();
+        } catch(e) { 
+            showToast("連線或推演異常，請重試", true); 
+        } finally {
+            hideLoading();
+        }
+    }, 1000);
+}
+
+// ==========================================
+// 🔗 8. 分享、匯出與 PDF 功能
+// ==========================================
+async function sharePrediction() {
+    const igContainer = document.getElementById('igCardContainer');
+    const titleEl = document.getElementById('igCardTitle'); const contentEl = document.getElementById('igCardContent'); const btn = document.getElementById('igBtn');
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 準備分享...'; btn.disabled = true; titleEl.innerText = `主題 : ${currentReportTitle}`;
+    
+    const rawHTML = document.getElementById('masterContent').innerHTML; const tempDiv = document.createElement("div"); tempDiv.innerHTML = rawHTML;
+    let goldenSentence = "大吉，吉星高照，凡事順遂。"; 
+    const headers = Array.from(tempDiv.querySelectorAll('h1, h2, h3, h4, h5')); const targetHeader = headers.find(h => h.innerText.includes('斷語'));
+    if (targetHeader && targetHeader.nextElementSibling) { goldenSentence = targetHeader.nextElementSibling.innerText; } else { let blockquotes = tempDiv.getElementsByTagName('blockquote'); if (blockquotes.length > 0) goldenSentence = blockquotes[0].innerText; }
+    goldenSentence = goldenSentence.replace(/[\n\r]/g, ' ').replace(/（.*?）/g, '').replace(/\(.*?\)/g, '').replace('斷語金句：', '').trim();
+    if (goldenSentence.length > 35) goldenSentence = goldenSentence.substring(0, 35) + "...";
+    contentEl.innerText = `測文 : ${goldenSentence}`; window.currentShareText = `【奇門大師推演】\n主題：${currentReportTitle}\n測文：${goldenSentence}\n\n👉 立即推演你的專屬運勢：${window.location.href}`;
+    try {
+        const canvas = await html2canvas(igContainer, { scale: 1.5, useCORS: true, backgroundColor: null });
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        canvas.toBlob(async (blob) => {
+            const file = new File([blob], 'qimen_share.jpg', { type: 'image/jpeg' }); const isInAppBrowser = /MicroMessenger|Line|FBAN|FBAV/i.test(navigator.userAgent);
+            if (!isInAppBrowser && navigator.share && navigator.canShare({ files: [file] })) {
+                try { await navigator.share({ title: '奇門推演', files: [file] }); btn.innerHTML = '<i class="fa-solid fa-share-nodes"></i> 分享預測'; btn.disabled = false; } catch (err) { openShareFallbackModal(dataUrl); btn.innerHTML = '<i class="fa-solid fa-share-nodes"></i> 分享預測'; btn.disabled = false; }
+            } else { openShareFallbackModal(dataUrl); btn.innerHTML = '<i class="fa-solid fa-share-nodes"></i> 分享預測'; btn.disabled = false; }
+        }, 'image/jpeg', 0.95);
+    } catch (err) { showToast("分享失敗，請稍後再試", true); btn.innerHTML = '<i class="fa-solid fa-share-nodes"></i> 分享預測'; btn.disabled = false; }
+}
+
+function shareToApp(app) { triggerVibration(); copyShareText(); if (app === 'ig') { showToast("已為您複製測文！正在前往 IG...", false); setTimeout(() => window.open('https://www.instagram.com/', '_blank'), 1500); } else if (app === 'wechat') { showToast("已複製測文！請開啟 WeChat 貼上分享。", false); } }
+function openShareFallbackModal(dataUrl) { document.getElementById('shareImagePreview').src = dataUrl; document.getElementById('downloadShareBtn').href = dataUrl; const url = encodeURIComponent(window.location.href); const text = encodeURIComponent(window.currentShareText); document.getElementById('shareLineBtn').href = `https://social-plugins.line.me/lineit/share?url=${url}&text=${text}`; document.getElementById('shareFbBtn').href = `https://www.facebook.com/sharer/sharer.php?u=${url}`; document.getElementById('shareXBtn').href = `https://twitter.com/intent/tweet?text=${text}&url=${url}`; document.getElementById('shareThreadsBtn').href = `https://threads.net/intent/post?text=${text}&url=${url}`; document.getElementById('shareFallbackModal').classList.remove('hidden'); }
+function closeShareModal() { document.getElementById('shareFallbackModal').classList.add('hidden'); }
+function copyShareText() { navigator.clipboard.writeText(window.currentShareText).then(() => showToast("已複製測文！")); }
+
+function downloadPDF() { 
+    const e = document.getElementById('masterResultBox'); const btn1 = document.getElementById('pdfBtn'); const btn2 = document.getElementById('igBtn'); const actions = document.getElementById('resultActions');
+    if (btn1) { btn1.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...'; btn1.disabled = true; }
+    if (btn2) btn2.style.display = 'none'; if (actions) actions.style.display = 'none'; 
+    e.classList.add('report-print-mode');
+    html2pdf().set({ margin: [15, 10, 15, 10], filename: '奇門大師_鑑定報告.pdf', image: { type: 'jpeg', quality: 1.0 }, html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: 'css' } }).from(e).save().then(() => { 
+        if(btn1) { btn1.innerHTML = '<i class="fa-solid fa-file-pdf"></i> 儲存為 PDF'; btn1.disabled = false; }
+        if(btn2) btn2.style.display = 'flex'; if(actions) actions.style.display = 'flex'; e.classList.remove('report-print-mode');
+    });
+}
+
+// ==========================================
+// 🛒 9. 商城、排版與語音播報
+// ==========================================
+async function buyProduct(planType) {
+    const token = localStorage.getItem('qimen_token');
+    if (!token) { showToast("請先登入大師系統喔！", true); return; }
+    showToast("開啟專屬結帳通道中...");
+    try {
+        const response = await fetch('/api/v1/payment/create-checkout-session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: token, plan: planType }) });
+        const data = await response.json();
+        if (data.status === 'success' && data.url) { window.location.href = data.url; } else { showToast("通道開啟失敗：" + (data.message || "未知錯誤"), true); }
+    } catch (error) { showToast("磁場連線異常，請稍後再試。", true); }
+}
+
+function openTopupModal() { document.getElementById('topupModal').classList.remove('hidden'); }
+function closeTopupModal() { document.getElementById('topupModal').classList.add('hidden'); }
+function openFreeDailyModal() { document.getElementById('freeDailyDate').innerText = document.getElementById('displayTimeText').innerText; document.getElementById('freeDailyModal').classList.remove('hidden'); }
+function closeFreeDailyModal() { document.getElementById('freeDailyModal').classList.add('hidden'); }
+function openDestinyModal() { 
+    document.getElementById('destinyModal').classList.remove('hidden'); 
+    const dDateInput = document.getElementById('d_date');
+    const dTimeSelect = document.getElementById('d_time_select');
+    if (dDateInput && !dDateInput.value) { 
+        const now = new Date(); 
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        dDateInput.value = `${year}-${month}-${day}`;
+        if (dTimeSelect) {
+            const hour = now.getHours();
+            let targetHour = 0;
+            if (hour === 23) { targetHour = 0; } 
+            else {
+                targetHour = Math.floor((hour + 1) / 2) * 2;
+                if (targetHour >= 24) targetHour = 0;
+            }
+            dTimeSelect.value = String(targetHour).padStart(2, '0') + ":00";
+            const unknownBox = document.getElementById('d_unknown_box');
+            if (unknownBox) unknownBox.style.display = 'none';
+        }
+    } 
+}
+function closeDestinyModal() { document.getElementById('destinyModal').classList.add('hidden'); }
+function beautifyQimenText(rawText) {
+    if (!rawText) return ""; let htmlText = rawText;
+    htmlText = htmlText.replace(/木/g, '<span style="color:#15803d;" class="font-bold text-lg mx-0.5">木</span>'); htmlText = htmlText.replace(/火/g, '<span style="color:#dc2626;" class="font-bold text-lg mx-0.5">火</span>'); htmlText = htmlText.replace(/土/g, '<span style="color:#8b4513;" class="font-bold text-lg mx-0.5">土</span>'); htmlText = htmlText.replace(/金/g, '<span style="color:#d97706;" class="font-bold text-lg mx-0.5">金</span>'); htmlText = htmlText.replace(/水/g, '<span style="color:#2563eb;" class="font-bold text-lg mx-0.5">水</span>');
+    htmlText = htmlText.replace(/(大吉|吉|順利|貴人)/g, '<span style="color: #b91c1c; background-color: #fee2e2; border: 1px solid #fca5a5; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.95em;">$&</span>'); htmlText = htmlText.replace(/(大凶|凶|阻礙|小人)/g, '<span style="color: #334155; background-color: #f1f5f9; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.95em;">$&</span>');
+    return htmlText;
+}
+
+let isSpeaking = false; let masterUtterance = null;
+setTimeout(() => { const savedLang = localStorage.getItem('qimen_voice_lang'); if (savedLang && document.getElementById('voiceLang')) { document.getElementById('voiceLang').value = savedLang; } }, 500);
+function saveVoiceLang() { const lang = document.getElementById('voiceLang').value; localStorage.setItem('qimen_voice_lang', lang); if (isSpeaking) toggleVoice(); }
+
+function toggleVoice() {
+    if (!('speechSynthesis' in window)) { showToast("您的瀏覽器不支援語音播報功能", true); return; }
+    const btn = document.getElementById('voiceBtn'); const group = document.getElementById('voiceBtnGroup'); const langSelect = document.getElementById('voiceLang');
+    if (isSpeaking) { window.speechSynthesis.cancel(); isSpeaking = false; btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> 語音播報'; group.classList.remove('animate-pulse', 'bg-indigo-700'); group.classList.add('bg-indigo-500'); return; }
+    let aiTextContainer = document.getElementById('aiInterpretationText'); let textToRead = aiTextContainer ? aiTextContainer.innerText : document.getElementById('masterContent').innerText;
+    if (!textToRead) return; textToRead = textToRead.replace(/推演報告生成中.../g, '');
+    masterUtterance = new SpeechSynthesisUtterance(textToRead); masterUtterance.lang = langSelect.value; masterUtterance.rate = 0.95; masterUtterance.pitch = 1.0;
+    const voices = window.speechSynthesis.getVoices();
+    if (langSelect.value === 'zh-HK') { const hkVoice = voices.find(v => v.lang === 'zh-HK' || v.lang === 'yue-HK'); if (hkVoice) masterUtterance.voice = hkVoice; } else { const twVoice = voices.find(v => v.lang === 'zh-TW' || v.lang === 'zh-CN'); if (twVoice) masterUtterance.voice = twVoice; }
+    masterUtterance.onend = function() { isSpeaking = false; if (btn) { btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> 語音播報'; group.classList.remove('animate-pulse', 'bg-indigo-700'); group.classList.add('bg-indigo-500'); } };
+    if (voices.length === 0) { window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.speak(masterUtterance); } else { window.speechSynthesis.speak(masterUtterance); }
+    isSpeaking = true; btn.innerHTML = '<i class="fa-solid fa-stop"></i> 停止播報'; group.classList.add('animate-pulse', 'bg-indigo-700'); group.classList.remove('bg-indigo-500');
+}
+
+// ==========================================
+// 🚑 大師修補包：歷史紀錄與視圖隔離路由
+// ==========================================
+
+// 1. 視圖隔離路由：將報告區塊精準搬移到當前分頁
+window.moveResultBoxTo = function(targetViewId) {
+    const box = document.getElementById('masterResultBoxContainer');
+    const targetView = document.getElementById(targetViewId);
+    if (box && targetView) {
+        targetView.appendChild(box); 
+    }
+};
+
+// 2. 查看歷史紀錄詳情 (包含秒開、讀取轉圈與平滑滾動)
+window.viewHistoryDetail = async function(id) {
+    const t = localStorage.getItem('qimen_token');
+    if (!t) { openAuthModal(); return; }
+    
+    showLoading("讀取過往卷宗...");
+    try {
+        const res = await fetch('/api/v1/history/detail', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: t, record_id: id })
+        });
+        const d = await res.json();
+        
+        if (d.status === 'success') {
+            const r = d.data;
+            document.getElementById('masterContent').innerHTML = r.report_text || "<div class='text-center py-10 text-slate-400'>無法解析紀錄內容</div>";
+            document.getElementById('masterResultBoxContainer').classList.remove('hidden');
+            document.getElementById('resultActions').classList.remove('hidden');
+            
+            if (r.category && r.category.startsWith('「命盤」')) {
+                switchView('view-destiny', document.querySelectorAll('.tab-btn')[2]);
+                if(window.moveResultBoxTo) window.moveResultBoxTo('view-destiny');
+            } else {
+                switchView('view-report', document.querySelectorAll('.tab-btn')[1]);
+                if(window.moveResultBoxTo) window.moveResultBoxTo('view-report');
+            }
+            
+            setTimeout(() => {
+                document.getElementById('masterResultBoxContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300);
+        } else {
+            showToast("無法讀取紀錄，可能已被刪除", true);
+        }
+    } catch (e) {
+        showToast("伺服器連線異常", true);
+    } finally {
+        hideLoading();
+    }
+};
+
+// 3. 緊急救災喚醒腳本：確保載入遮罩絕對會消失
+window.forceWakeUp = function() {
+    hideLoading();
+    const initialLoading = document.getElementById('initialLoading');
+    if (initialLoading) initialLoading.classList.add('hidden');
+    
+    const timeEl = document.getElementById('timeInput');
+    if (timeEl && !timeEl.value) { initTime(); }
+};
+window.addEventListener('load', forceWakeUp);
+
+// ==========================================
+// 🧭 免費運勢：四宮格與出行訣切換邏輯
+// ==========================================
+window.showFdDetail = function(title, dir, encodedDesc) {
+    document.getElementById('fdDetailTitle').innerText = title;
+    document.getElementById('fdDetailDir').innerText = dir;
+    
+    document.getElementById('fdDetailText').innerHTML = decodeURIComponent(encodedDesc);
+    
+    document.getElementById('fdGrid').classList.add('hidden');
+    document.getElementById('fdDetail').classList.remove('hidden');
+    document.getElementById('fdDetail').style.display = 'flex';
+};
+
+window.closeFreeDailyModal = function() { 
+    document.getElementById('freeDailyModal').classList.add('hidden'); 
+    const fdGrid = document.getElementById('fdGrid');
+    const fdDetail = document.getElementById('fdDetail');
+    if (fdGrid && fdDetail) {
+        fdGrid.classList.remove('hidden');
+        fdDetail.classList.add('hidden');
+        fdDetail.style.display = 'none';
+    }
+};
+    
+</script> </body>
+</html>

@@ -1,0 +1,12 @@
+API key details
+API Key
+AIzaSyCJlOnY6eOEsruj3jzFnZABt1ME2LEV6EY
+Name
+Gemini API Key
+Project name
+projects/642352109437
+Project number
+642352109437
+
+deepseed
+sk-d1af3833cc3d4c67aae6766ee3d77ddd
