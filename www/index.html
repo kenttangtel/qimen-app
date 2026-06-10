@@ -888,7 +888,8 @@ async function fetchData(keepMasterBox = false, isSilent = false) {
     if (!isSilent) showLoading("排盤中...");
 
     try {
-        const response = await fetch('/api/v1/divination/calculate', { 
+        // 修改後的第 891 行如下：
+const response = await fetch('https://kenttangtel-qimen-api.hf.space/api/v1/divination/calculate', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, 
             body: JSON.stringify({ time: rawTime.replace('T', ' ') }) 
         });

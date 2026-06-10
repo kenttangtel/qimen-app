@@ -3,5 +3,8 @@ uvicorn
 pydantic
 lunar-python
 openai
+bcrypt<4.0.0
 psycopg2-binary
 stripe
+SQLAlchemy
+python-jose[cryptography]

@@ -3,3 +3,4 @@ android/
 dist/
 .DS_Store
 package-lock.json
+.env
