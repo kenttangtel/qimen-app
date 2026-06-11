@@ -45,17 +45,22 @@ def _get_plan(price_id: str):
 
 
 @router.post("/api/v1/payment/create-checkout-session")
-async def create_checkout_session(price_id: str, user: User = Depends(get_current_user)):
+async def create_checkout_session(
+    price_id: str,
+    request: Request,
+    user: User = Depends(get_current_user),
+):
     plan = _get_plan(price_id)
     if not plan:
         raise HTTPException(status_code=400, detail="Invalid price_id")
 
     try:
+        base_url = str(request.base_url)
         session = stripe.checkout.Session.create(
             mode=plan["mode"],
             line_items=[{"price": price_id, "quantity": 1}],
-            success_url="https://kenttangtel-qimen-api.hf.space/?payment=success",
-            cancel_url="https://kenttangtel-qimen-api.hf.space/?payment=cancel",
+            success_url=f"{base_url}?payment=success",
+            cancel_url=f"{base_url}?payment=cancel",
             client_reference_id=user.id,
             metadata={"price_id": price_id},
         )
