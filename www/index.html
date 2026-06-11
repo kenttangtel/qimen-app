@@ -212,7 +212,7 @@
                 </button>
                 
                 <div class="w-1/2 relative">
-                   <button class="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95 transition pointer-events-none">
+                   <button onclick="triggerVibration(); const picker = document.getElementById('timeInput'); if (picker.showPicker) { picker.showPicker(); } else { picker.click(); }" class="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95 transition">
                       <i class="fa-regular fa-calendar-days"></i> 自選日期
                    </button>
                    <input type="datetime-local" id="timeInput" class="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="handleTimeChange()">
