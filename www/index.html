@@ -801,16 +801,20 @@ async function handleAuth() {
     if (isRegister && p !== p_confirm) { showToast("兩次密碼輸入不一致", true); resetSubmitButton(); return; }
 
     const endpoint = isRegister ? '/api/v1/auth/register' : '/api/v1/auth/login';
-    const headers = isRegister
-        ? { 'Content-Type': 'application/json' }
-        : { 'Content-Type': 'application/x-www-form-urlencoded' };
-    const body = isRegister
-        ? JSON.stringify({ username: u, password: p, email })
-        : new URLSearchParams({ username: u, password: p });
+    const registerPayload = JSON.stringify({ username: u, password: p, email });
 
+    let res;
     let userAlerted = false;
     try {
-        const res = await fetch(endpoint, { method: 'POST', headers, body });
+        if (isRegister) {
+            res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: registerPayload });
+        } else {
+            res = await fetch('/api/v1/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ username: u, password: p })
+            });
+        }
         let data = {};
         try { data = await res.json(); } catch (parseErr) { data = {}; }
 
@@ -856,33 +860,39 @@ async function fetchUserInfo() {
     const t = localStorage.getItem('qimen_token');
     if (!t) return;
     try {
-        const res = await fetch('/api/v1/user/info', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: t })
+        const res = await fetch('/api/v1/auth/me', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${t}`
+            }
         });
-        const d = await res.json();
-        if (d.status === 'success') {
-            const creditsEl = document.getElementById('headerCredits');
-            const creditsVal = document.getElementById('userCredits');
-            const profileCredits = document.getElementById('profileCreditsView');
-            if (creditsEl) creditsEl.style.display = 'flex';
-            if (creditsVal) creditsVal.innerText = d.credits;
-            if (profileCredits) profileCredits.innerText = d.credits;
-            
-            const pGuest = document.getElementById('profileGuest');
-            const pUser = document.getElementById('profileUser');
-            if (pGuest) pGuest.style.display = 'none';
-            if (pUser) pUser.style.display = 'flex';
-            
-            const pName = document.getElementById('profileUsername');
-            if (pName) pName.innerText = d.username;
-            window.isVipUser = d.is_vip;
-
-            if (typeof fetchHistoryAndSync === 'function') fetchHistoryAndSync(true); 
-
-        } else {
+        if (!res.ok) {
             localStorage.removeItem('qimen_token');
+            return;
         }
-    } catch (e) { console.error("UserInfo 抓取失敗"); }
+        const d = await res.json();
+        const creditsEl = document.getElementById('headerCredits');
+        const creditsVal = document.getElementById('userCredits');
+        const profileCredits = document.getElementById('profileCreditsView');
+        if (creditsEl) creditsEl.style.display = 'flex';
+        if (creditsVal) creditsVal.innerText = d.credits;
+        if (profileCredits) profileCredits.innerText = d.credits;
+
+        const pGuest = document.getElementById('profileGuest');
+        const pUser = document.getElementById('profileUser');
+        if (pGuest) pGuest.style.display = 'none';
+        if (pUser) pUser.style.display = 'flex';
+
+        const pName = document.getElementById('profileUsername');
+        if (pName) pName.innerText = d.username;
+        window.isVipUser = d.is_vip;
+
+        if (typeof fetchHistoryAndSync === 'function') fetchHistoryAndSync(true);
+    } catch (e) {
+        console.error('UserInfo 抓取失敗');
+        localStorage.removeItem('qimen_token');
+    }
 }
 
 function logout() {

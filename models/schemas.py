@@ -75,6 +75,18 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class UserResponse(BaseModel):
+    id: str
+    username: str
+    email: Optional[str] = None
+    credits: int = 0
+    membership_type: str = "free"
+    subscription_status: str = "inactive"
+    gender: Optional[str] = None
+    bazi_birth_time: Optional[str] = None
+    is_vip: bool = False
+
+
 class HistoryCreate(BaseModel):
     category: str
     record_time: str

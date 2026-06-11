@@ -9,7 +9,7 @@ import traceback
 from sqlalchemy.exc import IntegrityError
 
 from models.db import get_db, User
-from models.schemas import AuthRequest, TokenResponse
+from models.schemas import AuthRequest, TokenResponse, UserResponse
 
 router = APIRouter()
 security = HTTPBearer()
@@ -82,3 +82,18 @@ async def login(request: AuthRequest, db=Depends(get_db)):
     except Exception as exc:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail="Unable to login")
+
+
+@router.get("/api/v1/auth/me", response_model=UserResponse)
+def read_current_user(user: User = Depends(get_current_user)):
+    return UserResponse(
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        credits=user.credits,
+        membership_type=user.membership_type,
+        subscription_status=user.subscription_status,
+        gender=user.gender,
+        bazi_birth_time=user.bazi_birth_time,
+        is_vip=user.membership_type in {"monthly", "lifetime"}
+    )
