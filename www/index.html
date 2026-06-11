@@ -792,56 +792,51 @@ async function handleAuth() {
     const u = document.getElementById('auth_user').value;
     const p = document.getElementById('auth_pass').value;
     const authTitle = document.getElementById('authTitle').innerText;
-    
     const isRegister = (authTitle === '加入會員');
     const email = isRegister ? document.getElementById('reg_email').value : null;
-    const p_confirm = isRegister ? document.getElementById('reg_pass_confirm').value : null; // 👈 獲取確認密碼
+    const p_confirm = isRegister ? document.getElementById('reg_pass_confirm').value : null;
 
     if (!u || !p) { showToast("請填寫帳號與密碼", true); resetSubmitButton(); return; }
     if (isRegister && !email) { showToast("註冊請填寫 Email", true); resetSubmitButton(); return; }
-    
-    // 🛡️ 檢查兩次密碼是否一致
-    if (isRegister && p !== p_confirm) { 
-        showToast("兩次密碼輸入不一致", true); 
-        resetSubmitButton();
-        return; 
-    }
+    if (isRegister && p !== p_confirm) { showToast("兩次密碼輸入不一致", true); resetSubmitButton(); return; }
 
     const endpoint = isRegister ? '/api/v1/auth/register' : '/api/v1/auth/login';
-    const payload = { username: u, password: p };
-    if (isRegister) payload.email = email;
+    const headers = isRegister
+        ? { 'Content-Type': 'application/json' }
+        : { 'Content-Type': 'application/x-www-form-urlencoded' };
+    const body = isRegister
+        ? JSON.stringify({ username: u, password: p, email })
+        : new URLSearchParams({ username: u, password: p });
 
+    let userAlerted = false;
     try {
-        const res = await fetch(endpoint, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        const data = await res.json();
+        const res = await fetch(endpoint, { method: 'POST', headers, body });
+        let data = {};
+        try { data = await res.json(); } catch (parseErr) { data = {}; }
 
-        if (data.status === 'success') {
-            if (isRegister) {
-                // 🎉 註冊成功後的完美體驗
-                showToast("註冊成功！請登入");
-                document.getElementById('auth_pass').value = ''; // 清空密碼，確保安全
-                document.getElementById('reg_pass_confirm').value = '';
-                toggleAuthMode(); // 👈 直接切換回登入畫面 (解決圖2的問題)
+        if (!res.ok) {
+            const detail = data.detail || data.error || data.message || `伺服器錯誤 (${res.status})`;
+            if (res.status >= 400 && res.status < 500) {
+                alert(detail);
+                userAlerted = true;
             } else {
-                // 🔑 登入成功邏輯
-                localStorage.setItem('qimen_token', data.token);
-                showToast("歡迎回來！");
-                closeAuthModal();
-                fetchUserInfo(); 
+                showToast(detail, true);
             }
-        } else {
-            showToast(data.message || "認證失敗", true);
+            throw new Error(detail);
         }
-    } catch (e) { 
-        showToast("伺服器連線失敗", true);
+
+        const token = data.access_token || data.token;
+        if (!token) {
+            throw new Error('伺服器回傳缺少 token');
+        }
+
+        localStorage.setItem('qimen_token', token);
+        closeAuthModal();
+        window.location.reload();
+    } catch (e) {
+        if (!userAlerted) showToast(e.message || '認證失敗', true);
     } finally {
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = submitBtn.dataset.originalText || '確認送出';
-        }
+        resetSubmitButton();
     }
 }
 
