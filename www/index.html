@@ -560,7 +560,7 @@
                 </div>
             </div>
 
-            <button onclick="handleAuth()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black py-4 rounded-xl shadow-lg shadow-purple-500/30 hover:scale-[1.02] active:scale-95 transition-all mb-6">確認送出</button>
+            <button id="authSubmitBtn" onclick="handleAuth()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black py-4 rounded-xl shadow-lg shadow-purple-500/30 hover:scale-[1.02] active:scale-95 transition-all mb-6">確認送出</button>
             
             <p class="text-center text-sm text-slate-500 font-bold">
                 <span id="authSwitchText">還沒有帳號嗎？</span>
@@ -770,10 +770,25 @@ function toggleAuthMode() {
     }
 }
 
+function resetSubmitButton() {
+    const submitBtn = document.getElementById('authSubmitBtn');
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = submitBtn.dataset.originalText || '確認送出';
+    }
+}
+
 // ==========================================
 // 🚀 更新：處理登入與註冊邏輯
 // ==========================================
 async function handleAuth() {
+    const submitBtn = document.getElementById('authSubmitBtn');
+    if (submitBtn) {
+        submitBtn.dataset.originalText = submitBtn.dataset.originalText || submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...';
+    }
+
     const u = document.getElementById('auth_user').value;
     const p = document.getElementById('auth_pass').value;
     const authTitle = document.getElementById('authTitle').innerText;
@@ -782,12 +797,13 @@ async function handleAuth() {
     const email = isRegister ? document.getElementById('reg_email').value : null;
     const p_confirm = isRegister ? document.getElementById('reg_pass_confirm').value : null; // 👈 獲取確認密碼
 
-    if (!u || !p) { showToast("請填寫帳號與密碼", true); return; }
-    if (isRegister && !email) { showToast("註冊請填寫 Email", true); return; }
+    if (!u || !p) { showToast("請填寫帳號與密碼", true); resetSubmitButton(); return; }
+    if (isRegister && !email) { showToast("註冊請填寫 Email", true); resetSubmitButton(); return; }
     
     // 🛡️ 檢查兩次密碼是否一致
     if (isRegister && p !== p_confirm) { 
         showToast("兩次密碼輸入不一致", true); 
+        resetSubmitButton();
         return; 
     }
 
@@ -821,6 +837,11 @@ async function handleAuth() {
         }
     } catch (e) { 
         showToast("伺服器連線失敗", true);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = submitBtn.dataset.originalText || '確認送出';
+        }
     }
 }
 
