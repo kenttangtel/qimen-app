@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Body
 import stripe
 
 from config import (
@@ -59,7 +59,7 @@ def _get_plan(price_id: str):
 
 @router.post("/api/v1/payment/create-checkout-session")
 async def create_checkout_session(
-    plan: str,
+    plan: str = Body(...),
     request: Request,
     user: User = Depends(get_current_user),
 ):
