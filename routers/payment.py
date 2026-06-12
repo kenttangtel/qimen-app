@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Body
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel
 import stripe
 
 from config import (
@@ -57,13 +58,19 @@ def _get_plan(price_id: str):
     return STRIPE_PRICE_PLAN_MAP.get(price_id)
 
 
+class CheckoutRequest(BaseModel):
+    plan: str
+    token: str | None = None
+
+
 @router.post("/api/v1/payment/create-checkout-session")
 async def create_checkout_session(
-    plan: str = Body(...),
+    request_data: CheckoutRequest,
     request: Request,
     user: User = Depends(get_current_user),
 ):
-    price_id = PLAN_CODE_TO_PRICE_ID.get(plan)
+    plan_code = request_data.plan
+    price_id = PLAN_CODE_TO_PRICE_ID.get(plan_code)
     if not price_id:
         raise HTTPException(status_code=400, detail="無效的付費方案代號")
 
