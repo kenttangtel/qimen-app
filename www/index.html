@@ -1453,7 +1453,14 @@ async function buyProduct(planType) {
     if (!token) { showToast("請先登入大師系統喔！", true); return; }
     showToast("開啟專屬結帳通道中...");
     try {
-        const response = await fetch('/api/v1/payment/create-checkout-session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: token, plan: planType }) });
+        const response = await fetch('/api/v1/payment/create-checkout-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ token: token, plan: planType })
+        });
         const data = await response.json();
         if (data.status === 'success' && data.url) { window.location.href = data.url; } else { showToast("通道開啟失敗：" + (data.message || "未知錯誤"), true); }
     } catch (error) { showToast("磁場連線異常，請稍後再試。", true); }
