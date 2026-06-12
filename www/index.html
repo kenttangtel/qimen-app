@@ -211,12 +211,14 @@
                     <i class="fa-solid fa-bolt"></i> 立即排盤
                 </button>
                 
-                <div class="w-1/2 relative">
-                <button onclick="triggerVibration();" class="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95 transition">
-                      <i class="fa-regular fa-calendar-days"></i> 自選日期
-                   </button>
-                    <input type="datetime-local" id="timeInput" class="absolute top-0 left-0 w-full h-full opacity-0 z-10 cursor-pointer" onchange="handleTimeChange()">
-               </div>
+                <div class="w-1/2 relative overflow-hidden rounded-xl">
+                    <!-- 這是視覺上的假按鈕 (移除了 onclick) -->
+                    <div class="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-600 shadow-sm transition">
+                        <i class="fa-regular fa-calendar-days"></i> 自選日期
+                    </div>
+                    <!-- 這是真正接收點擊的透明 input (加上 cursor-pointer，覆蓋整個區域) -->
+                    <input type="datetime-local" id="timeInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="handleTimeChange()" onclick="triggerVibration();">
+                </div>
           </div>
           
         <div id="initialLoading" class="text-center py-10 text-slate-400 hidden">
@@ -801,20 +803,21 @@ async function handleAuth() {
         if (isRegister) {
             res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: registerPayload });
         } else {
+            // 登入改回使用 JSON 格式發送
             res = await fetch(endpoint, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ username: u, password: p })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p })
             });
         }
         let data = {};
         try { data = await res.json(); } catch (parseErr) { data = {}; }
 
         if (!res.ok) {
-            const detail = data.detail || data.error || data.message || `伺服器錯誤 (${res.status})`;
-            const readableDetail = typeof detail === 'object' ? JSON.stringify(detail) : detail;
-            showToast(readableDetail, true);
-            throw new Error(readableDetail);
+            let detail = data.detail || data.error || data.message || `伺服器錯誤 (${res.status})`;
+            if (typeof detail === 'object') detail = JSON.stringify(detail);
+            showToast(detail, true);
+            throw new Error(detail);
         }
 
         const token = data.access_token || data.token;
