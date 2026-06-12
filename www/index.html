@@ -212,10 +212,10 @@
                 </button>
                 
                 <div class="w-1/2 relative">
-                   <button onclick="triggerVibration(); const picker = document.getElementById('timeInput'); if (picker.showPicker) { picker.showPicker(); } else { picker.click(); }" class="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95 transition">
+                <button onclick="triggerVibration();" class="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95 transition">
                       <i class="fa-regular fa-calendar-days"></i> 自選日期
                    </button>
-                   <input type="datetime-local" id="timeInput" class="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="handleTimeChange()">
+                    <input type="datetime-local" id="timeInput" class="absolute top-0 left-0 w-full h-full opacity-0 z-10 cursor-pointer" onchange="handleTimeChange()">
                </div>
           </div>
           
@@ -651,15 +651,6 @@ function initTime() {
     }
 }
 
-function handleTimeChange() {
-    const i = document.getElementById('timeInput');
-    const dText = document.getElementById('displayTimeText');
-    if (i && dText && i.value) {
-        const d = new Date(i.value);
-        const pad = (n) => String(n).padStart(2,'0');
-        dText.innerText = `${d.getFullYear()}年${pad(d.getMonth()+1)}月${pad(d.getDate())}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    }
-}
 function calculateNow() { fetchData(false, false); }
 
 // ==========================================
@@ -802,6 +793,7 @@ async function handleAuth() {
 
     const endpoint = isRegister ? '/api/v1/auth/register' : '/api/v1/auth/login';
     const registerPayload = JSON.stringify({ username: u, password: p, email });
+    const loginPayload = JSON.stringify({ username: u, password: p });
 
     let res;
     let userAlerted = false;
@@ -809,7 +801,7 @@ async function handleAuth() {
         if (isRegister) {
             res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: registerPayload });
         } else {
-            res = await fetch('/api/v1/auth/login', {
+            res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ username: u, password: p })
@@ -820,13 +812,9 @@ async function handleAuth() {
 
         if (!res.ok) {
             const detail = data.detail || data.error || data.message || `伺服器錯誤 (${res.status})`;
-            if (res.status >= 400 && res.status < 500) {
-                alert(detail);
-                userAlerted = true;
-            } else {
-                showToast(detail, true);
-            }
-            throw new Error(detail);
+            const readableDetail = typeof detail === 'object' ? JSON.stringify(detail) : detail;
+            showToast(readableDetail, true);
+            throw new Error(readableDetail);
         }
 
         const token = data.access_token || data.token;
@@ -838,9 +826,9 @@ async function handleAuth() {
         closeAuthModal();
         window.location.reload();
     } catch (e) {
-        if (!userAlerted) showToast(e.message || '認證失敗', true);
+        showToast(e.message || '認證失敗', true);
     } finally {
-        resetSubmitButton();
+        resetSubmitButton(); // 確保按鈕一定會恢復，不會卡在處理中
     }
 }
 
