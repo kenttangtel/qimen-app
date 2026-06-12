@@ -40,24 +40,41 @@ if not STRIPE_PRICE_PLAN_MAP:
     raise RuntimeError("Stripe price IDs are not configured in the environment.")
 
 
+PLAN_CODE_TO_PRICE_ID = {
+    "vip_monthly": STRIPE_PRICE_VIP,
+    "vip_lifetime": STRIPE_PRICE_LIFETIME,
+    "topup_15": STRIPE_PRICE_15_CREDITS,
+    "topup_5": STRIPE_PRICE_5_CREDITS,
+}
+PLAN_CODE_TO_PRICE_ID = {
+    plan_code: price_id
+    for plan_code, price_id in PLAN_CODE_TO_PRICE_ID.items()
+    if price_id
+}
+
+
 def _get_plan(price_id: str):
     return STRIPE_PRICE_PLAN_MAP.get(price_id)
 
 
 @router.post("/api/v1/payment/create-checkout-session")
 async def create_checkout_session(
-    price_id: str,
+    plan: str,
     request: Request,
     user: User = Depends(get_current_user),
 ):
-    plan = _get_plan(price_id)
-    if not plan:
+    price_id = PLAN_CODE_TO_PRICE_ID.get(plan)
+    if not price_id:
+        raise HTTPException(status_code=400, detail="無效的付費方案代號")
+
+    plan_info = _get_plan(price_id)
+    if not plan_info:
         raise HTTPException(status_code=400, detail="Invalid price_id")
 
     try:
         base_url = str(request.base_url)
         session = stripe.checkout.Session.create(
-            mode=plan["mode"],
+            mode=plan_info["mode"],
             line_items=[{"price": price_id, "quantity": 1}],
             success_url=f"{base_url}?payment=success",
             cancel_url=f"{base_url}?payment=cancel",
