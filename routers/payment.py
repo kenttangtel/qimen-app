@@ -88,9 +88,9 @@ async def create_checkout_session(
             client_reference_id=user.id,
             metadata={"price_id": price_id},
         )
-        return {"url": session.url}
+        return {"status": "success", "url": session.url}
     except stripe.error.StripeError as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        return {"status": "error", "message": str(exc)}
 
 
 @router.post("/api/v1/payment/webhook")

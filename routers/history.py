@@ -48,12 +48,7 @@ async def create_history(
     )
 
 
-@router.get("/api/v1/history", response_model=list[HistoryResponse])
-async def list_history(
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
-):
-    entries = db.query(History).filter(History.user_id == user_id).order_by(History.created_at.desc()).all()
+def _build_history_response(entries: list[History]) -> list[HistoryResponse]:
     return [
         HistoryResponse(
             id=e.id,
@@ -65,3 +60,21 @@ async def list_history(
         )
         for e in entries
     ]
+
+
+@router.get("/api/v1/history", response_model=list[HistoryResponse])
+async def list_history(
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    entries = db.query(History).filter(History.user_id == user_id).order_by(History.created_at.desc()).all()
+    return _build_history_response(entries)
+
+
+@router.post("/api/v1/history/list", response_model=list[HistoryResponse])
+async def list_history_post(
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    entries = db.query(History).filter(History.user_id == user_id).order_by(History.created_at.desc()).all()
+    return _build_history_response(entries)
