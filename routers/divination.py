@@ -1,5 +1,6 @@
 from datetime import date, datetime
 import re
+import pytz
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -51,6 +52,11 @@ def build_matrix_response(request_time: str, user: User | None = None) -> Calcul
             status_code=400,
             detail="time must follow format YYYY-MM-DD HH:MM",
         ) from exc
+    hk_tz = pytz.timezone("Asia/Hong_Kong")
+    if dt.tzinfo is None:
+        dt = hk_tz.localize(dt)
+    else:
+        dt = dt.astimezone(hk_tz)
     solar = Solar.fromYmdHms(dt.year, dt.month, dt.day, dt.hour, dt.minute, 0)
     lunar = solar.getLunar()
     bazi = lunar.getEightChar()
@@ -192,17 +198,8 @@ def build_matrix_response(request_time: str, user: User | None = None) -> Calcul
 
 
 @router.post("/api/v1/divination/calculate", response_model=CalculationResponse)
-def get_current_user(request: CalculationRequest):
-    if not request.token:
-        return None
-    db = next(get_db())
-    return db.query(User).filter(User.id == request.token).first()
-
-def get_current_user(request: CalculationRequest):
-    if not request.token:
-        return None
-    db = next(get_db())
-    return db.query(User).filter(User.id == request.token).first()
+async def calculate_route(request: CalculationRequest) -> CalculationResponse:
+    return await calculate_matrix(request)
 
 
 async def calculate_matrix(request: CalculationRequest) -> CalculationResponse:
@@ -449,23 +446,28 @@ async def interpret_matrix(request: CalculationRequest):
 """
 
         async def generate():
-            stream = await client.chat.completions.create(
-                model="deepseek-chat",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "你是香港頂級奇門遁甲大師，語氣莊重專業、客觀權威。請務必全程使用「香港繁體中文的書面語」進行解答（符合香港人的閱讀習慣，避免內地網絡用語，但保持高級命理顧問的質感）。絕對禁止透露 AI 身份。",
-                    },
-                    {"role": "user", "content": prompt},
-                ],
-                temperature=0.7,
-                stream=True,
-            )
-            async for chunk in stream:
-                content = chunk.choices[0].delta.content
-                if content:
-                    yield clean_stream_content(content)
+            try:
+                stream = await client.chat.completions.create(
+                    model="deepseek-chat",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "你是香港頂級奇門遁甲大師，語氣莊重專業、客觀權威。請務必全程使用「香港繁體中文的書面語」進行解答（符合香港人的閱讀習慣，避免內地網絡用語，但保持高級命理顧問的質感）。絕對禁止透露 AI 身份。",
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                    temperature=0.7,
+                    stream=True,
+                )
+                async for chunk in stream:
+                    content = chunk.choices[0].delta.content
+                    if content:
+                        yield clean_stream_content(content)
+            except Exception as exc:
+                raise HTTPException(status_code=500, detail=f"AI 推演失敗: {str(exc)}")
 
         return StreamingResponse(generate(), media_type="text/event-stream")
+    except HTTPException:
+        raise
     except Exception as exc:
-        return StreamingResponse(iter([f"**❌ 磁場異常**：{str(exc)}"]), media_type="text/event-stream")
+        raise HTTPException(status_code=500, detail=f"AI 推演失敗: {str(exc)}")

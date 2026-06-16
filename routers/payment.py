@@ -10,7 +10,7 @@ from config import (
     STRIPE_PRICE_15_CREDITS,
     STRIPE_WEBHOOK_SECRET,
 )
-from models.db import get_db, User
+from models.db import SessionLocal, User
 from routers.auth import get_current_user
 
 router = APIRouter()
@@ -106,44 +106,50 @@ async def webhook(request: Request):
     except stripe.error.SignatureVerificationError:
         raise HTTPException(status_code=400, detail="Invalid signature")
 
-    db = next(get_db())
-    if event.type == "checkout.session.completed":
-        session = event.data.object
-        user = db.query(User).filter(User.id == session.client_reference_id).first()
-        if not user:
-            return {"status": "user_not_found"}
+    db = SessionLocal()
+    try:
+        if event.type == "checkout.session.completed":
+            session = event.data.object
+            user = db.query(User).filter(User.id == session.client_reference_id).first()
+            if not user:
+                return {"status": "error", "message": "user_not_found"}
 
-        if session.mode == "subscription":
-            user.stripe_customer_id = session.customer
-            user.stripe_subscription_id = session.subscription
-            user.subscription_status = "active"
-            user.membership_type = "monthly"
-        else:
-            price_id = session.metadata.get("price_id") if session.metadata else None
-            plan = _get_plan(price_id)
-            if not plan:
-                return {"status": "ignored"}
+            if session.mode == "subscription":
+                user.stripe_customer_id = session.customer
+                user.stripe_subscription_id = session.subscription
+                user.subscription_status = "active"
+                user.membership_type = "monthly"
+            else:
+                price_id = session.metadata.get("price_id") if session.metadata else None
+                plan = _get_plan(price_id)
+                if not plan:
+                    return {"status": "error", "message": "Unknown plan"}
 
-            if plan.get("membership_type"):
-                membership_type = plan["membership_type"]
-                user.membership_type = membership_type
-                user.subscription_status = (
-                    "lifetime" if membership_type == "lifetime" else membership_type
-                )
+                if plan.get("membership_type"):
+                    membership_type = plan["membership_type"]
+                    user.membership_type = membership_type
+                    user.subscription_status = (
+                        "lifetime" if membership_type == "lifetime" else membership_type
+                    )
 
-            if plan.get("credits"):
-                user.credits = (user.credits or 0) + plan["credits"]
-    elif event.type == "invoice.payment_succeeded":
-        subscription = event.data.object.subscription
-        user = db.query(User).filter(User.stripe_subscription_id == subscription).first()
-        if user:
-            user.subscription_status = "active"
-            user.membership_type = "monthly"
-    elif event.type in ("customer.subscription.deleted", "invoice.payment_failed"):
-        subscription = event.data.object.subscription
-        user = db.query(User).filter(User.stripe_subscription_id == subscription).first()
-        if user:
-            user.subscription_status = "past_due" if event.type == "invoice.payment_failed" else "inactive"
-            user.membership_type = "free"
-    db.commit()
-    return {"status": "success"}
+                if plan.get("credits"):
+                    user.credits = (user.credits or 0) + plan["credits"]
+        elif event.type == "invoice.payment_succeeded":
+            subscription = event.data.object.subscription
+            user = db.query(User).filter(User.stripe_subscription_id == subscription).first()
+            if user:
+                user.subscription_status = "active"
+                user.membership_type = "monthly"
+        elif event.type in ("customer.subscription.deleted", "invoice.payment_failed"):
+            subscription = event.data.object.subscription
+            user = db.query(User).filter(User.stripe_subscription_id == subscription).first()
+            if user:
+                user.subscription_status = "past_due" if event.type == "invoice.payment_failed" else "inactive"
+                user.membership_type = "free"
+        db.commit()
+        return {"status": "success"}
+    except Exception as exc:
+        db.rollback()
+        return {"status": "error", "message": str(exc)}
+    finally:
+        db.close()
