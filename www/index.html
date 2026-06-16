@@ -625,22 +625,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
     try { initTime(); } catch (e) { console.error(e); }
 
+    const onLoadCleanup = () => {
+        const initialLoading = document.getElementById('initialLoading');
+        if (initialLoading) initialLoading.classList.add('hidden');
+    };
+
     if (typeof fetchUserInfo === 'function') {
         fetchUserInfo().then(() => {
-            const initialLoading = document.getElementById('initialLoading');
-            if (initialLoading) initialLoading.classList.add('hidden');
-        if (typeof fetchUserInfo === 'function') {
-            fetchUserInfo(true);
-        }
-        if (new URLSearchParams(window.location.search).get('payment') === 'success') {
-            if (typeof fetchUserInfo === 'function') fetchUserInfo(true);
-        }
+            onLoadCleanup();
         }).catch(e => {
             console.error(e);
-            const initialLoading = document.getElementById('initialLoading');
-            if (initialLoading) initialLoading.classList.add('hidden');
-            if (typeof fetchData === 'function') fetchData(false, true);
+            onLoadCleanup();
         });
+    } else {
+        onLoadCleanup();
+    }
+
+    if (new URLSearchParams(window.location.search).get('payment') === 'success') {
+        setTimeout(() => {
+            showToast("付款成功！系統已為您補充能量。", false);
+            if (typeof fetchUserInfo === 'function') fetchUserInfo(true);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }, 1500);
     }
 });
 
@@ -1072,7 +1078,7 @@ async function fetchHistoryAndSync(isSilent = false) {
             document.getElementById('reportHistoryList').innerHTML = '<div class="text-center text-slate-400 py-10 text-sm font-bold"><i class="fa-solid fa-spinner fa-spin"></i> 載入中...</div>';
         }
         
-        const res = await fetch('/api/v1/history/list',{method:'POST',headers:{'Content-Type':'application/json','Authorization': `Bearer ${t}`} });
+        const res = await fetch('/api/v1/history/list',{method:'POST',headers: buildAuthorizedHeaders(t) });
         const d = await res.json();
         
         if(d.status==='success') {
@@ -1183,7 +1189,7 @@ window.deleteSelected = async function(type) {
     const t = localStorage.getItem('qimen_token'); let currentPid = localStorage.getItem('qimen_primary_id');
     for (let cb of selectedItems) {
         const id = cb.value;
-        await fetch('/api/v1/history/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: t, record_id: id }) });
+        await fetch('/api/v1/history/delete', { method: 'POST', headers: buildAuthorizedHeaders(t), body: JSON.stringify({ record_id: id }) });
         if (currentPid === id) localStorage.removeItem('qimen_primary_id');
     }
     showToast(`已成功刪除 ${selectedItems.length} 筆紀錄`); fetchHistoryAndSync();
@@ -1403,7 +1409,7 @@ async function executeInterpretation() {
                 document.getElementById('masterContent').innerHTML = beautifyQimenText(finalReportHtml);
             }
             document.getElementById('resultActions').classList.remove('hidden');
-            await fetch('/api/v1/history/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:t,category:req.category,record_time:req.time,report_text: document.getElementById('masterContent').innerHTML})});
+            await fetch('/api/v1/history/save',{method:'POST',headers:buildAuthorizedHeaders(t),body:JSON.stringify({category:req.category,record_time:req.time,report_text: document.getElementById('masterContent').innerHTML})});
             fetchUserInfo(); fetchHistoryAndSync();
         } catch(e) { 
             showToast("連線或推演異常，請重試", true); 
