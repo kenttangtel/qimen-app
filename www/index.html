@@ -629,7 +629,12 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchUserInfo().then(() => {
             const initialLoading = document.getElementById('initialLoading');
             if (initialLoading) initialLoading.classList.add('hidden');
-            if (typeof fetchData === 'function') fetchData(false, true);
+        if (typeof fetchUserInfo === 'function') {
+            fetchUserInfo(true);
+        }
+        if (new URLSearchParams(window.location.search).get('payment') === 'success') {
+            if (typeof fetchUserInfo === 'function') fetchUserInfo(true);
+        }
         }).catch(e => {
             console.error(e);
             const initialLoading = document.getElementById('initialLoading');
@@ -693,6 +698,12 @@ function hideLoading() {
         loader.classList.remove('opacity-100'); loader.classList.add('opacity-0');
         setTimeout(() => { loader.classList.add('hidden'); }, 300);
     }
+}
+
+function buildAuthorizedHeaders(token) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
 }
 
 function switchView(viewId, btnEl = null) {
@@ -1061,7 +1072,7 @@ async function fetchHistoryAndSync(isSilent = false) {
             document.getElementById('reportHistoryList').innerHTML = '<div class="text-center text-slate-400 py-10 text-sm font-bold"><i class="fa-solid fa-spinner fa-spin"></i> 載入中...</div>';
         }
         
-        const res = await fetch('/api/v1/history/list',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:t})});
+        const res = await fetch('/api/v1/history/list',{method:'POST',headers:{'Content-Type':'application/json','Authorization': `Bearer ${t}`} });
         const d = await res.json();
         
         if(d.status==='success') {
