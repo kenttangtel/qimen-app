@@ -14,11 +14,10 @@ from config import (
     STRIPE_PRICE_5_CREDITS,
     STRIPE_PRICE_15_CREDITS,
     STRIPE_WEBHOOK_SECRET,
-    SECRET_KEY,
-    JWT_ALGORITHM,
     SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY,
 )
+import config
 from models.db import SessionLocal, User, CheckoutSessionRecord
 
 router = APIRouter()
@@ -82,7 +81,7 @@ def get_user_from_token(token: str | None) -> User | None:
     if not token:
         return None
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(token, config.SECRET_KEY, algorithms=[config.JWT_ALGORITHM])
     except JWTError:
         return None
     user_id = payload.get("sub")
