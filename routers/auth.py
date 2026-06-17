@@ -10,19 +10,18 @@ from sqlalchemy.exc import IntegrityError
 
 from models.db import get_db, User
 from models.schemas import AuthRequest, TokenResponse, UserResponse
+import config
 
 router = APIRouter()
 security = HTTPBearer()
 
-from config import SECRET_KEY, JWT_ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
-
-ALGORITHM = JWT_ALGORITHM
+ALGORITHM = config.JWT_ALGORITHM
 
 
 def get_secret_key() -> str:
-    if not SECRET_KEY:
+    if not config.SECRET_KEY:
         raise RuntimeError("SECRET_KEY is required in environment variables for JWT authentication")
-    return SECRET_KEY
+    return config.SECRET_KEY
 
 
 def hash_password(password: str) -> str:
@@ -35,7 +34,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.utcnow() + timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, get_secret_key(), algorithm=ALGORITHM)
 
