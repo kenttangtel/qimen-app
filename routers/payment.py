@@ -1,7 +1,11 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Query
 from pydantic import BaseModel
 import stripe
 from jose import jwt, JWTError
+from datetime import datetime
+import logging
+import os
+from supabase import create_client
 
 from config import (
     STRIPE_SECRET_KEY,
@@ -10,12 +14,24 @@ from config import (
     STRIPE_PRICE_5_CREDITS,
     STRIPE_PRICE_15_CREDITS,
     STRIPE_WEBHOOK_SECRET,
+    SECRET_KEY,
+    JWT_ALGORITHM,
+    SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY,
 )
-from models.db import SessionLocal, User
-from routers.auth import SECRET_KEY, ALGORITHM
+from models.db import SessionLocal, User, CheckoutSessionRecord
 
 router = APIRouter()
 stripe.api_key = STRIPE_SECRET_KEY
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    logging.basicConfig(level=logging.INFO)
+
+
+def get_supabase_admin():
+    if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+        raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set for admin webhook operations")
+    return create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 STRIPE_PRICE_PLAN_MAP = {
     STRIPE_PRICE_VIP: {
@@ -64,6 +80,91 @@ class CheckoutRequest(BaseModel):
     token: str | None = None
 
 
+def get_user_from_token(token: str | None) -> User | None:
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[JWT_ALGORITHM])
+    except JWTError:
+        return None
+    user_id = payload.get("sub")
+    if not user_id:
+        return None
+    db = SessionLocal()
+    try:
+        return db.query(User).filter(User.id == user_id).first()
+    finally:
+        db.close()
+
+
+def is_checkout_session_processed(db, session_id: str) -> bool:
+    return db.query(CheckoutSessionRecord).filter(CheckoutSessionRecord.id == session_id).first() is not None
+
+
+def process_checkout_session(session, db):
+    if not session or not getattr(session, "id", None):
+        return {"status": "error", "message": "invalid_session"}
+    if is_checkout_session_processed(db, session.id):
+        return {"status": "success", "message": "already_processed"}
+
+    user = db.query(User).filter(User.id == str(session.client_reference_id)).first()
+    if not user:
+        return {"status": "error", "message": "user_not_found"}
+
+    use_supabase_admin = SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY
+    update_payload = {}
+
+    if session.mode == "subscription":
+        update_payload = {
+            "stripe_customer_id": session.customer,
+            "stripe_subscription_id": session.subscription,
+            "subscription_status": "active",
+            "membership_type": "monthly",
+        }
+    else:
+        price_id = session.metadata.get("price_id") if session.metadata else None
+        plan = _get_plan(price_id)
+        if not plan:
+            return {"status": "error", "message": "Unknown plan"}
+
+        if plan.get("membership_type"):
+            membership_type = plan["membership_type"]
+            update_payload["membership_type"] = membership_type
+            update_payload["subscription_status"] = "lifetime" if membership_type == "lifetime" else membership_type
+
+        if plan.get("credits"):
+            update_payload["credits"] = (user.credits or 0) + plan["credits"]
+
+    if update_payload:
+        if use_supabase_admin:
+            supabase_admin = get_supabase_admin()
+            update_resp = supabase_admin.from_("users").update(update_payload).eq("id", user.id).execute()
+            logger.info("Supabase admin update response: %s", update_resp)
+            if update_resp.error:
+                logger.error("Supabase admin update error detail: %s", update_resp.error)
+                return {"status": "error", "message": "Supabase update failed"}
+        else:
+            if "stripe_customer_id" in update_payload:
+                user.stripe_customer_id = update_payload["stripe_customer_id"]
+            if "stripe_subscription_id" in update_payload:
+                user.stripe_subscription_id = update_payload["stripe_subscription_id"]
+            if "subscription_status" in update_payload:
+                user.subscription_status = update_payload["subscription_status"]
+            if "membership_type" in update_payload:
+                user.membership_type = update_payload["membership_type"]
+            if "credits" in update_payload:
+                user.credits = update_payload["credits"]
+
+    record = CheckoutSessionRecord(
+        id=session.id,
+        user_id=user.id,
+        price_id=session.metadata.get("price_id") if session.metadata else None,
+    )
+    db.add(record)
+    db.commit()
+    return {"status": "success", "message": "processed"}
+
+
 @router.post("/api/v1/payment/create-checkout-session")
 async def create_checkout_session(
     request_data: CheckoutRequest,
@@ -73,39 +174,59 @@ async def create_checkout_session(
     token = request_data.token or (auth_header.split("Bearer ")[-1] if auth_header.startswith("Bearer ") else None)
     if not token:
         raise HTTPException(status_code=401, detail="Unauthorized")
+    user = get_user_from_token(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    plan_code = request_data.plan
+    price_id = PLAN_CODE_TO_PRICE_ID.get(plan_code)
+    if not price_id:
+        raise HTTPException(status_code=400, detail="無效的付費方案代號")
+
+    plan_info = _get_plan(price_id)
+    if not plan_info:
+        raise HTTPException(status_code=400, detail="Invalid price_id")
+
+    try:
+        base_url = str(request.base_url)
+        session = stripe.checkout.Session.create(
+            mode=plan_info["mode"],
+            line_items=[{"price": price_id, "quantity": 1}],
+            success_url=f"{base_url}?payment=success&session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{base_url}?payment=cancel",
+            client_reference_id=str(user.id),
+            metadata={"price_id": price_id},
+        )
+        return {"status": "success", "url": session.url, "id": session.id}
+    except stripe.error.StripeError as exc:
+        return {"status": "error", "message": str(exc)}
+
+
+@router.get("/api/v1/payment/confirm-checkout-session")
+async def confirm_checkout_session(session_id: str = Query(...), request: Request = None):
+    auth_header = request.headers.get("Authorization", "")
+    token = auth_header.split("Bearer ")[-1] if auth_header.startswith("Bearer ") else None
+    user = get_user_from_token(token)
+
+    try:
+        stripe_session = stripe.checkout.Session.retrieve(session_id)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid session: {str(exc)}")
+
+    if not (getattr(stripe_session, "payment_status", "") == "paid" or getattr(stripe_session, "status", "") == "complete"):
+        raise HTTPException(status_code=400, detail="Payment not completed")
+
     db = SessionLocal()
     try:
-        try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            user_id = payload.get("sub")
-            user = db.query(User).filter(User.id == user_id).first()
-            if not user:
-                raise HTTPException(status_code=401, detail="Unauthorized")
-        except JWTError:
-            raise HTTPException(status_code=401, detail="Invalid token")
+        if not user:
+            client_ref = getattr(stripe_session, "client_reference_id", None)
+            if client_ref:
+                user = db.query(User).filter(User.id == str(client_ref)).first()
+        if not user:
+            raise HTTPException(status_code=401, detail="Unauthorized")
 
-        plan_code = request_data.plan
-        price_id = PLAN_CODE_TO_PRICE_ID.get(plan_code)
-        if not price_id:
-            raise HTTPException(status_code=400, detail="無效的付費方案代號")
-
-        plan_info = _get_plan(price_id)
-        if not plan_info:
-            raise HTTPException(status_code=400, detail="Invalid price_id")
-
-        try:
-            base_url = str(request.base_url)
-            session = stripe.checkout.Session.create(
-                mode=plan_info["mode"],
-                line_items=[{"price": price_id, "quantity": 1}],
-                success_url=f"{base_url}?payment=success&session_id={{CHECKOUT_SESSION_ID}}",
-                cancel_url=f"{base_url}?payment=cancel",
-                client_reference_id=str(user.id),
-                metadata={"price_id": price_id},
-            )
-            return {"status": "success", "url": session.url, "id": session.id}
-        except stripe.error.StripeError as exc:
-            return {"status": "error", "message": str(exc)}
+        result = process_checkout_session(stripe_session, db)
+        return result
     finally:
         db.close()
 
@@ -127,30 +248,9 @@ async def webhook(request: Request):
     try:
         if event.type == "checkout.session.completed":
             session = event.data.object
-            user = db.query(User).filter(User.id == str(session.client_reference_id)).first()
-            if not user:
-                return {"status": "error", "message": "user_not_found"}
-
-            if session.mode == "subscription":
-                user.stripe_customer_id = session.customer
-                user.stripe_subscription_id = session.subscription
-                user.subscription_status = "active"
-                user.membership_type = "monthly"
-            else:
-                price_id = session.metadata.get("price_id") if session.metadata else None
-                plan = _get_plan(price_id)
-                if not plan:
-                    return {"status": "error", "message": "Unknown plan"}
-
-                if plan.get("membership_type"):
-                    membership_type = plan["membership_type"]
-                    user.membership_type = membership_type
-                    user.subscription_status = (
-                        "lifetime" if membership_type == "lifetime" else membership_type
-                    )
-
-                if plan.get("credits"):
-                    user.credits = (user.credits or 0) + plan["credits"]
+            result = process_checkout_session(session, db)
+            if result.get("status") != "success":
+                return result
         elif event.type == "invoice.payment_succeeded":
             subscription = event.data.object.subscription
             user = db.query(User).filter(User.stripe_subscription_id == subscription).first()

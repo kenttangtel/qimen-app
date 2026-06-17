@@ -6,6 +6,7 @@ openai
 bcrypt<4.0.0
 psycopg2-binary
 stripe
+supabase
 pytz
 SQLAlchemy
 python-jose[cryptography]
