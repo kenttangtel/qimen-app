@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 import stripe
+from jose import jwt, JWTError
 
 from config import (
     STRIPE_SECRET_KEY,
@@ -11,7 +12,7 @@ from config import (
     STRIPE_WEBHOOK_SECRET,
 )
 from models.db import SessionLocal, User
-from routers.auth import get_current_user
+from routers.auth import SECRET_KEY, ALGORITHM
 
 router = APIRouter()
 stripe.api_key = STRIPE_SECRET_KEY
@@ -67,30 +68,46 @@ class CheckoutRequest(BaseModel):
 async def create_checkout_session(
     request_data: CheckoutRequest,
     request: Request,
-    user: User = Depends(get_current_user),
 ):
-    plan_code = request_data.plan
-    price_id = PLAN_CODE_TO_PRICE_ID.get(plan_code)
-    if not price_id:
-        raise HTTPException(status_code=400, detail="無效的付費方案代號")
-
-    plan_info = _get_plan(price_id)
-    if not plan_info:
-        raise HTTPException(status_code=400, detail="Invalid price_id")
-
+    auth_header = request.headers.get("Authorization", "")
+    token = request_data.token or (auth_header.split("Bearer ")[-1] if auth_header.startswith("Bearer ") else None)
+    if not token:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    db = SessionLocal()
     try:
-        base_url = str(request.base_url)
-        session = stripe.checkout.Session.create(
-            mode=plan_info["mode"],
-            line_items=[{"price": price_id, "quantity": 1}],
-            success_url=f"{base_url}?payment=success&session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{base_url}?payment=cancel",
-            client_reference_id=str(user.id),
-            metadata={"price_id": price_id},
-        )
-        return {"status": "success", "url": session.url, "id": session.id}
-    except stripe.error.StripeError as exc:
-        return {"status": "error", "message": str(exc)}
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id = payload.get("sub")
+            user = db.query(User).filter(User.id == user_id).first()
+            if not user:
+                raise HTTPException(status_code=401, detail="Unauthorized")
+        except JWTError:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+        plan_code = request_data.plan
+        price_id = PLAN_CODE_TO_PRICE_ID.get(plan_code)
+        if not price_id:
+            raise HTTPException(status_code=400, detail="無效的付費方案代號")
+
+        plan_info = _get_plan(price_id)
+        if not plan_info:
+            raise HTTPException(status_code=400, detail="Invalid price_id")
+
+        try:
+            base_url = str(request.base_url)
+            session = stripe.checkout.Session.create(
+                mode=plan_info["mode"],
+                line_items=[{"price": price_id, "quantity": 1}],
+                success_url=f"{base_url}?payment=success&session_id={{CHECKOUT_SESSION_ID}}",
+                cancel_url=f"{base_url}?payment=cancel",
+                client_reference_id=str(user.id),
+                metadata={"price_id": price_id},
+            )
+            return {"status": "success", "url": session.url, "id": session.id}
+        except stripe.error.StripeError as exc:
+            return {"status": "error", "message": str(exc)}
+    finally:
+        db.close()
 
 
 @router.post("/api/v1/payment/webhook")
