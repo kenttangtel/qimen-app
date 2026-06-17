@@ -1,15 +1,31 @@
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
+import logging
 
 from models.db import init_db
 from routers import auth, divination, history, payment
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# global logger
+logger = logging.getLogger("qimen_app")
+if not logger.handlers:
+    logging.basicConfig(level=logging.INFO)
+
+
+@app.middleware("http")
+async def catch_exceptions_middleware(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as exc:
+        logger.exception("Unhandled exception in ASGI request")
+        return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
 
 BASE_DIR = os.path.dirname(__file__)
 WWW_DIR = os.path.join(BASE_DIR, "www")
@@ -18,7 +34,10 @@ app.mount("/static", StaticFiles(directory=WWW_DIR), name="static")
 
 @app.on_event("startup")
 def on_startup():
-    init_db()
+    try:
+        init_db()
+    except Exception:
+        logger.exception("Database initialization failed on startup")
 
 
 @app.get("/", response_class=HTMLResponse)
