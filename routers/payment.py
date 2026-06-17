@@ -83,12 +83,12 @@ async def create_checkout_session(
         session = stripe.checkout.Session.create(
             mode=plan_info["mode"],
             line_items=[{"price": price_id, "quantity": 1}],
-            success_url=f"{base_url}?payment=success",
+            success_url=f"{base_url}?payment=success&session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=f"{base_url}?payment=cancel",
             client_reference_id=str(user.id),
             metadata={"price_id": price_id},
         )
-        return {"status": "success", "url": session.url}
+        return {"status": "success", "url": session.url, "id": session.id}
     except stripe.error.StripeError as exc:
         return {"status": "error", "message": str(exc)}
 

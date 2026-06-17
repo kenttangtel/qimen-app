@@ -1,4 +1,5 @@
 from datetime import date, datetime
+import logging
 import re
 import pytz
 
@@ -27,6 +28,11 @@ except ImportError:
 router = APIRouter()
 security = HTTPBearer()
 client = AsyncOpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com") if AsyncOpenAI and DEEPSEEK_API_KEY else None
+
+# logger for debugging in live environment
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    logging.basicConfig(level=logging.INFO)
 
 
 def clean_stream_content(text: str) -> str:
@@ -62,6 +68,10 @@ def normalize_time_to_hk(request_time: str) -> tuple[str, datetime]:
 
 def build_matrix_response(request_time: str, user: User | None = None) -> CalculationResponse:
     safe_time, dt = normalize_time_to_hk(request_time)
+    try:
+        logger.debug(f"build_matrix_response: safe_time={safe_time}, dt={dt.isoformat()}")
+    except Exception:
+        pass
     solar = Solar.fromYmdHms(dt.year, dt.month, dt.day, dt.hour, dt.minute, 0)
     lunar = solar.getLunar()
     bazi = lunar.getEightChar()
@@ -291,7 +301,14 @@ async def interpret_matrix(request: CalculationRequest):
 
     try:
         matrix_data = build_matrix_response(request.time)
-        bazi_eval = QuantityEvaluator.evaluate(matrix_data.bazi)
+        if not getattr(matrix_data, "bazi", None):
+            logger.error("build_matrix_response returned no bazi data")
+            return StreamingResponse(iter(["**❌ 盤象產生失敗**"]), media_type="text/event-stream")
+        try:
+            bazi_eval = QuantityEvaluator.evaluate(matrix_data.bazi)
+        except Exception as exc:
+            logger.exception("QuantityEvaluator failed")
+            return StreamingResponse(iter(["**❌ 盤象量化失敗**"]), media_type="text/event-stream")
 
         eval_text = f"""
 \n【⚖️ 核心數據：五行量化能量分析 (LLM 必讀)】
