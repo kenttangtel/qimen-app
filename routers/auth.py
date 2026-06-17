@@ -14,9 +14,15 @@ from models.schemas import AuthRequest, TokenResponse, UserResponse
 router = APIRouter()
 security = HTTPBearer()
 
-SECRET_KEY = secrets.token_hex(32)
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+from config import SECRET_KEY, JWT_ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+
+ALGORITHM = JWT_ALGORITHM
+
+
+def get_secret_key() -> str:
+    if not SECRET_KEY:
+        raise RuntimeError("SECRET_KEY is required in environment variables for JWT authentication")
+    return SECRET_KEY
 
 
 def hash_password(password: str) -> str:
@@ -31,12 +37,13 @@ def create_access_token(data: dict) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, get_secret_key(), algorithm=ALGORITHM)
+
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db=Depends(get_db)):
     token = credentials.credentials
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, get_secret_key(), algorithms=[ALGORITHM])
         user_id = payload.get("sub")
         user = db.query(User).filter(User.id == user_id).first()
         if not user:

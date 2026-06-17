@@ -54,8 +54,6 @@ STRIPE_PRICE_PLAN_MAP = {
 STRIPE_PRICE_PLAN_MAP = {
     price_id: plan for price_id, plan in STRIPE_PRICE_PLAN_MAP.items() if price_id
 }
-if not STRIPE_PRICE_PLAN_MAP:
-    raise RuntimeError("Stripe price IDs are not configured in the environment.")
 
 
 PLAN_CODE_TO_PRICE_ID = {
