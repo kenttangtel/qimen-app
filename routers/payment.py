@@ -85,7 +85,7 @@ async def create_checkout_session(
             line_items=[{"price": price_id, "quantity": 1}],
             success_url=f"{base_url}?payment=success",
             cancel_url=f"{base_url}?payment=cancel",
-            client_reference_id=user.id,
+            client_reference_id=str(user.id),
             metadata={"price_id": price_id},
         )
         return {"status": "success", "url": session.url}
@@ -110,7 +110,7 @@ async def webhook(request: Request):
     try:
         if event.type == "checkout.session.completed":
             session = event.data.object
-            user = db.query(User).filter(User.id == session.client_reference_id).first()
+            user = db.query(User).filter(User.id == str(session.client_reference_id)).first()
             if not user:
                 return {"status": "error", "message": "user_not_found"}
 

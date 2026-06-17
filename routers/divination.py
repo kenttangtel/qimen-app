@@ -43,7 +43,7 @@ def clean_stream_content(text: str) -> str:
     return text
 
 
-def build_matrix_response(request_time: str, user: User | None = None) -> CalculationResponse:
+def normalize_time_to_hk(request_time: str) -> tuple[str, datetime]:
     safe_time = request_time[:16].replace("T", " ")
     try:
         dt = datetime.strptime(safe_time, "%Y-%m-%d %H:%M")
@@ -57,6 +57,11 @@ def build_matrix_response(request_time: str, user: User | None = None) -> Calcul
         dt = hk_tz.localize(dt)
     else:
         dt = dt.astimezone(hk_tz)
+    return safe_time, dt
+
+
+def build_matrix_response(request_time: str, user: User | None = None) -> CalculationResponse:
+    safe_time, dt = normalize_time_to_hk(request_time)
     solar = Solar.fromYmdHms(dt.year, dt.month, dt.day, dt.hour, dt.minute, 0)
     lunar = solar.getLunar()
     bazi = lunar.getEightChar()
@@ -265,10 +270,7 @@ async def interpret_matrix(request: CalculationRequest):
             seeker_record = c.fetchone()
             if seeker_record:
                 try:
-                    s_dt = datetime.strptime(
-                        seeker_record["record_time"][:16].replace("T", " "),
-                        "%Y-%m-%d %H:%M",
-                    )
+                    _, s_dt = normalize_time_to_hk(seeker_record["record_time"])
                     s_solar = Solar.fromYmdHms(
                         s_dt.year, s_dt.month, s_dt.day, s_dt.hour, s_dt.minute, 0
                     )
@@ -459,12 +461,17 @@ async def interpret_matrix(request: CalculationRequest):
                     temperature=0.7,
                     stream=True,
                 )
-                async for chunk in stream:
-                    content = chunk.choices[0].delta.content
-                    if content:
-                        yield clean_stream_content(content)
             except Exception as exc:
-                raise HTTPException(status_code=500, detail=f"AI 推演失敗: {str(exc)}")
+                raise HTTPException(status_code=500, detail="AI 解盤失敗，請稍後再試") from exc
+
+            async for chunk in stream:
+                content = None
+                try:
+                    content = chunk.choices[0].delta.content
+                except Exception:
+                    continue
+                if content:
+                    yield clean_stream_content(content)
 
         return StreamingResponse(generate(), media_type="text/event-stream")
     except HTTPException:
