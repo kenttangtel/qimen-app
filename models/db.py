@@ -51,6 +51,15 @@ class Session(Base):
     user_id = Column(String, nullable=False)
 
 
+class CheckoutSessionRecord(Base):
+    __tablename__ = "checkout_session_records"
+
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, nullable=False)
+    price_id = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 def get_db():
     if not DATABASE_URL:
         raise Exception("請設定 DATABASE_URL！")
