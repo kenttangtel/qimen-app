@@ -3,13 +3,13 @@ import logging
 import re
 import pytz
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import StreamingResponse
 from lunar_python import Solar
 
 from config import DEEPSEEK_API_KEY
-from models.db import get_db, User
+from models.db import get_db, SessionLocal, User, History, Session
 from models.schemas import (
     AuthRequest,
     CalculationRequest,
@@ -64,6 +64,19 @@ def normalize_time_to_hk(request_time: str) -> tuple[str, datetime]:
     else:
         dt = dt.astimezone(hk_tz)
     return safe_time, dt
+
+
+def get_user_by_token(token: str | None) -> User | None:
+    if not token:
+        return None
+    db = SessionLocal()
+    try:
+        session_record = db.query(Session).filter(Session.token == token).first()
+        if not session_record:
+            return None
+        return db.query(User).filter(User.id == session_record.user_id).first()
+    finally:
+        db.close()
 
 
 def build_matrix_response(request_time: str, user: User | None = None) -> CalculationResponse:
@@ -218,7 +231,7 @@ async def calculate_route(request: CalculationRequest) -> CalculationResponse:
 
 
 async def calculate_matrix(request: CalculationRequest) -> CalculationResponse:
-    user = get_current_user(request)
+    user = get_user_by_token(request.token)
     if user and user.membership_type not in ("monthly", "lifetime"):
         user = None
     return build_matrix_response(request.time, user)

@@ -44,6 +44,13 @@ class History(Base):
     is_pinned = Column(Boolean, default=False)
 
 
+class Session(Base):
+    __tablename__ = "sessions"
+
+    token = Column(String, primary_key=True, index=True)
+    user_id = Column(String, nullable=False)
+
+
 def get_db():
     if not DATABASE_URL:
         raise Exception("請設定 DATABASE_URL！")
