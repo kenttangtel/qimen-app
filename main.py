@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 import logging
 
 from models.db import init_db
-from routers import auth, divination, history, payment
+from routers import auth, divination, history, payment, debug
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -63,3 +63,4 @@ app.include_router(divination.router)
 app.include_router(auth.router)
 app.include_router(history.router)
 app.include_router(payment.router)
+app.include_router(debug.router)
