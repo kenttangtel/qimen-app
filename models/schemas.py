@@ -49,7 +49,7 @@ class CalculationResponse(BaseModel):
     bazi: Dict[str, str]
     qimen_info: QimenInfo
     qimen_matrix: List[PalaceData]
-    solution: str
+    solution: str = ""
 
 
 class CalculationRequest(BaseModel):

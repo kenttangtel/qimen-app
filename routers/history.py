@@ -71,6 +71,15 @@ async def list_history(
     return _build_history_response(entries)
 
 
+@router.post("/api/v1/history/save", response_model=HistoryResponse)
+async def save_history(
+    payload: HistoryCreate,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    return await create_history(payload=payload, user_id=user_id, db=db)
+
+
 @router.post("/api/v1/history/list", response_model=list[HistoryResponse])
 async def list_history_post(
     user_id: str = Depends(get_current_user_id),
