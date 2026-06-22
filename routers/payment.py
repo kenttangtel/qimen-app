@@ -28,9 +28,11 @@ if not logger.handlers:
 
 
 def get_supabase_admin():
-    if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+    if not config.SUPABASE_URL or not config.SUPABASE_SERVICE_ROLE_KEY:
         raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set for admin webhook operations")
-    return create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    if config.SUPABASE_URL.strip().startswith("https://your-project-ref.supabase.co"):
+        raise RuntimeError("SUPABASE_URL is not configured correctly; replace the placeholder URL with your real Supabase project URL")
+    return create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY)
 
 STRIPE_PRICE_PLAN_MAP = {
     STRIPE_PRICE_VIP: {
