@@ -503,12 +503,12 @@
                 <button onclick="triggerVibration(); buyProduct('topup_15')" class="w-full bg-rose-50 dark:bg-rose-900/20 border-2 border-rose-400 p-5 rounded-3xl flex justify-between items-center relative shadow-sm hover:bg-rose-100 active:scale-[0.98] transition-all text-left">
                     <div class="absolute -top-3 right-4 bg-rose-500 text-white text-[0.7rem] font-black px-3 py-1 rounded-full shadow-md tracking-wider">🔥 深度首選</div>
                     <div class="flex items-center gap-4"><div class="w-12 h-12 shrink-0 bg-rose-200 dark:bg-rose-800/50 rounded-full flex items-center justify-center text-xl">💎</div><div><div class="font-black text-rose-800 dark:text-rose-400 text-lg">深度能量</div><div class="text-[0.65rem] text-rose-600 dark:text-rose-400 font-bold mt-0.5 leading-tight">內含 15 點推演能量<br>適合高頻率深度解盤</div></div></div>
-                    <div class="font-black text-2xl text-rose-700 dark:text-rose-500 shrink-0">HK$ 390</div>
+                    <div class="font-black text-2xl text-rose-700 dark:text-rose-500 shrink-0">HK$ 118</div>
                 </button>
             
                 <button onclick="triggerVibration(); buyProduct('topup_5')" class="w-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-600 p-5 rounded-3xl flex justify-between items-center hover:border-slate-400 active:scale-[0.98] transition-all text-left shadow-sm">
                     <div class="flex items-center gap-4"><div class="w-12 h-12 shrink-0 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center text-xl">🔮</div><div><div class="font-black text-slate-700 dark:text-slate-200 text-lg">基礎能量</div><div class="text-[0.65rem] text-slate-500 font-bold mt-0.5 leading-tight">內含 5 點推演能量</div></div></div>
-                    <div class="font-black text-xl text-slate-800 dark:text-slate-200 shrink-0">HK$ 150</div>
+                    <div class="font-black text-xl text-slate-800 dark:text-slate-200 shrink-0">HK$ 50</div>
                 </button>
             </div>
         </div>
@@ -642,9 +642,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (new URLSearchParams(window.location.search).get('payment') === 'success') {
-        setTimeout(() => {
-            showToast("付款成功！系統已為您補充能量。", false);
-            if (typeof fetchUserInfo === 'function') fetchUserInfo(true);
+        const sessionId = new URLSearchParams(window.location.search).get('session_id');
+        setTimeout(async () => {
+            if (sessionId) {
+                try {
+                    const token = localStorage.getItem('qimen_token');
+                    const confirmRes = await fetch(`/api/v1/payment/confirm-checkout-session?session_id=${encodeURIComponent(sessionId)}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const confirmData = await confirmRes.json();
+                    if (confirmRes.ok && confirmData.status === 'success') {
+                        showToast("付款成功！系統已為您補充能量。", false);
+                        if (typeof fetchUserInfo === 'function') fetchUserInfo(true);
+                    } else {
+                        const message = confirmData.detail || confirmData.message || '付款確認失敗';
+                        showToast(`付款已成功，系統未完成交付：${message}`, true);
+                    }
+                } catch (err) {
+                    console.error('Confirm checkout failed', err);
+                    showToast("付款成功，但交付流程異常，請稍後重試或聯繫客服。", true);
+                }
+            } else {
+                showToast("付款成功！系統已為您補充能量。", false);
+                if (typeof fetchUserInfo === 'function') fetchUserInfo(true);
+            }
             window.history.replaceState({}, document.title, window.location.pathname);
         }, 1500);
     }
