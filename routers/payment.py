@@ -72,6 +72,38 @@ def _get_plan(price_id: str):
     return STRIPE_PRICE_PLAN_MAP.get(price_id)
 
 
+def _safe_stripe_attr(obj, attr, default=None):
+    if obj is None:
+        return default
+    if isinstance(obj, dict):
+        return obj.get(attr, default)
+    try:
+        return getattr(obj, attr, default)
+    except Exception:
+        pass
+    try:
+        return obj[attr]
+    except Exception:
+        return default
+
+
+def _safe_session_metadata_value(session, key):
+    metadata = _safe_stripe_attr(session, "metadata", None)
+    if metadata is None:
+        return None
+    if isinstance(metadata, dict):
+        return metadata.get(key)
+    if hasattr(metadata, "get"):
+        try:
+            return metadata.get(key)
+        except Exception:
+            pass
+    try:
+        return metadata[key]
+    except Exception:
+        return _safe_stripe_attr(metadata, key, None)
+
+
 class CheckoutRequest(BaseModel):
     plan: str
     token: str | None = None
@@ -99,12 +131,13 @@ def is_checkout_session_processed(db, session_id: str) -> bool:
 
 
 def process_checkout_session(session, db):
-    if not session or not getattr(session, "id", None):
+    if not session or not _safe_stripe_attr(session, "id", None):
         return {"status": "error", "message": "invalid_session"}
-    if is_checkout_session_processed(db, session.id):
+    if is_checkout_session_processed(db, _safe_stripe_attr(session, "id", "")):
         return {"status": "success", "message": "already_processed"}
 
-    user = db.query(User).filter(User.id == str(session.client_reference_id)).first()
+    client_ref = _safe_stripe_attr(session, "client_reference_id", None)
+    user = db.query(User).filter(User.id == str(client_ref)).first()
     if not user:
         return {"status": "error", "message": "user_not_found"}
 
@@ -119,7 +152,7 @@ def process_checkout_session(session, db):
             "membership_type": "monthly",
         }
     else:
-        price_id = session.metadata.get("price_id") if session.metadata else None
+        price_id = _safe_session_metadata_value(session, "price_id")
         plan = _get_plan(price_id)
         if not plan:
             return {"status": "error", "message": "Unknown plan"}
@@ -139,23 +172,22 @@ def process_checkout_session(session, db):
             logger.info("Supabase admin update response: %s", update_resp)
             if update_resp.error:
                 logger.error("Supabase admin update error detail: %s", update_resp.error)
-                return {"status": "error", "message": "Supabase update failed"}
-        else:
-            if "stripe_customer_id" in update_payload:
-                user.stripe_customer_id = update_payload["stripe_customer_id"]
-            if "stripe_subscription_id" in update_payload:
-                user.stripe_subscription_id = update_payload["stripe_subscription_id"]
-            if "subscription_status" in update_payload:
-                user.subscription_status = update_payload["subscription_status"]
-            if "membership_type" in update_payload:
-                user.membership_type = update_payload["membership_type"]
-            if "credits" in update_payload:
-                user.credits = update_payload["credits"]
+                # 紀錄錯誤但仍同步本地資料，避免前端讀不到已付款的能量
+        if "stripe_customer_id" in update_payload:
+            user.stripe_customer_id = update_payload["stripe_customer_id"]
+        if "stripe_subscription_id" in update_payload:
+            user.stripe_subscription_id = update_payload["stripe_subscription_id"]
+        if "subscription_status" in update_payload:
+            user.subscription_status = update_payload["subscription_status"]
+        if "membership_type" in update_payload:
+            user.membership_type = update_payload["membership_type"]
+        if "credits" in update_payload:
+            user.credits = update_payload["credits"]
 
     record = CheckoutSessionRecord(
-        id=session.id,
+        id=_safe_stripe_attr(session, "id", None),
         user_id=user.id,
-        price_id=session.metadata.get("price_id") if session.metadata else None,
+        price_id=_safe_session_metadata_value(session, "price_id"),
     )
     db.add(record)
     db.commit()
