@@ -17,6 +17,17 @@ if not logger.handlers:
     logging.basicConfig(level=logging.INFO)
 
 
+def format_created_at(value):
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    try:
+        return value.isoformat()
+    except AttributeError:
+        return str(value)
+
+
 def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
     try:
@@ -49,7 +60,7 @@ async def create_history(
             category=entry.category,
             record_time=entry.record_time,
             report_text=entry.report_text,
-            created_at=entry.created_at.isoformat() if entry.created_at else "",
+            created_at=format_created_at(entry.created_at),
             is_pinned=entry.is_pinned,
         )
     except Exception as exc:
@@ -73,7 +84,7 @@ def _build_history_response(entries: list[History]) -> list[HistoryResponse]:
             category=e.category,
             record_time=e.record_time,
             report_text=e.report_text,
-            created_at=e.created_at.isoformat(),
+            created_at=format_created_at(e.created_at),
             is_pinned=e.is_pinned,
         )
         for e in entries
