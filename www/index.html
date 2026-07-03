@@ -1332,11 +1332,15 @@ async function executeInterpretation() {
     const masterResultBox = document.getElementById('masterResultBoxContainer');
     const masterContent = document.getElementById('masterContent');
     const resultActions = document.getElementById('resultActions');
+    const reportHistoryList = document.getElementById('reportHistoryList');
+    const destinyHistoryList = document.getElementById('destinyHistoryList');
     if (masterResultBox) masterResultBox.classList.remove('hidden');
     if (masterContent) {
         masterContent.innerHTML = `<div class='text-center py-20 text-slate-400 font-bold'><i class='fa-solid fa-spinner fa-spin text-4xl mb-3 opacity-30'></i><p>大師正在推演中，請稍候片刻...</p></div>`;
     }
     if (resultActions) resultActions.classList.add('hidden');
+    if (reportHistoryList) { reportHistoryList.classList.add('hidden'); reportHistoryList.innerHTML = ''; }
+    if (destinyHistoryList) { destinyHistoryList.classList.add('hidden'); destinyHistoryList.innerHTML = ''; }
     await new Promise(resolve => setTimeout(resolve, 50));
     closeConfirmModal();
     
@@ -1380,6 +1384,7 @@ async function executeInterpretation() {
     setTimeout(async () => {
         try {
             const res = await fetch('/api/v1/divination/interpret', { method: 'POST', headers: buildAuthorizedHeaders(t), body: JSON.stringify(req) });
+            console.debug('interpret request status', res.status, res.ok);
             if (!res.ok) {
                 const errText = await res.text();
                 throw new Error(`Interpret request failed: ${res.status} ${errText}`);
@@ -1388,6 +1393,7 @@ async function executeInterpretation() {
             while(true){
                 const {done,value} = await reader.read(); if(done) break;
                 full += decoder.decode(value);
+                console.debug('interpret stream progress', { len: full.length });
                 
                 let goldenText = '磁場感應中...';
                 let rawHtml = marked.parse(full).replace(/[\u{1F000}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
