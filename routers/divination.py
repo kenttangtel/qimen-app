@@ -5,12 +5,15 @@ import pytz
 
 from fastapi import APIRouter, HTTPException, Depends, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jose import jwt, JWTError
+import config
 from fastapi.responses import StreamingResponse
 from sqlalchemy import text
 from lunar_python import Solar
 
 from config import DEEPSEEK_API_KEY
 from models.db import engine, get_db, SessionLocal, User, History, Session
+from routers.auth import get_current_user
 from models.schemas import (
     AuthRequest,
     CalculationRequest,
@@ -70,12 +73,33 @@ def normalize_time_to_hk(request_time: str) -> tuple[str, datetime]:
 def get_user_by_token(token: str | None) -> User | None:
     if not token:
         return None
+    # First try JWT decode (tokens issued by auth.login)
+    try:
+        payload = jwt.decode(token, config.SECRET_KEY, algorithms=[config.JWT_ALGORITHM])
+        user_id = payload.get("sub")
+        if user_id:
+            with engine.connect() as conn:
+                res = conn.execute(text("SELECT id, credits, membership_type FROM users WHERE id=:uid"), {"uid": user_id})
+                row = res.mappings().first()
+                if row:
+                    # normalize is_vip flag for legacy code
+                    row = dict(row)
+                    row["is_vip"] = row.get("membership_type") in ("monthly", "lifetime")
+                    return row
+    except JWTError:
+        # not a JWT or invalid JWT, fallback to session lookup
+        pass
+
     db = SessionLocal()
     try:
         session_record = db.query(Session).filter(Session.token == token).first()
         if not session_record:
             return None
-        return db.query(User).filter(User.id == session_record.user_id).first()
+        user = db.query(User).filter(User.id == session_record.user_id).first()
+        if not user:
+            return None
+        # return mapping-like object similar to the SQL path above
+        return {"id": user.id, "credits": user.credits, "membership_type": user.membership_type, "is_vip": user.membership_type in ("monthly", "lifetime")}
     finally:
         db.close()
 
@@ -240,26 +264,22 @@ async def calculate_matrix(request: CalculationRequest) -> CalculationResponse:
 
 
 @router.post("/api/v1/divination/interpret")
-async def interpret_matrix(request: CalculationRequest):
+async def interpret_matrix(request: CalculationRequest, user: User = Depends(get_current_user)):
     if not client:
         return StreamingResponse(iter(["**❌ 磁場連接異常**"]), media_type="text/event-stream")
+    # user is provided by the authentication dependency; if missing, dependency will raise HTTPException
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
     with engine.connect() as conn:
-        result = conn.execute(
-            text(
-                "SELECT u.id, u.credits, u.is_vip FROM users u JOIN sessions s ON u.id = s.user_id WHERE s.token=:token"
-            ),
-            {"token": request.token},
-        )
-        user = result.mappings().first()
-        if not user:
-            return StreamingResponse(iter(["**⚠️ 請先登入帳號**"]), media_type="text/event-stream")
+        # normalize VIP flag for downstream logic
+        is_vip = getattr(user, "membership_type", None) in ("monthly", "lifetime")
 
         is_free = False
         today_str = date.today().isoformat()
         month_str = date.today().strftime("%Y-%m")
 
-        if user["is_vip"]:
+        if is_vip:
             if "專屬每日運程" in request.category:
                 result = conn.execute(
                     text(
@@ -288,11 +308,11 @@ async def interpret_matrix(request: CalculationRequest):
                     is_free = True
 
         if not is_free:
-            if user["credits"] < 1:
+            if getattr(user, "credits", 0) < 1:
                 return StreamingResponse(iter(["**💎 推演能量不足**"]), media_type="text/event-stream")
             conn.execute(
                 text("UPDATE users SET credits = credits - 1 WHERE id=:user_id"),
-                {"user_id": user["id"]},
+                {"user_id": getattr(user, "id")},
             )
 
         seeker_info_prompt = ""
