@@ -1329,7 +1329,14 @@ function closeConfirmModal() { document.getElementById('confirmCalcModal').class
 // ==========================================
 async function executeInterpretation() {
     showLoading("大師推演中...");
-    document.getElementById('masterResultBoxContainer').classList.remove('hidden');
+    const masterResultBox = document.getElementById('masterResultBoxContainer');
+    const masterContent = document.getElementById('masterContent');
+    const resultActions = document.getElementById('resultActions');
+    if (masterResultBox) masterResultBox.classList.remove('hidden');
+    if (masterContent) {
+        masterContent.innerHTML = `<div class='text-center py-20 text-slate-400 font-bold'><i class='fa-solid fa-spinner fa-spin text-4xl mb-3 opacity-30'></i><p>大師正在推演中，請稍候片刻...</p></div>`;
+    }
+    if (resultActions) resultActions.classList.add('hidden');
     await new Promise(resolve => setTimeout(resolve, 50));
     closeConfirmModal();
     
@@ -1360,19 +1367,23 @@ async function executeInterpretation() {
         const calcData = await calcRes.json(); renderUI(calcData); 
     } catch (e) { console.error("盤局抓取失敗", e); }
 
+    if (type === 'destiny') { 
+        switchView('view-destiny', document.querySelectorAll('.tab-btn')[2]); 
+        if(window.moveResultBoxTo) window.moveResultBoxTo('view-destiny');
+    }
+    else { 
+        switchView('view-report', document.querySelectorAll('.tab-btn')[1]); 
+        if(window.moveResultBoxTo) window.moveResultBoxTo('view-report');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     setTimeout(async () => {
-        if (type === 'destiny') { 
-            switchView('view-destiny', document.querySelectorAll('.tab-btn')[2]); 
-            if(window.moveResultBoxTo) window.moveResultBoxTo('view-destiny');
-        }
-        else { 
-            switchView('view-report', document.querySelectorAll('.tab-btn')[1]); 
-            if(window.moveResultBoxTo) window.moveResultBoxTo('view-report');
-        }
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-   
         try {
             const res = await fetch('/api/v1/divination/interpret', { method: 'POST', headers: buildAuthorizedHeaders(t), body: JSON.stringify(req) });
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(`Interpret request failed: ${res.status} ${errText}`);
+            }
             const reader = res.body.getReader(); const decoder = new TextDecoder(); let full = "";
             while(true){
                 const {done,value} = await reader.read(); if(done) break;
@@ -1461,6 +1472,8 @@ async function executeInterpretation() {
             }
             fetchUserInfo(); fetchHistoryAndSync();
         } catch(e) { 
+            console.error('executeInterpretation error:', e);
+            if (masterContent) masterContent.innerHTML = `<div class='text-center py-20 text-rose-500 font-bold'><i class='fa-solid fa-triangle-exclamation text-4xl mb-3'></i><p>推演失敗，請稍後重試。</p></div>`;
             showToast("連線或推演異常，請重試", true); 
         } finally {
             hideLoading();
