@@ -265,11 +265,12 @@ async def calculate_matrix(request: CalculationRequest) -> CalculationResponse:
 
 @router.post("/api/v1/divination/interpret")
 async def interpret_matrix(request: CalculationRequest, user: User = Depends(get_current_user)):
-    if not client:
-        return StreamingResponse(iter(["**❌ 磁場連接異常**"]), media_type="text/event-stream")
-    # user is provided by the authentication dependency; if missing, dependency will raise HTTPException
-    if not user:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        if not client:
+            return StreamingResponse(iter(["**❌ 磁場連接異常**"]), media_type="text/event-stream")
+        # user is provided by the authentication dependency; if missing, dependency will raise HTTPException
+        if not user:
+            raise HTTPException(status_code=401, detail="Unauthorized")
 
     with engine.connect() as conn:
         # normalize VIP flag for downstream logic
@@ -286,7 +287,7 @@ async def interpret_matrix(request: CalculationRequest, user: User = Depends(get
                         "SELECT count(*) AS cnt FROM history WHERE user_id=:user_id AND category LIKE :category AND created_at LIKE :created_at"
                     ),
                     {
-                        "user_id": user["id"],
+                        "user_id": getattr(user, "id"),
                         "category": "%專屬每日運程%",
                         "created_at": today_str + "%",
                     },
@@ -299,7 +300,7 @@ async def interpret_matrix(request: CalculationRequest, user: User = Depends(get
                         "SELECT count(*) AS cnt FROM history WHERE user_id=:user_id AND category LIKE :category AND created_at LIKE :created_at"
                     ),
                     {
-                        "user_id": user["id"],
+                        "user_id": getattr(user, "id"),
                         "category": "%「命盤」%",
                         "created_at": month_str + "%",
                     },
@@ -318,7 +319,7 @@ async def interpret_matrix(request: CalculationRequest, user: User = Depends(get
         seeker_info_prompt = ""
         is_destiny = "「命盤」" in request.category
 
-        if user["is_vip"] and not is_destiny:
+        if is_vip and not is_destiny:
             seeker_match = re.search(r"\(求測人：(.*?)\)", request.question)
             if seeker_match:
                 seeker_name = seeker_match.group(1)
@@ -327,7 +328,7 @@ async def interpret_matrix(request: CalculationRequest, user: User = Depends(get
                         "SELECT record_time FROM history WHERE user_id=:user_id AND category=:category ORDER BY created_at DESC LIMIT 1"
                     ),
                     {
-                        "user_id": user["id"],
+                        "user_id": getattr(user, "id"),
                         "category": f"「命盤」{seeker_name}",
                     },
                 )
@@ -350,7 +351,7 @@ async def interpret_matrix(request: CalculationRequest, user: User = Depends(get
                     except Exception:
                         pass
 
-    try:
+        try:
         try:
             matrix_data = build_matrix_response(request.time)
         except HTTPException as exc:
@@ -559,4 +560,10 @@ async def interpret_matrix(request: CalculationRequest, user: User = Depends(get
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"AI 推演失敗: {str(exc)}")
+        logger.exception("interpret_matrix unexpected error")
+        # Return a safe streaming error message and include the exception text for debugging in logs
+        return StreamingResponse(
+            iter([f"**❌ Internal Server Error: {str(exc)}**"]),
+            media_type="text/event-stream",
+            status_code=500,
+        )
