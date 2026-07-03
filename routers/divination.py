@@ -53,6 +53,15 @@ def clean_stream_content(text: str) -> str:
     return text
 
 
+def get_user_field(user, key, default=None):
+    """Return attribute or mapping value for `user` supporting ORM instance or dict."""
+    if user is None:
+        return default
+    if isinstance(user, dict):
+        return user.get(key, default)
+    return getattr(user, key, default)
+
+
 def normalize_time_to_hk(request_time: str) -> tuple[str, datetime]:
     safe_time = request_time[:16].replace("T", " ")
     try:
@@ -242,9 +251,13 @@ def build_matrix_response(request_time: str, user: User | None = None) -> Calcul
         solution="",
     )
 
-    if user and user.membership_type in ("monthly", "lifetime"):
+    user_membership = getattr(user, "membership_type", None) if user is not None else None
+    if not user_membership and isinstance(user, dict):
+        user_membership = user.get("membership_type")
+
+    if user and user_membership in ("monthly", "lifetime"):
         report.qimen_info.description += "\n【專屬加值】系統已融合本命八字，加強準度。"
-    if user and user.membership_type in ("monthly", "lifetime"):
+    if user and user_membership in ("monthly", "lifetime"):
         report.solution = "完整解決方案與能量策略已啟動。"
     else:
         report.solution = "鎖定內容：請升級會員解鎖專屬解決方案"
@@ -258,7 +271,11 @@ async def calculate_route(request: CalculationRequest) -> CalculationResponse:
 
 async def calculate_matrix(request: CalculationRequest) -> CalculationResponse:
     user = get_user_by_token(request.token)
-    if user and user.membership_type not in ("monthly", "lifetime"):
+    # support both ORM User and mapping returned by legacy token lookup
+    user_membership = getattr(user, "membership_type", None) if user is not None else None
+    if not user_membership and isinstance(user, dict):
+        user_membership = user.get("membership_type")
+    if user and user_membership not in ("monthly", "lifetime"):
         user = None
     return build_matrix_response(request.time, user)
 
@@ -272,86 +289,85 @@ async def interpret_matrix(request: CalculationRequest, user: User = Depends(get
         if not user:
             raise HTTPException(status_code=401, detail="Unauthorized")
 
-    with engine.connect() as conn:
-        # normalize VIP flag for downstream logic
-        is_vip = getattr(user, "membership_type", None) in ("monthly", "lifetime")
+        with engine.connect() as conn:
+            # normalize VIP flag for downstream logic
+            is_vip = get_user_field(user, "membership_type") in ("monthly", "lifetime")
 
-        is_free = False
-        today_str = date.today().isoformat()
-        month_str = date.today().strftime("%Y-%m")
+            is_free = False
+            today_str = date.today().isoformat()
+            month_str = date.today().strftime("%Y-%m")
 
-        if is_vip:
-            if "專屬每日運程" in request.category:
-                result = conn.execute(
-                    text(
-                        "SELECT count(*) AS cnt FROM history WHERE user_id=:user_id AND category LIKE :category AND created_at LIKE :created_at"
-                    ),
-                    {
-                        "user_id": getattr(user, "id"),
-                        "category": "%專屬每日運程%",
-                        "created_at": today_str + "%",
-                    },
+            if is_vip:
+                if "專屬每日運程" in request.category:
+                    result = conn.execute(
+                        text(
+                            "SELECT count(*) AS cnt FROM history WHERE user_id=:user_id AND category LIKE :category AND created_at LIKE :created_at"
+                        ),
+                        {
+                            "user_id": get_user_field(user, "id"),
+                            "category": "%專屬每日運程%",
+                            "created_at": today_str + "%",
+                        },
+                    )
+                    if result.mappings().first()["cnt"] == 0:
+                        is_free = True
+                elif "「命盤」" in request.category:
+                    result = conn.execute(
+                        text(
+                            "SELECT count(*) AS cnt FROM history WHERE user_id=:user_id AND category LIKE :category AND created_at LIKE :created_at"
+                        ),
+                        {
+                            "user_id": get_user_field(user, "id"),
+                            "category": "%「命盤」%",
+                            "created_at": month_str + "%",
+                        },
+                    )
+                    if result.mappings().first()["cnt"] == 0:
+                        is_free = True
+
+            if not is_free:
+                if get_user_field(user, "credits", 0) < 1:
+                    return StreamingResponse(iter(["**💎 推演能量不足**"]), media_type="text/event-stream")
+                conn.execute(
+                    text("UPDATE users SET credits = credits - 1 WHERE id=:user_id"),
+                    {"user_id": get_user_field(user, "id")},
                 )
-                if result.mappings().first()["cnt"] == 0:
-                    is_free = True
-            elif "「命盤」" in request.category:
-                result = conn.execute(
-                    text(
-                        "SELECT count(*) AS cnt FROM history WHERE user_id=:user_id AND category LIKE :category AND created_at LIKE :created_at"
-                    ),
-                    {
-                        "user_id": getattr(user, "id"),
-                        "category": "%「命盤」%",
-                        "created_at": month_str + "%",
-                    },
-                )
-                if result.mappings().first()["cnt"] == 0:
-                    is_free = True
 
-        if not is_free:
-            if getattr(user, "credits", 0) < 1:
-                return StreamingResponse(iter(["**💎 推演能量不足**"]), media_type="text/event-stream")
-            conn.execute(
-                text("UPDATE users SET credits = credits - 1 WHERE id=:user_id"),
-                {"user_id": getattr(user, "id")},
-            )
+            seeker_info_prompt = ""
+            is_destiny = "「命盤」" in request.category
 
-        seeker_info_prompt = ""
-        is_destiny = "「命盤」" in request.category
+            if is_vip and not is_destiny:
+                seeker_match = re.search(r"\(求測人：(.*?)\)", request.question)
+                if seeker_match:
+                    seeker_name = seeker_match.group(1)
+                    result = conn.execute(
+                        text(
+                            "SELECT record_time FROM history WHERE user_id=:user_id AND category=:category ORDER BY created_at DESC LIMIT 1"
+                        ),
+                        {
+                            "user_id": get_user_field(user, "id"),
+                            "category": f"「命盤」{seeker_name}",
+                        },
+                    )
+                    seeker_record = result.mappings().first()
+                    if seeker_record:
+                        try:
+                            _, s_dt = normalize_time_to_hk(seeker_record["record_time"])
+                            s_solar = Solar.fromYmdHms(
+                                s_dt.year, s_dt.month, s_dt.day, s_dt.hour, s_dt.minute, 0
+                            )
+                            s_bazi = s_solar.getLunar().getEightChar()
+                            bz_str = (
+                                f"{s_bazi.getYearGan()}{s_bazi.getYearZhi()}年 {s_bazi.getMonthGan()}{s_bazi.getMonthZhi()}月"
+                                f" {s_bazi.getDayGan()}{s_bazi.getDayZhi()}日 {s_bazi.getTimeGan()}{s_bazi.getTimeZhi()}時"
+                            )
+                            seeker_info_prompt = (
+                                f"\n\n【💎 VIP 專屬交叉分析】\n求測人「{seeker_name}」本命八字：{bz_str}。"
+                                "請務必將此奇門局象與本命人的八字進行交叉共振分析，給出專屬指引！"
+                            )
+                        except Exception:
+                            pass
 
-        if is_vip and not is_destiny:
-            seeker_match = re.search(r"\(求測人：(.*?)\)", request.question)
-            if seeker_match:
-                seeker_name = seeker_match.group(1)
-                result = conn.execute(
-                    text(
-                        "SELECT record_time FROM history WHERE user_id=:user_id AND category=:category ORDER BY created_at DESC LIMIT 1"
-                    ),
-                    {
-                        "user_id": getattr(user, "id"),
-                        "category": f"「命盤」{seeker_name}",
-                    },
-                )
-                seeker_record = result.mappings().first()
-                if seeker_record:
-                    try:
-                        _, s_dt = normalize_time_to_hk(seeker_record["record_time"])
-                        s_solar = Solar.fromYmdHms(
-                            s_dt.year, s_dt.month, s_dt.day, s_dt.hour, s_dt.minute, 0
-                        )
-                        s_bazi = s_solar.getLunar().getEightChar()
-                        bz_str = (
-                            f"{s_bazi.getYearGan()}{s_bazi.getYearZhi()}年 {s_bazi.getMonthGan()}{s_bazi.getMonthZhi()}月"
-                            f" {s_bazi.getDayGan()}{s_bazi.getDayZhi()}日 {s_bazi.getTimeGan()}{s_bazi.getTimeZhi()}時"
-                        )
-                        seeker_info_prompt = (
-                            f"\n\n【💎 VIP 專屬交叉分析】\n求測人「{seeker_name}」本命八字：{bz_str}。"
-                            "請務必將此奇門局象與本命人的八字進行交叉共振分析，給出專屬指引！"
-                        )
-                    except Exception:
-                        pass
-
-        try:
         try:
             matrix_data = build_matrix_response(request.time)
         except HTTPException as exc:
@@ -537,7 +553,7 @@ async def interpret_matrix(request: CalculationRequest, user: User = Depends(get
                     messages=[
                         {
                             "role": "system",
-                            "content": "你是香港頂級奇門遁甲大師，語氣莊重專業、客觀權威。請務必全程使用「香港繁體中文的書面語」進行解答（符合香港人的閱讀習慣，避免內地網絡用語，但保持高級命理顧問的質感）。絕對禁止透露 AI 身份。",
+                            "content": "你是香港頂級奇門遁甲大師，語氣莊重專業、客觀權威。請務必全程使用「香港繁體中文的書面語」進行解答（符合香港人的閱讀習慣，避免內地網絡用語，但保持高級命理顯問的質感）。絕對禁止透露 AI 身份。",
                         },
                         {"role": "user", "content": prompt},
                     ],
@@ -545,16 +561,23 @@ async def interpret_matrix(request: CalculationRequest, user: User = Depends(get
                     stream=True,
                 )
             except Exception as exc:
-                raise HTTPException(status_code=500, detail="AI 解盤失敗，請稍後再試") from exc
+                logger.exception("AI stream creation failed")
+                yield "**❌ AI 解盤失敗，請稍後再試**"
+                return
 
-            async for chunk in stream:
-                content = None
-                try:
-                    content = chunk.choices[0].delta.content
-                except Exception:
-                    continue
-                if content:
-                    yield clean_stream_content(content)
+            try:
+                async for chunk in stream:
+                    content = None
+                    try:
+                        content = chunk.choices[0].delta.content
+                    except Exception:
+                        continue
+                    if content:
+                        yield clean_stream_content(content)
+            except Exception as exc:
+                logger.exception("AI stream iteration failed")
+                yield "**❌ AI 串流中斷，請稍後再試**"
+                return
 
         return StreamingResponse(generate(), media_type="text/event-stream")
     except HTTPException:
