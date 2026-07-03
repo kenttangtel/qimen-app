@@ -646,7 +646,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(async () => {
             if (sessionId) {
                 try {
-                    const token = localStorage.getItem('qimen_token');
+                    const token = getAuthToken();
                     const confirmRes = await fetch(`/api/v1/payment/confirm-checkout-session?session_id=${encodeURIComponent(sessionId)}`, {
                         method: 'GET',
                         headers: {
@@ -729,6 +729,12 @@ function hideLoading() {
         loader.classList.remove('opacity-100'); loader.classList.add('opacity-0');
         setTimeout(() => { loader.classList.add('hidden'); }, 300);
     }
+}
+
+function getAuthToken() {
+    const token = localStorage.getItem('qimen_token');
+    if (!token || token === 'null' || token === 'undefined') return null;
+    return token;
 }
 
 function buildAuthorizedHeaders(token) {
@@ -870,7 +876,7 @@ async function openForgotPasswordModal() {
 }
 
 async function fetchUserInfo() {
-    const t = localStorage.getItem('qimen_token');
+    const t = getAuthToken();
     if (!t) return;
     try {
         const res = await fetch('/api/v1/auth/me', {
@@ -1095,7 +1101,7 @@ function closeModal() { document.getElementById('palaceModal').classList.add('hi
 // 📜 6. 歷史紀錄與本命人管理
 // ==========================================
 async function fetchHistoryAndSync(isSilent = false) {
-    const t = localStorage.getItem('qimen_token');
+    const t = getAuthToken();
     if(!t) return;
     try {
         if (!isSilent) {
@@ -1211,7 +1217,7 @@ window.deleteSelected = async function(type) {
     const selectedItems = Array.from(document.querySelectorAll(`.cb-item-${type}:checked`));
     if (selectedItems.length === 0) return;
     if (!confirm(`確定要刪除這 ${selectedItems.length} 筆紀錄嗎？`)) return;
-    const t = localStorage.getItem('qimen_token'); let currentPid = localStorage.getItem('qimen_primary_id');
+    const t = getAuthToken(); let currentPid = localStorage.getItem('qimen_primary_id');
     for (let cb of selectedItems) {
         const id = cb.value;
         await fetch('/api/v1/history/delete', { method: 'POST', headers: buildAuthorizedHeaders(t), body: JSON.stringify({ record_id: id }) });
@@ -1246,7 +1252,7 @@ window.toggleSeekerSelection = function(id) {
 };
 
 async function openSeekerSelectionModal(type) {
-    const token = localStorage.getItem('qimen_token');
+    const token = getAuthToken();
     if (!token) { openAuthModal(); return; }
     
     pendingInterpretationType = type;
@@ -1306,7 +1312,7 @@ function confirmSeekerAndPrepare() {
 }
 
 function prepareInterpretation(type, selectedSeekerId = null) {
-    const t = localStorage.getItem('qimen_token');
+    const t = getAuthToken();
     if (!t) { openAuthModal(); return; }
     if (type === 'destiny') {
         const n = document.getElementById('d_name').value; const dt = document.getElementById('d_date').value;
@@ -1328,7 +1334,8 @@ async function executeInterpretation() {
     closeConfirmModal();
     
     const type = pendingInterpretationType;
-    const t = localStorage.getItem('qimen_token');
+    const t = getAuthToken();
+    if (!t) { openAuthModal(); return; }
     let req = { token: t };
     let targetSeeker = (window.destinySeekers && tempSelectedSeekerId) ? window.destinySeekers.find(s => s.id === tempSelectedSeekerId) : null;
     let sName = targetSeeker ? targetSeeker.name : "";
@@ -1365,7 +1372,7 @@ async function executeInterpretation() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
    
         try {
-            const res = await fetch('/api/v1/divination/interpret', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(req) });
+            const res = await fetch('/api/v1/divination/interpret', { method: 'POST', headers: buildAuthorizedHeaders(t), body: JSON.stringify(req) });
             const reader = res.body.getReader(); const decoder = new TextDecoder(); let full = "";
             while(true){
                 const {done,value} = await reader.read(); if(done) break;
@@ -1434,7 +1441,24 @@ async function executeInterpretation() {
                 document.getElementById('masterContent').innerHTML = beautifyQimenText(finalReportHtml);
             }
             document.getElementById('resultActions').classList.remove('hidden');
-            await fetch('/api/v1/history/save',{method:'POST',headers:buildAuthorizedHeaders(t),body:JSON.stringify({category:req.category,record_time:req.time,report_text: document.getElementById('masterContent').innerHTML})});
+            try {
+                const saveRes = await fetch('/api/v1/history/save', {
+                    method: 'POST',
+                    headers: buildAuthorizedHeaders(t),
+                    body: JSON.stringify({
+                        category: req.category,
+                        record_time: req.time,
+                        report_text: document.getElementById('masterContent').innerHTML,
+                        is_pinned: false
+                    })
+                });
+                if (!saveRes.ok) {
+                    const err = await saveRes.text();
+                    console.error('history save failed', saveRes.status, err);
+                }
+            } catch (saveErr) {
+                console.error('history save failed', saveErr);
+            }
             fetchUserInfo(); fetchHistoryAndSync();
         } catch(e) { 
             showToast("連線或推演異常，請重試", true); 
@@ -1491,7 +1515,7 @@ function downloadPDF() {
 // 🛒 9. 商城、排版與語音播報
 // ==========================================
 async function buyProduct(planType) {
-    const token = localStorage.getItem('qimen_token');
+    const token = getAuthToken();
     if (!token) { showToast("請先登入大師系統喔！", true); return; }
     showToast("開啟專屬結帳通道中...");
     try {
@@ -1577,7 +1601,7 @@ window.moveResultBoxTo = function(targetViewId) {
 
 // 2. 查看歷史紀錄詳情 (包含秒開、讀取轉圈與平滑滾動)
 window.viewHistoryDetail = async function(id) {
-    const t = localStorage.getItem('qimen_token');
+    const t = getAuthToken();
     if (!t) { openAuthModal(); return; }
     
     showLoading("讀取過往卷宗...");
