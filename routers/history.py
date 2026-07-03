@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -10,6 +12,9 @@ from jose import jwt, JWTError
 
 router = APIRouter()
 security = HTTPBearer()
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    logging.basicConfig(level=logging.INFO)
 
 
 def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)):
@@ -27,25 +32,38 @@ async def create_history(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    entry = History(
-        id=str(uuid.uuid4()),
-        user_id=user_id,
-        category=payload.category,
-        record_time=payload.record_time,
-        report_text=payload.report_text,
-        is_pinned=payload.is_pinned,
-    )
-    db.add(entry)
-    db.commit()
-    db.refresh(entry)
-    return HistoryResponse(
-        id=entry.id,
-        category=entry.category,
-        record_time=entry.record_time,
-        report_text=entry.report_text,
-        created_at=entry.created_at.isoformat(),
-        is_pinned=entry.is_pinned,
-    )
+    try:
+        entry = History(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            category=payload.category,
+            record_time=payload.record_time,
+            report_text=payload.report_text,
+            is_pinned=payload.is_pinned,
+        )
+        db.add(entry)
+        db.commit()
+        db.refresh(entry)
+        return HistoryResponse(
+            id=entry.id,
+            category=entry.category,
+            record_time=entry.record_time,
+            report_text=entry.report_text,
+            created_at=entry.created_at.isoformat() if entry.created_at else "",
+            is_pinned=entry.is_pinned,
+        )
+    except Exception as exc:
+        print(f"DB Error: {exc}")
+        logger.exception("Failed to save history for user_id=%s", user_id)
+        db.rollback()
+        return HistoryResponse(
+            id="",
+            category=payload.category or "",
+            record_time=payload.record_time or "",
+            report_text=payload.report_text or "",
+            created_at="",
+            is_pinned=payload.is_pinned or False,
+        )
 
 
 def _build_history_response(entries: list[History]) -> list[HistoryResponse]:
@@ -67,8 +85,13 @@ async def list_history(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    entries = db.query(History).filter(History.user_id == user_id).order_by(History.created_at.desc()).all()
-    return _build_history_response(entries)
+    try:
+        entries = db.query(History).filter(History.user_id == user_id).order_by(History.created_at.desc()).all()
+        return _build_history_response(entries)
+    except Exception as exc:
+        print(f"DB Error: {exc}")
+        logger.exception("Failed to list history for user_id=%s", user_id)
+        return []
 
 
 @router.post("/api/v1/history/save", response_model=HistoryResponse)
@@ -85,5 +108,10 @@ async def list_history_post(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    entries = db.query(History).filter(History.user_id == user_id).order_by(History.created_at.desc()).all()
-    return _build_history_response(entries)
+    try:
+        entries = db.query(History).filter(History.user_id == user_id).order_by(History.created_at.desc()).all()
+        return _build_history_response(entries)
+    except Exception as exc:
+        print(f"DB Error: {exc}")
+        logger.exception("Failed to list history for user_id=%s", user_id)
+        return []
