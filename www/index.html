@@ -1645,8 +1645,11 @@ window.viewHistoryDetail = async function(id) {
     try {
         const res = await fetch('/api/v1/history/detail', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: t, record_id: id })
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + t  // 🌟 關鍵修正：把通行證放到 Headers 正確位置
+            },
+            body: JSON.stringify({ record_id: id }) // 💡 身體只需傳送紀錄 ID 即可
         });
         const d = await res.json();
         
