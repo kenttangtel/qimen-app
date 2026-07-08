@@ -1235,13 +1235,28 @@ window.deleteSelected = async function(type) {
     const selectedItems = Array.from(document.querySelectorAll(`.cb-item-${type}:checked`));
     if (selectedItems.length === 0) return;
     if (!confirm(`確定要刪除這 ${selectedItems.length} 筆紀錄嗎？`)) return;
-    const t = getAuthToken(); let currentPid = localStorage.getItem('qimen_primary_id');
+    
+    const t = getAuthToken(); 
+    let currentPid = localStorage.getItem('qimen_primary_id');
+    
     for (let cb of selectedItems) {
-        const id = cb.value;
-        await fetch('/api/v1/history/delete', { method: 'POST', headers: buildAuthorizedHeaders(t), body: JSON.stringify({ record_id: id }) });
+        // 🌟 超強防禦：多重路徑抓取真實 ID，防止 cb.value 綁定失敗或變成 "on"
+        const id = (cb.value && cb.value !== 'on') ? cb.value : (cb.dataset.id || cb.id || cb.getAttribute('data-id'));
+        
+        // 🌟 關鍵修正：補齊 Content-Type 與 Authorization Headers，並雙重保險發送 ID
+        await fetch('/api/v1/history/delete', { 
+            method: 'POST', 
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + t
+            }, 
+            body: JSON.stringify({ id: id, record_id: id }) 
+        });
+        
         if (currentPid === id) localStorage.removeItem('qimen_primary_id');
     }
-    showToast(`已成功刪除 ${selectedItems.length} 筆紀錄`); fetchHistoryAndSync();
+    showToast(`已成功刪除 ${selectedItems.length} 筆紀錄`); 
+    fetchHistoryAndSync();
 };
 
 window.setPrimarySeeker = function(id) {
