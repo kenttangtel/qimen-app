@@ -1647,9 +1647,9 @@ window.viewHistoryDetail = async function(id) {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + t  // 🌟 關鍵修正：把通行證放到 Headers 正確位置
+                'Authorization': 'Bearer ' + t
             },
-            body: JSON.stringify({ record_id: id }) // 💡 身體只需傳送紀錄 ID 即可
+            body: JSON.stringify({ record_id: id }) // 🌟 補上這行！把要查詢的紀錄 ID 傳給後端
         });
         const d = await res.json();
         
