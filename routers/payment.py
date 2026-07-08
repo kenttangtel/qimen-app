@@ -176,10 +176,11 @@ def process_checkout_session(session, db):
     if update_payload:
         if use_supabase_admin:
             supabase_admin = get_supabase_admin()
-            update_resp = supabase_admin.from_("users").update(update_payload).eq("id", user.id).execute()
-            logger.info("Supabase admin update response: %s", update_resp)
-            if update_resp.error:
-                logger.error("Supabase admin update error detail: %s", update_resp.error)
+            try:
+                update_resp = supabase_admin.from_("users").update(update_payload).eq("id", user.id).execute()
+                logger.info("Supabase admin update response: %s", update_resp)
+            except Exception as e:
+                logger.error("Supabase admin update failed: %s", e)
                 # 紀錄錯誤但仍同步本地資料，避免前端讀不到已付款的能量
         if "stripe_customer_id" in update_payload:
             user.stripe_customer_id = update_payload["stripe_customer_id"]
