@@ -188,3 +188,67 @@ async def get_history_detail(
         created_at=format_created_at(entry.created_at),
         is_pinned=entry.is_pinned,
     )
+    # 🌟 進化版：刪除歷史紀錄（同時通吃 id 與 record_id，徹底解決 400 錯誤）
+@router.get("/api/v1/history/delete")
+@router.post("/api/v1/history/delete")
+@router.delete("/api/v1/history/delete")
+async def delete_history(
+    request: Request,
+    id: str = Query(None),
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    record_id = id
+    if not record_id:
+        try:
+            body = await request.json()
+            # 💡 關鍵修正：不管是傳 id 還是 record_id，後端都認得！
+            record_id = body.get("id") or body.get("record_id")
+        except Exception:
+            pass
+            
+    if not record_id:
+        raise HTTPException(status_code=400, detail="缺少紀錄 ID")
+        
+    entry = db.query(History).filter(History.id == record_id, History.user_id == user_id).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="找不到該筆紀錄")
+        
+    db.delete(entry)
+    db.commit()
+    return {"status": "success", "message": "紀錄已成功刪除"}
+
+
+# 🌟 進化版：查看歷史紀錄詳情（同步做雙重格式防禦）
+@router.get("/api/v1/history/detail")
+@router.post("/api/v1/history/detail")
+async def get_history_detail(
+    request: Request,
+    id: str = Query(None),
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    record_id = id
+    if not record_id:
+        try:
+            body = await request.json()
+            # 💡 關鍵修正：不管是傳 id 還是 record_id 都通吃
+            record_id = body.get("id") or body.get("record_id")
+        except Exception:
+            pass
+            
+    if not record_id:
+        raise HTTPException(status_code=400, detail="缺少紀錄 ID")
+        
+    entry = db.query(History).filter(History.id == record_id, History.user_id == user_id).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="找不到該筆紀錄")
+        
+    return HistoryResponse(
+        id=entry.id,
+        category=entry.category,
+        record_time=entry.record_time,
+        report_text=entry.report_text,
+        created_at=format_created_at(entry.created_at),
+        is_pinned=entry.is_pinned,
+    )
