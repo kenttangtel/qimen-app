@@ -906,6 +906,18 @@ async function fetchUserInfo() {
         const pName = document.getElementById('profileUsername');
         if (pName) pName.innerText = d.username;
         window.isVipUser = d.is_vip;
+        
+        const vBadge = document.getElementById('vipBadge');
+        if (vBadge) {
+            if (d.is_vip) {
+                vBadge.innerText = '尊享會員';
+                // 順便幫您把徽章換成尊貴的琥珀金底色，更顯尊榮！
+                vBadge.className = 'text-xs font-bold text-amber-600 dark:text-amber-400 mt-1 bg-amber-50 dark:bg-amber-950/30 inline-block px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-900/30';
+            } else {
+                vBadge.innerText = '免費會員';
+                vBadge.className = 'text-xs font-bold text-slate-400 mt-1 bg-slate-100 dark:bg-slate-700 inline-block px-2 py-0.5 rounded-md';
+            }
+        }
 
         if (typeof fetchHistoryAndSync === 'function') fetchHistoryAndSync(true);
     } catch (e) {
