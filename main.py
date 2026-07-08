@@ -36,8 +36,12 @@ app.mount("/static", StaticFiles(directory=WWW_DIR), name="static")
 def on_startup():
     try:
         init_db()
+    except RuntimeError as exc:
+        logger.exception("Startup failed due to runtime configuration error: %s", exc)
+        raise
     except Exception:
         logger.exception("Database initialization failed on startup")
+        raise
 
 
 @app.get("/", response_class=HTMLResponse)
