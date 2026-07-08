@@ -1120,26 +1120,32 @@ async function fetchHistoryAndSync(isSilent = false) {
             document.getElementById('destinyHistoryList').innerHTML = '<div class="text-center text-slate-400 py-10 text-sm font-bold"><i class="fa-solid fa-spinner fa-spin"></i> 載入中...</div>';
             document.getElementById('reportHistoryList').innerHTML = '<div class="text-center text-slate-400 py-10 text-sm font-bold"><i class="fa-solid fa-spinner fa-spin"></i> 載入中...</div>';
         }
-        
-        const res = await fetch('/api/v1/history/list',{method:'POST',headers: buildAuthorizedHeaders(t) });
-        const d = await res.json();
-        
-        if(d.status==='success') {
-            const dbDestinyRecords = d.data.filter(h => h.category && h.category.startsWith('「命盤」'));
 
-            window.destinySeekers = dbDestinyRecords.map(r => {
-                let sName = r.category.replace('「命盤」', '').trim();
-                return { id: r.id, name: sName, time: r.record_time };
-            });
-            let pid = localStorage.getItem('qimen_primary_id');
-            if (!window.destinySeekers.find(s => s.id === pid) && window.destinySeekers.length > 0) {
-                pid = window.destinySeekers[0].id;
-                localStorage.setItem('qimen_primary_id', pid);
-            }
-            
-            renderHistoryList('divination', d.data.filter(h => !h.category || !h.category.startsWith('「命盤」')));
-            renderHistoryList('destiny', dbDestinyRecords, pid);
+        const res = await fetch('/api/v1/history/list', { method: 'POST', headers: buildAuthorizedHeaders(t) });
+        const d = await res.json();
+
+        // 🌟 修正防禦 1：自動相容「物件帶 data」或「直接回傳陣列」兩種後端格式
+        const rawList = Array.isArray(d) ? d : (d.data || []);
+        
+        // 🌟 修正防禦 2：同時相容「有空格」與「沒空格」的命盤標籤，絕不漏看
+        const dbDestinyRecords = rawList.filter(h => h.category && (h.category.startsWith('「命盤」') || h.category.startsWith('「命盤」 ')));
+
+        window.destinySeekers = dbDestinyRecords.map(r => {
+            // 清理標籤時同時相容有無空格的情況
+            let sName = r.category.replace('「命盤」 ', '').replace('「命盤」', '').trim();
+            return { id: r.id, name: sName, time: r.record_time };
+        });
+
+        let pid = localStorage.getItem('qimen_primary_id');
+        if (!window.destinySeekers.find(s => s.id === pid) && window.destinySeekers.length > 0) {
+            pid = window.destinySeekers[0].id;
+            localStorage.setItem('qimen_primary_id', pid);
         }
+
+        // 🌟 修正防禦 3：同步修正渲染列表的過濾邏輯
+        renderHistoryList('divination', rawList.filter(h => !h.category || (!h.category.startsWith('「命盤」') && !h.category.startsWith('「命盤」 '))));
+        renderHistoryList('destiny', dbDestinyRecords, pid);
+
     } catch(e) { console.error("同步失敗", e); }
 }
 
