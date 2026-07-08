@@ -146,12 +146,16 @@ def process_checkout_session(session, db):
     use_supabase_admin = SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY
     update_payload = {}
 
-    if session.mode == "subscription":
+    session_mode = _safe_stripe_attr(session, "mode", "")
+    if session_mode == "subscription":
+        stripe_customer = _safe_stripe_attr(session, "customer", None)
+        stripe_subscription = _safe_stripe_attr(session, "subscription", None)
         update_payload = {
-            "stripe_customer_id": session.customer,
-            "stripe_subscription_id": session.subscription,
+            **({"stripe_customer_id": stripe_customer} if stripe_customer else {}),
+            **({"stripe_subscription_id": stripe_subscription} if stripe_subscription else {}),
             "subscription_status": "active",
             "membership_type": "monthly",
+            "is_vip": True,
         }
     else:
         price_id = _safe_session_metadata_value(session, "price_id")
@@ -163,6 +167,8 @@ def process_checkout_session(session, db):
             membership_type = plan["membership_type"]
             update_payload["membership_type"] = membership_type
             update_payload["subscription_status"] = "lifetime" if membership_type == "lifetime" else membership_type
+            if membership_type in ("monthly", "lifetime"):
+                update_payload["is_vip"] = True
 
         if plan.get("credits"):
             update_payload["credits"] = (user.credits or 0) + plan["credits"]
@@ -185,6 +191,8 @@ def process_checkout_session(session, db):
             user.membership_type = update_payload["membership_type"]
         if "credits" in update_payload:
             user.credits = update_payload["credits"]
+        if "is_vip" in update_payload:
+            user.is_vip = update_payload["is_vip"]
 
     record = CheckoutSessionRecord(
         id=_safe_stripe_attr(session, "id", None),
