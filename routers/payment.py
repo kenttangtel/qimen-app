@@ -163,14 +163,14 @@ def process_checkout_session(session, db):
         if not plan:
             return {"status": "error", "message": "Unknown plan"}
 
-    if plan.get("membership_type"):
+        if plan.get("membership_type"):
             membership_type = plan["membership_type"]
             update_payload["membership_type"] = membership_type
             update_payload["subscription_status"] = "lifetime" if membership_type == "lifetime" else membership_type
             if membership_type in ("monthly", "lifetime"):
                 update_payload["is_vip"] = True
             
-            # 🌟 核心新增：確保這裡的空格與上下完全對齊
+            # 🌟 永久會員大禮包：自動加碼送 10 點
             if membership_type == "lifetime":
                 update_payload["credits"] = (user.credits or 0) + 10
 
@@ -185,7 +185,6 @@ def process_checkout_session(session, db):
                 logger.info("Supabase admin update response: %s", update_resp)
             except Exception as e:
                 logger.error("Supabase admin update failed: %s", e)
-                # 紀錄錯誤但仍同步本地資料，避免前端讀不到已付款的能量
         if "stripe_customer_id" in update_payload:
             user.stripe_customer_id = update_payload["stripe_customer_id"]
         if "stripe_subscription_id" in update_payload:
