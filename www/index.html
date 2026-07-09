@@ -1651,22 +1651,47 @@ function toggleVoice() {
     isSpeaking = true; btn.innerHTML = '<i class="fa-solid fa-stop"></i> 停止播報'; group.classList.add('animate-pulse', 'bg-indigo-700'); group.classList.remove('bg-indigo-500');
 }
 
-// 🌟 處理「今日運程預測」點擊事件
-function handleTodayFortuneClick() {
-    // 1. 隱藏初始大按鈕容器，亮出結果版面
+// 🌟 升級完全體：處理「今日運程預測」點擊事件（全自動背景排盤 + 內容內嵌）
+async function handleTodayFortuneClick() {
+    // 1. 立即掀開蓋子：隱藏初始大按鈕，亮出運勢方位結果版面
     document.getElementById('todayFortuneInitialContainer').classList.add('hidden');
     document.getElementById('todayFortuneResultSection').classList.remove('hidden');
     
-    // 2. 觸發自動按當時的九宮盤來推演
-    // 💡 這裡直接串接您原本點擊「免費版吉凶」會觸發的排盤核心邏輯！
-    if (typeof openFreeDailyModal === "function") {
-        // 如果原本是用彈窗，我們可以命令它直接去跑推演邏輯並填入 #dailyFortuneGridContent 容器中
-        // 註：此處可根據您原本 openFreeDailyModal() 內的渲染清單進行功能對接
-        console.log("正在自動依據當前時間九宮盤進行吉凶方位推演...");
-        
-        // 範例：如果原本有現成的渲染，可以在這裡直接呼叫。
-        // 若原本 openFreeDailyModal 只是彈出舊彈窗，您可以將原本生成免費文字的邏輯改寫丟給 dailyFortuneGridContent.innerHTML
+    // 2. 核心大招：自動觸發當前時間的奇門九宮盤排盤（再也不用手動點立即排盤了！）
+    if (typeof calculateNow === "function") {
+        console.log("正在自動依據當前時間進行奇門盤局天體磁場校準...");
+        await calculateNow(); // 呼叫原本的「立即排盤」函數
     }
+    
+    // 3. 偷天換日：把原本要彈窗顯示的免費吉凶內容，直接「複製」並內嵌到我們的方框中
+    setTimeout(() => {
+        const originModal = document.getElementById('freeDailyModal');
+        const targetContainer = document.getElementById('dailyFortuneGridContent');
+        
+        if (originModal && targetContainer) {
+            // 抓取彈窗內層真正裝文字的白盒子（排除半透明背景遮罩）
+            const contentBox = originModal.querySelector('.bg-white') || originModal.querySelector('div[class*="bg-"]') || originModal;
+            
+            // 複製一份內容結構，避免破壞原本的功能
+            const clonedContent = contentBox.cloneNode(true);
+            
+            // 強制拔掉所有會讓它變成全螢幕死板彈窗的定位樣式（fixed, absolute, inset 等），讓它變溫順的內嵌區塊
+            clonedContent.className = clonedContent.className
+                .replace(/\bfixed\b/g, '')
+                .replace(/\babsolute\b/g, '')
+                .replace(/\binset-0\b/g, '')
+                .replace(/\bz-\d+\b/g, '')
+                .replace(/\bhidden\b/g, '');
+            
+            // 順手把原本彈窗右上角的「關閉按鈕 (X)」藏起來，因為內嵌在網頁裡就不需要打叉關閉了
+            const closeBtn = clonedContent.querySelector('button[onclick*="closeFreeDailyModal"]') || clonedContent.querySelector('.fa-xmark')?.parentElement;
+            if (closeBtn) closeBtn.style.display = 'none';
+            
+            // 完美刷入藍色框框，大功告成！
+            targetContainer.innerHTML = '';
+            targetContainer.appendChild(clonedContent);
+        }
+    }, 400); // 稍微延遲 400 毫秒，等待後端 API 排盤算命完成
 }
 
 // ==========================================
