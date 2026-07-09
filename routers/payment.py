@@ -163,19 +163,19 @@ def process_checkout_session(session, db):
         if not plan:
             return {"status": "error", "message": "Unknown plan"}
 
- if plan.get("membership_type"):
-        membership_type = plan["membership_type"]
-        update_payload["membership_type"] = membership_type
-        update_payload["subscription_status"] = "lifetime" if membership_type == "lifetime" else membership_type
-        if membership_type in ("monthly", "lifetime"):
-            update_payload["is_vip"] = True
-        
-        # 🌟 核心新增：如果買的是『永久會員』，直接在 update_payload 裡幫他塞入 +10 點基礎能量！
-        if membership_type == "lifetime":
-            update_payload["credits"] = (user.credits or 0) + 10
+    if plan.get("membership_type"):
+            membership_type = plan["membership_type"]
+            update_payload["membership_type"] = membership_type
+            update_payload["subscription_status"] = "lifetime" if membership_type == "lifetime" else membership_type
+            if membership_type in ("monthly", "lifetime"):
+                update_payload["is_vip"] = True
+            
+            # 🌟 核心新增：確保這裡的空格與上下完全對齊
+            if membership_type == "lifetime":
+                update_payload["credits"] = (user.credits or 0) + 10
 
-    if plan.get("credits"):
-        update_payload["credits"] = (user.credits or 0) + plan["credits"]
+        if plan.get("credits"):
+            update_payload["credits"] = (user.credits or 0) + plan["credits"]
 
     if update_payload:
         if use_supabase_admin:
