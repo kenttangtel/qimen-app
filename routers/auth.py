@@ -60,11 +60,13 @@ async def register(request: AuthRequest, db=Depends(get_db)):
             username=request.username,
             password_hash=hash_password(request.password),
             email=request.email,
+            credits=5,             # 🌟 核心修正：新註冊免費會員直接大方送 5 點！
+            membership_type="free" # 預設初始為免費會員
         )
-        db.add(user)
-        db.commit()
-        token = create_access_token({"sub": user.id})
-        return TokenResponse(access_token=token)
+        db.add(user) # [cite: 21]
+        db.commit() # [cite: 21]
+        token = create_access_token({"sub": user.id}) # [cite: 21]
+        return TokenResponse(access_token=token) # [cite: 21]
     except IntegrityError:
         traceback.print_exc()
         db.rollback()
@@ -101,5 +103,8 @@ def read_current_user(user: User = Depends(get_current_user)):
         subscription_status=user.subscription_status,
         gender=user.gender,
         bazi_birth_time=user.bazi_birth_time,
-        is_vip=user.membership_type in {"monthly", "lifetime"}
+        is_vip=user.membership_type in {"monthly", "lifetime"}, # 
+        # 🌟 核心修正：將資料庫的 datetime 物件安全轉換為 ISO 字串傳給前端
+        last_daily_fortune_at=user.last_daily_fortune_at.isoformat() if user.last_daily_fortune_at else None,
+        last_weekly_shipan_at=user.last_weekly_shipan_at.isoformat() if user.last_weekly_shipan_at else None
     )

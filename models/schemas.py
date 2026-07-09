@@ -85,6 +85,9 @@ class UserResponse(BaseModel):
     gender: Optional[str] = None
     bazi_birth_time: Optional[str] = None
     is_vip: bool = False
+    # 🌟 新增：將時間戳欄位暴露給前端，方便網頁做冷卻時間或額度顯示
+    last_daily_fortune_at: Optional[str] = None
+    last_weekly_shipan_at: Optional[str] = None
 
 
 class HistoryCreate(BaseModel):

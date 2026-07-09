@@ -38,7 +38,62 @@ logger = logging.getLogger(__name__)
 if not logger.handlers:
     logging.basicConfig(level=logging.INFO)
 
+from datetime import datetime, timedelta
+from fastapi import HTTPException
 
+def verify_and_deduct_credits(user, category: str, db):
+    """
+    🌟 奇門大師核心商業權限驗證閘門
+    """
+    current_time = datetime.now()
+    today_date = current_time.date()
+
+    # -------------------------------------------------------------------------
+    # 核心邏輯 A：個人專屬運程報告 (深度推演)
+    # -------------------------------------------------------------------------
+    if category in ["綜合運勢", "個人運程"]:
+        if user.membership_type == "free":
+            raise HTTPException(
+                status_code=403, 
+                detail="❌ 免費會員無法使用『個人專屬深度推演』！請先升級為尊享月費會員或永久會員。"
+            )
+        
+        if user.last_daily_fortune_at and user.last_daily_fortune_at.date() == today_date:
+            raise HTTPException(
+                status_code=403, 
+                detail="⏳ 您今日的免費個人運程報告額度已用完，請明天再試！"
+            )
+        
+        user.last_daily_fortune_at = current_time
+        db.commit()
+        return True
+
+    # -------------------------------------------------------------------------
+    # 核心邏輯 B：事盤推演
+    # -------------------------------------------------------------------------
+    elif category == "事盤":
+        if user.membership_type == "lifetime":
+            is_free_weekly_available = (
+                user.last_weekly_shipan_at is None or 
+                (current_time - user.last_weekly_shipan_at) >= timedelta(days=7)
+            )
+            if is_free_weekly_available:
+                user.last_weekly_shipan_at = current_time
+                db.commit()
+                return True
+        
+        if user.credits < 1:
+            raise HTTPException(
+                status_code=402, 
+                detail="🪙 您的基礎能量點數不足！無法進行事盤推演，請前往個人中心補充點數包。"
+            )
+        
+        user.credits -= 1
+        db.commit()
+        return True
+        
+    return True
+    
 def clean_stream_content(text: str) -> str:
     patterns = [
         (r"AI", "本大師"),

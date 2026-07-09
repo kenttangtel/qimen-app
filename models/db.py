@@ -23,13 +23,17 @@ class User(Base):
     username = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=True)
-    credits = Column(Integer, default=3)
+    credits = Column(Integer, default=5)  # 🌟 順手修正：資料庫預設點數同步升級為 5 點！
     membership_type = Column(String, default="free")
     stripe_customer_id = Column(String, nullable=True)
     stripe_subscription_id = Column(String, nullable=True)
     subscription_status = Column(String, default="inactive")
     gender = Column(String, nullable=True)
     bazi_birth_time = Column(String, nullable=True)
+    
+    # 🌟 核心新增：加在 User 的最底部（原第 32 行下方）
+    last_daily_fortune_at = Column(DateTime, nullable=True)  # 追蹤每日個人深度運程時間
+    last_weekly_shipan_at = Column(DateTime, nullable=True)  # 追蹤每週免費事盤時間
 
 
 class History(Base):
