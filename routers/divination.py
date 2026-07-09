@@ -93,7 +93,7 @@ def verify_and_deduct_credits(user, category: str, db):
         return True
         
     return True
-    
+
 def clean_stream_content(text: str) -> str:
     patterns = [
         (r"AI", "本大師"),
@@ -336,13 +336,20 @@ async def calculate_matrix(request: CalculationRequest) -> CalculationResponse:
 
 
 @router.post("/api/v1/divination/interpret")
-async def interpret_matrix(request: CalculationRequest, user: User = Depends(get_current_user)):
+async def interpret_matrix(
+    request: CalculationRequest, 
+    user: User = Depends(get_current_user),
+    db=Depends(get_db)  # 🌟 這裡直接帶入第 15 行已經準備好的 get_db
+):
     try:
         if not client:
             return StreamingResponse(iter(["**❌ 磁場連接異常**"]), media_type="text/event-stream")
-        # user is provided by the authentication dependency; if missing, dependency will raise HTTPException
+        
         if not user:
             raise HTTPException(status_code=401, detail="Unauthorized")
+            
+        # 🌟 在發送給 AI 算命前，先執行權限攔截與扣點驗證！
+        verify_and_deduct_credits(user, request.category, db)
 
         with engine.connect() as conn:
             # normalize VIP flag for downstream logic
