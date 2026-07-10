@@ -210,24 +210,44 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
 
 @router.post("/api/v1/auth/reset-password")
 async def reset_password(request: ResetPasswordRequest, db=Depends(get_db)):
-    # 同時相容用帳號或信箱查詢要求改密碼的人
-    user = db.query(User).filter((User.email == request.account) | (User.username == request.account)).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="找不到該用戶")
-    
-    # 驗證碼安全防禦檢查
-    if not user.reset_code or user.reset_code != request.code:
-        raise HTTPException(status_code=400, detail="安全驗證碼不正確")
+    try:
+        print(f"⚡ [奇門修改密碼] 收到修改密碼請求，目標帳號/信箱: {request.account}")
         
-    if not user.reset_code_expires or user.reset_code_expires < datetime.utcnow():
-        raise HTTPException(status_code=400, detail="驗證碼已超過 15 分鐘時效，請重新獲取")
+        # 同時相容用帳號或信箱查詢要求改密碼的人
+        user = db.query(User).filter((User.email == request.account) | (User.username == request.account)).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="找不到該用戶")
         
-    # 成功過關，強制進行新密碼改運雜湊
-    user.password_hash = hash_password(request.new_password)
-    
-    # 清空金鑰欄位，防止一碼多用
-    user.reset_code = None
-    user.reset_code_expires = None
-    db.commit()
-    
-    return {"status": "success", "message": "密碼修改成功！新磁場已同步，請重新登入。"}
+        # 1. 驗證碼安全防禦檢查
+        if not user.reset_code or user.reset_code.strip() != request.code.strip():
+            raise HTTPException(status_code=400, detail="安全驗證碼不正確")
+            
+        # 2. 🌟 終極修正：防禦時區對撞地雷！將資料庫時間統一轉為 naive 無時區時間進行安全比對
+        if user.reset_code_expires:
+            naive_expires = user.reset_code_expires.replace(tzinfo=None)
+            if naive_expires < datetime.utcnow():
+                raise HTTPException(status_code=400, detail="驗證碼已超過 15 分鐘時效，請重新獲取")
+        else:
+            raise HTTPException(status_code=400, detail="未偵測到驗證碼時效，請重新獲取")
+            
+        # 3. 成功過關，進行新密碼雜湊與寫入
+        print("⚡ [奇門修改密碼] 驗證碼比對成功！正在進行新密碼雜湊改運...")
+        user.password_hash = hash_password(request.new_password)
+        
+        # 4. 清空驗證碼欄位，防止一碼多用
+        user.reset_code = None
+        user.reset_code_expires = None
+        db.commit()
+        
+        print("⚡ [奇門修改密碼] 🎉 密碼修改成功，新磁場已同步完成！")
+        return {"status": "success", "message": "密碼修改成功！新磁場已同步，請重新登入。"}
+        
+    except HTTPException:
+        # 如果是我們自己主動拋出的自訂錯誤（400/404），直接放行讓前端顯示提示
+        raise
+    except Exception as e:
+        # 🌟 診斷外掛：如果是系統意外崩潰（500），實實地把錯誤原因打在 Render Logs 裡
+        import traceback
+        print("❌ [奇門修改密碼] 後端執行期間發生未知崩潰！")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"後端內部錯誤: {str(e)}")
