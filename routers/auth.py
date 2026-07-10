@@ -138,6 +138,7 @@ class ResetPasswordRequest(BaseModel):
 async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
     import os
     import urllib.request
+    import urllib.error
     import json
     
     search_target = request.account or request.email or request.username
@@ -154,7 +155,7 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
     user.reset_code_expires = datetime.utcnow() + timedelta(minutes=15)
     db.commit()
 
-    # 2. 直連 Render 後台設定的 Resend API 密鑰
+    # 2. 讀取環境變數
     resend_api_key = os.environ.get("RESEND_API_KEY")
     if not resend_api_key:
         raise HTTPException(status_code=500, detail="後端未偵測到 RESEND_API_KEY 環境變數")
@@ -169,21 +170,25 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
     """
     
     try:
-        # 3. 🌟 降維打擊：走 Port 443 安全網頁通道，百分之百穿透 Render 防火牆！
+        # 免費版固定發信人格式
         payload = {
-            "from": "奇門大師 <onboarding@resend.dev>",
+            "from": "onboarding@resend.dev",
             "to": [user.email],
             "subject": "【奇門大師】安全驗證碼",
             "html": mail_body
         }
         
+        # 3. 🌟 終極修正：加入偽裝瀏覽器的 User-Agent，並強行剔除 Token 前後可能誤複製的空格
+        headers = {
+            "Authorization": f"Bearer {resend_api_key.strip()}",
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        
         req = urllib.request.Request(
             "https://api.resend.com/emails",
             data=json.dumps(payload).encode("utf-8"),
-            headers={
-                "Authorization": f"Bearer {resend_api_key}",
-                "Content-Type": "application/json"
-            },
+            headers=headers,
             method="POST"
         )
         
@@ -193,6 +198,12 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
             print(f"⚡ [奇門發信] 🎉 Resend 響應成功: {res_body}")
             
         return {"status": "success", "message": "驗證碼已成功送達您的信箱"}
+        
+    except urllib.error.HTTPError as http_err:
+        # 🌟 偵錯終極外掛：如果被拒絕，強行把 Resend 官方回傳的「真心自白黑盒子」拆開印在日誌上！
+        error_reply = http_err.read().decode("utf-8")
+        print(f"❌ [奇門發信] Resend 拒絕連線！官方真實回應內容為: {error_reply}")
+        raise HTTPException(status_code=400, detail=f"發信服務商拒絕，原因: {error_reply}")
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"HTTP 管道發信失敗: {str(e)}")
