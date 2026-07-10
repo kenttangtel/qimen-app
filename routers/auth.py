@@ -162,14 +162,22 @@ async def forgot_password(request: AuthRequest, db=Depends(get_db)):
         raise HTTPException(status_code=500, detail="發送郵件失敗，請檢查後端 SMTP 配置")
 
 
-# 🌟 核心修正：定義一個只收 account 的乾淨模型
+# 🌟 萬能相容模型：不管前端丟什麼欄位過來，通通設為預設空字串，絕不噴 422 錯誤！
 class ForgotPasswordRequest(BaseModel):
-    account: str
+    account: str = ""
+    email: str = ""
+    username: str = ""
+    password: str = ""
 
 @router.post("/api/v1/auth/forgot-password")
 async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
+    # 🌟 萬能解鎖鑰匙：哪一個欄位有填，就用哪一個當作查找目標！
+    search_target = request.account or request.email or request.username
+    if not search_target:
+        raise HTTPException(status_code=400, detail="請輸入帳號或電子信箱")
+
     # 同時支援用戶輸入信箱或用戶名來查找
-    user = db.query(User).filter((User.email == request.account) | (User.username == request.account)).first()
+    user = db.query(User).filter((User.email == search_target) | (User.username == search_target)).first()
     if not user or not user.email:
         raise HTTPException(status_code=404, detail="找不到該用戶或該帳號未綁定信箱")
 
