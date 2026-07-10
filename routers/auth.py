@@ -1,13 +1,12 @@
 from datetime import datetime, timedelta
+from pydantic import BaseModel  # 🌟 核心修正：把漏掉的大腦憑證補進來！
 import secrets
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 import bcrypt
 import traceback
 from sqlalchemy.exc import IntegrityError
-
 from models.db import get_db, User
 from models.schemas import AuthRequest, TokenResponse, UserResponse
 import config
