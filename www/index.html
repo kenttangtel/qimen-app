@@ -920,7 +920,7 @@ function closeForgotPasswordModal() {
     document.getElementById('forgotPasswordModal').classList.add('hidden');
 }
 
-// 🌟 發送 Email 索取驗證碼
+// 🌟 降維打擊版：同時送出新舊後端想要的所有欄位，徹底繞過 Render 的 422 快取死穴！
 async function submitForgotPasswordEmail() {
     const account = document.getElementById('forgotAccountInput').value.trim();
     if (!account) return showToast("請輸入用戶名稱或信箱", true);
@@ -933,7 +933,11 @@ async function submitForgotPasswordEmail() {
         const res = await fetch('/api/v1/auth/forgot-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ account: account }) // 👈 核心修正：乾乾淨淨只傳 account
+            body: JSON.stringify({ 
+                account: account, 
+                username: account,               // 👈 餵給舊後端當作查找目標
+                password: "bypass_422_dummy_pwd" // 👈 餵給舊後端通過欄位檢查
+            })
         });
         const data = await res.json();
         if (res.ok) {
