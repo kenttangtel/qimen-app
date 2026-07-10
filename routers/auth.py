@@ -136,7 +136,9 @@ class ResetPasswordRequest(BaseModel):
 
 @router.post("/api/v1/auth/forgot-password")
 async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
-    # 萬能解鎖鑰匙：不論前端丟哪一個欄位過來，通通視為尋找目標
+    import os
+    import socket  # 🌟 終極補位：強制抓取純 IPv4 地址，徹底避開 IPv6 陷阱！
+    
     search_target = request.account or request.email or request.username
     if not search_target:
         raise HTTPException(status_code=400, detail="請輸入帳號或電子信箱")
@@ -145,17 +147,16 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
     if not user or not user.email:
         raise HTTPException(status_code=404, detail="找不到該用戶或該帳號未綁定信箱")
 
-    # 1. 生成 6 位數純數字驗證碼
+    # 1. 生成 6 位數驗證碼
     code = "".join(secrets.choice(string.digits) for _ in range(6))
     user.reset_code = code
     user.reset_code_expires = datetime.utcnow() + timedelta(minutes=15)
     db.commit()
 
-    # 2. 直連 Render 後台環境變數，安全又乾淨
+    # 2. 直連 Render 後台環境變數
     smtp_user = os.environ.get("SMTP_USER")
     smtp_pass = os.environ.get("SMTP_PASS")
     
-    # 留下伺服器診斷雷達訊號
     print(f"⚡ [奇門發信] 準備發送驗證碼至: {user.email}")
     print(f"⚡ [奇門發信] 當前偵測到的發信帳號為: {smtp_user}")
 
@@ -172,9 +173,13 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
         msg["From"] = smtp_user
         msg["To"] = user.email
 
-        # 3. 改走 465 SSL 加密管道搭配 10 秒逾時保護，全面破解 Render 的 IPv6 路由阻礙
+        # 🌟 核心突破：強行過濾掉不可用的 IPv6，直接鎖定 Google SMTP 的純 IPv4 數字地址！
+        print("⚡ [奇門發信] 正在強制解析 Google SMTP 的 IPv4 地址...")
+        smtp_ipv4 = socket.gethostbyname("smtp.gmail.com")
+        print(f"⚡ [奇門發信] 成功鎖定 IPv4 標靶: {smtp_ipv4}")
+
         print("⚡ [奇門發信] 正在建立 SMTP_SSL 安全加密連線...")
-        server = smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10)
+        server = smtplib.SMTP_SSL(smtp_ipv4, 465, timeout=10)
         
         print("⚡ [奇門發信] 正在登入 Google 驗證中心...")
         server.login(smtp_user, smtp_pass)
