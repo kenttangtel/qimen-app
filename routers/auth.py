@@ -170,7 +170,6 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
     
     try:
         # 3. 🌟 降維打擊：走 Port 443 安全網頁通道，百分之百穿透 Render 防火牆！
-        # 💡 註：免費測試帳號發信人固定用 onboarding@resend.dev，收件人必須是您註冊 Resend 的那個 Gmail
         payload = {
             "from": "奇門大師 <onboarding@resend.dev>",
             "to": [user.email],
