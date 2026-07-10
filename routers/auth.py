@@ -161,7 +161,7 @@ async def forgot_password(request: AuthRequest, db=Depends(get_db)):
         raise HTTPException(status_code=500, detail="發送郵件失敗，請檢查後端 SMTP 配置")
 
 
-# 🌟 核心修正：新增一個專屬的獨立模型，只收 account，徹底避開 422 驗證錯誤！
+# 🌟 核心修正：定義一個只收 account 的乾淨模型
 class ForgotPasswordRequest(BaseModel):
     account: str
 
