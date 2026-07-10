@@ -137,7 +137,8 @@ class ResetPasswordRequest(BaseModel):
 @router.post("/api/v1/auth/forgot-password")
 async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
     import os
-    import socket  # 🌟 核心黑科技：控管底層通訊協議
+    import urllib.request
+    import json
     
     search_target = request.account or request.email or request.username
     if not search_target:
@@ -153,12 +154,12 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
     user.reset_code_expires = datetime.utcnow() + timedelta(minutes=15)
     db.commit()
 
-    # 2. 直連 Render 後台環境變數
-    smtp_user = os.environ.get("SMTP_USER")
-    smtp_pass = os.environ.get("SMTP_PASS")
+    # 2. 直連 Render 後台設定的 Resend API 密鑰
+    resend_api_key = os.environ.get("RESEND_API_KEY")
+    if not resend_api_key:
+        raise HTTPException(status_code=500, detail="後端未偵測到 RESEND_API_KEY 環境變數")
     
-    print(f"⚡ [奇門發信] 準備發送驗證碼至: {user.email}")
-    print(f"⚡ [奇門發信] 當前偵測到的發信帳號為: {smtp_user}")
+    print(f"⚡ [奇門發信] 準備透過 Resend HTTP API 發送驗證碼至: {user.email}")
 
     mail_body = f"""
     <h3>【奇門大師】密碼重置驗證碼</h3>
@@ -167,39 +168,35 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
     <p>請於 15 分鐘內在網頁畫面上輸入此驗證碼。若非本人操作，請忽略此郵件。</p>
     """
     
-    # 3. 🌟 終極黑科技：強制底層走 IPv4 路由，並切換為 Render 綠色通道 Port 587 + STARTTLS！
-    original_getaddrinfo = socket.getaddrinfo
     try:
-        def ipv4_only_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
-            return original_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
-        socket.getaddrinfo = ipv4_only_getaddrinfo
-
-        msg = MIMEText(mail_body, "html", "utf-8")
-        msg["Subject"] = Header("【奇門大師】安全驗證碼", "utf-8")
-        msg["From"] = smtp_user
-        msg["To"] = user.email
-
-        print("⚡ [奇門發信] 正在建立 SMTP 連線 (IPv4 + Port 587 模式)...")
-        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=20)
+        # 3. 🌟 降維打擊：走 Port 443 安全網頁通道，百分之百穿透 Render 防火牆！
+        # 💡 註：免費測試帳號發信人固定用 onboarding@resend.dev，收件人必須是您註冊 Resend 的那個 Gmail
+        payload = {
+            "from": "奇門大師 <onboarding@resend.dev>",
+            "to": [user.email],
+            "subject": "【奇門大師】安全驗證碼",
+            "html": mail_body
+        }
         
-        print("⚡ [奇門發信] 正在啟動 STARTTLS 安全升級加密...")
-        server.starttls()
+        req = urllib.request.Request(
+            "https://api.resend.com/emails",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {resend_api_key}",
+                "Content-Type": "application/json"
+            },
+            method="POST"
+        )
         
-        print("⚡ [奇門發信] 正在登入 Google 驗證中心...")
-        server.login(smtp_user, smtp_pass)
-        
-        print("⚡ [奇門發信] 磁場大開！正在噴射郵件...")
-        server.sendmail(smtp_user, [user.email], msg.as_string())
-        server.quit()
-        
-        print("⚡ [奇門發信] 🎉 恭喜！驗證碼信件已成功全自動送達！")
+        print("⚡ [奇門發信] 正在向 Resend 伺服器發射 HTTP 請求...")
+        with urllib.request.urlopen(req, timeout=10) as response:
+            res_body = response.read().decode("utf-8")
+            print(f"⚡ [奇門發信] 🎉 Resend 響應成功: {res_body}")
+            
         return {"status": "success", "message": "驗證碼已成功送達您的信箱"}
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"發送郵件失敗: {str(e)}")
-    finally:
-        # 連線結束後務必還原全域設定，絕不影響其他元件
-        socket.getaddrinfo = original_getaddrinfo
+        raise HTTPException(status_code=500, detail=f"HTTP 管道發信失敗: {str(e)}")
 
 @router.post("/api/v1/auth/reset-password")
 async def reset_password(request: ResetPasswordRequest, db=Depends(get_db)):
