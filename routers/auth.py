@@ -24,6 +24,11 @@ security = HTTPBearer()
 ALGORITHM = config.JWT_ALGORITHM
 
 
+# 🌟 終極黑科技：全域記憶體金鑰保險箱！
+# 用來繞過資料庫缺少 reset_code 欄位的死穴，直接安全存放在伺服器記憶體中
+RESET_CODES = {}  # 結構：{ "user_id": {"code": "123456", "expires": datetime} }
+
+
 def get_secret_key() -> str:
     if not config.SECRET_KEY:
         raise RuntimeError("SECRET_KEY is required in environment variables for JWT authentication")
@@ -66,8 +71,8 @@ async def register(request: AuthRequest, db=Depends(get_db)):
             username=request.username,
             password_hash=hash_password(request.password),
             email=request.email,
-            credits=5,             # 🌟 新註冊免費會員直接送 5 點！
-            membership_type="free" # 預設初始為免費會員
+            credits=5,             
+            membership_type="free" 
         )
         db.add(user)
         db.commit()
@@ -119,7 +124,6 @@ def read_current_user(user: User = Depends(get_current_user)):
 # 🔐 忘記密碼與密碼重置核心完全體模組
 # ==========================================
 
-# 🌟 萬能相容模型：防禦一切前端新舊欄位打架，徹底消滅 422 錯誤
 class ForgotPasswordRequest(BaseModel):
     account: str = ""
     email: str = ""
@@ -127,7 +131,6 @@ class ForgotPasswordRequest(BaseModel):
     password: str = ""
 
 
-# 🌟 重置密碼驗證結構
 class ResetPasswordRequest(BaseModel):
     account: str
     code: str
@@ -151,11 +154,13 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
 
     # 1. 生成 6 位數驗證碼
     code = "".join(secrets.choice(string.digits) for _ in range(6))
-    user.reset_code = code
-    user.reset_code_expires = datetime.utcnow() + timedelta(minutes=15)
-    db.commit()
+    
+    # 🌟 修正點：改存入記憶體保險箱，用用戶的唯一 ID 當鑰匙
+    RESET_CODES[user.id] = {
+        "code": code,
+        "expires": datetime.utcnow() + timedelta(minutes=15)
+    }
 
-    # 2. 讀取環境變數
     resend_api_key = os.environ.get("RESEND_API_KEY")
     if not resend_api_key:
         raise HTTPException(status_code=500, detail="後端未偵測到 RESEND_API_KEY 環境變數")
@@ -170,7 +175,6 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
     """
     
     try:
-        # 免費版固定發信人格式
         payload = {
             "from": "onboarding@resend.dev",
             "to": [user.email],
@@ -178,11 +182,10 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
             "html": mail_body
         }
         
-        # 3. 🌟 終極修正：加入偽裝瀏覽器的 User-Agent，並強行剔除 Token 前後可能誤複製的空格
         headers = {
             "Authorization": f"Bearer {resend_api_key.strip()}",
             "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         }
         
         req = urllib.request.Request(
@@ -200,7 +203,6 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
         return {"status": "success", "message": "驗證碼已成功送達您的信箱"}
         
     except urllib.error.HTTPError as http_err:
-        # 🌟 偵錯終極外掛：如果被拒絕，強行把 Resend 官方回傳的「真心自白黑盒子」拆開印在日誌上！
         error_reply = http_err.read().decode("utf-8")
         print(f"❌ [奇門發信] Resend 拒絕連線！官方真實回應內容為: {error_reply}")
         raise HTTPException(status_code=400, detail=f"發信服務商拒絕，原因: {error_reply}")
@@ -208,45 +210,42 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"HTTP 管道發信失敗: {str(e)}")
 
+
 @router.post("/api/v1/auth/reset-password")
 async def reset_password(request: ResetPasswordRequest, db=Depends(get_db)):
     try:
         print(f"⚡ [奇門修改密碼] 收到修改密碼請求，目標帳號/信箱: {request.account}")
         
-        # 同時相容用帳號或信箱查詢要求改密碼的人
         user = db.query(User).filter((User.email == request.account) | (User.username == request.account)).first()
         if not user:
             raise HTTPException(status_code=404, detail="找不到該用戶")
         
-        # 1. 驗證碼安全防禦檢查
-        if not user.reset_code or user.reset_code.strip() != request.code.strip():
+        # 1. 🌟 修正點：從記憶體保險箱裡撈出這個用戶剛才生成的金鑰
+        cached_data = RESET_CODES.get(user.id)
+        if not cached_data:
+            raise HTTPException(status_code=400, detail="請先獲取驗證碼，或驗證碼已失效")
+            
+        if cached_data["code"].strip() != request.code.strip():
             raise HTTPException(status_code=400, detail="安全驗證碼不正確")
             
-        # 2. 🌟 終極修正：防禦時區對撞地雷！將資料庫時間統一轉為 naive 無時區時間進行安全比對
-        if user.reset_code_expires:
-            naive_expires = user.reset_code_expires.replace(tzinfo=None)
-            if naive_expires < datetime.utcnow():
-                raise HTTPException(status_code=400, detail="驗證碼已超過 15 分鐘時效，請重新獲取")
-        else:
-            raise HTTPException(status_code=400, detail="未偵測到驗證碼時效，請重新獲取")
+        # 2. 檢查記憶體時間是否過期
+        if cached_data["expires"] < datetime.utcnow():
+            raise HTTPException(status_code=400, detail="驗證碼已超過 15 分鐘時效，請重新獲取")
             
-        # 3. 成功過關，進行新密碼雜湊與寫入
-        print("⚡ [奇門修改密碼] 驗證碼比對成功！正在進行新密碼雜湊改運...")
+        # 3. 驗證完全過關，進行新密碼雜湊與寫入
+        print("⚡ [奇門修改密碼] 驗證碼完美對位！正在進行新密碼雜湊改運...")
         user.password_hash = hash_password(request.new_password)
-        
-        # 4. 清空驗證碼欄位，防止一碼多用
-        user.reset_code = None
-        user.reset_code_expires = None
         db.commit()
+        
+        # 4. 成功後清空該用戶的記憶體金鑰，防止一碼多用
+        RESET_CODES.pop(user.id, None)
         
         print("⚡ [奇門修改密碼] 🎉 密碼修改成功，新磁場已同步完成！")
         return {"status": "success", "message": "密碼修改成功！新磁場已同步，請重新登入。"}
         
     except HTTPException:
-        # 如果是我們自己主動拋出的自訂錯誤（400/404），直接放行讓前端顯示提示
         raise
     except Exception as e:
-        # 🌟 診斷外掛：如果是系統意外崩潰（500），實實地把錯誤原因打在 Render Logs 裡
         import traceback
         print("❌ [奇門修改密碼] 後端執行期間發生未知崩潰！")
         traceback.print_exc()
