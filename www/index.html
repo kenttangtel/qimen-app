@@ -583,7 +583,36 @@
             </p>
         </div>
     </div>
-              
+
+ <div id="forgotPasswordModal" class="fixed inset-0 glass-overlay flex justify-center items-center z-[115] p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 w-full max-w-md shadow-2xl relative border border-slate-100 dark:border-slate-700 text-slate-800 dark:text-slate-100">
+            <button onclick="closeForgotPasswordModal()" class="absolute top-4 right-5 text-slate-400 hover:text-slate-600 transition text-2xl font-bold">&times;</button>
+            <h3 class="text-2xl font-black text-center mb-6 tracking-wide">找回您的密碼</h3>
+            
+            <div id="forgotStep1">
+                <label class="block text-slate-400 text-xs font-bold mb-2 ml-1">請輸入您的註冊帳號或電子信箱：</label>
+                <div class="relative mb-5">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-envelope"></i></span>
+                    <input type="text" id="forgotAccountInput" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-10 pr-4 text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition" placeholder="Username or Email">
+                </div>
+                <button onclick="submitForgotPasswordEmail()" id="forgotSendBtn" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black py-4 rounded-xl shadow-lg shadow-purple-500/30 hover:scale-[1.02] active:scale-95 transition-all">發送安全驗證碼</button>
+            </div>
+
+            <div id="forgotStep2" class="hidden">
+                <div class="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50 rounded-xl p-3 text-xs text-indigo-700 dark:text-indigo-400 mb-5 text-center font-bold">
+                    <i class="fa-solid fa-circle-info mr-1"></i> 驗證碼已發送，請檢查您的垃圾郵件箱。
+                </div>
+                <label class="block text-slate-400 text-xs font-bold mb-2 ml-1">6 位數驗證碼：</label>
+                <input type="text" id="forgotCodeInput" maxlength="6" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-center font-mono tracking-widest text-lg mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500 text-slate-800 dark:text-slate-100" placeholder="000000">
+                
+                <label class="block text-slate-400 text-xs font-bold mb-2 ml-1">設定您的全新密碼：</label>
+                <input type="password" id="forgotNewPasswordInput" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 mb-6 focus:outline-none focus:ring-2 focus:ring-purple-500 text-slate-800 dark:text-slate-100" placeholder="請輸入新密碼">
+                
+                <button onclick="submitResetPasswordFinal()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black py-4 rounded-xl shadow-lg shadow-emerald-500/30 hover:scale-[1.02] active:scale-95 transition-all">確認修改並登入</button>
+            </div>
+        </div>
+    </div>   
+
 <script>
 // ==========================================
 // 🌟 1. 全域變數與核心字典
@@ -876,16 +905,79 @@ async function handleAuth() {
     }
 }
 
-async function openForgotPasswordModal() {
-    const email = prompt("請輸入您的註冊 Email：");
-    if (!email) return;
-    showToast("郵件處理中...");
+// 🌟 忘記密碼 UI 視窗開關控制
+function openForgotPasswordModal() {
+    // 順手把原本的登入 Modal 藏起來，騰出乾淨空間
+    const authModal = document.getElementById('authModal');
+    if (authModal) authModal.classList.add('hidden');
+    
+    document.getElementById('forgotPasswordModal').classList.remove('hidden');
+    document.getElementById('forgotStep1').classList.remove('hidden');
+    document.getElementById('forgotStep2').classList.add('hidden');
+}
+
+function closeForgotPasswordModal() {
+    document.getElementById('forgotPasswordModal').classList.add('hidden');
+}
+
+// 🌟 發送 Email 索取驗證碼
+async function submitForgotPasswordEmail() {
+    const account = document.getElementById('forgotAccountInput').value.trim();
+    if (!account) return showToast("請輸入用戶名稱或信箱", true);
+    
+    const btn = document.getElementById('forgotSendBtn');
+    btn.disabled = true;
+    btn.innerText = "正在傳送磁場信號...";
+
     try {
         const res = await fetch('/api/v1/auth/forgot-password', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email })
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ account: account }) // 👈 核心修正：乾乾淨淨只傳 account
         });
-        const data = await res.json(); alert(data.message);
-    } catch (e) { showToast("發送失敗", true); }
+        const data = await res.json();
+        if (res.ok) {
+            showToast("驗證碼已火速飛往您的信箱！");
+            document.getElementById('forgotStep1').classList.add('hidden');
+            document.getElementById('forgotStep2').classList.remove('hidden');
+        } else {
+            showToast(data.detail || "發送失敗，請確認資料是否正確", true);
+        }
+    } catch (err) {
+        showToast("天體連線異常，請稍後再試", true);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "發送安全驗證碼";
+    }
+}
+
+// 🌟 送出 6 位數密碼與驗證碼進行修改
+async function submitResetPasswordFinal() {
+    const account = document.getElementById('forgotAccountInput').value.trim();
+    const code = document.getElementById('forgotCodeInput').value.trim();
+    const newPassword = document.getElementById('forgotNewPasswordInput').value.trim();
+
+    if (!code || code.length !== 6) return showToast("請輸入完整的 6 位數驗證碼", true);
+    if (!newPassword || newPassword.length < 4) return showToast("新密碼長度太短", true);
+
+    try {
+        const res = await fetch('/api/v1/auth/reset-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ account: account, code: code, new_password: newPassword })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast("🌟 密碼改運成功！請用新密碼進行登入。");
+            closeForgotPasswordModal();
+            const authModal = document.getElementById('authModal');
+            if (authModal) authModal.classList.remove('hidden');
+        } else {
+            showToast(data.detail || "重置失敗，驗證碼可能不正確", true);
+        }
+    } catch (err) {
+        showToast("磁場紊亂，重置失敗", true);
+    }
 }
 
 async function fetchUserInfo() {
