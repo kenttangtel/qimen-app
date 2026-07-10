@@ -212,8 +212,8 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
         msg["From"] = smtp_user
         msg["To"] = user.email
 
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
+        # 🌟 終極修正：改用內建的 SMTP_SSL 走 Port 465 管道，強制繞過 Render 的 IPv6 路由死穴！
+        server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
         server.login(smtp_user, smtp_pass)
         server.sendmail(smtp_user, [user.email], msg.as_string())
         server.quit()
