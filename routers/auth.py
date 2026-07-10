@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from pydantic import BaseModel  # 🌟 核心修正：把漏掉的大腦憑證補進來！
+import string  # 🌟 核心補位：給後端隨機生成 6 位數純數字驗證碼使用！
 import secrets
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
