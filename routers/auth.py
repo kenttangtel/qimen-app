@@ -137,7 +137,7 @@ class ResetPasswordRequest(BaseModel):
 @router.post("/api/v1/auth/forgot-password")
 async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
     import os
-    import socket  # 🌟 核心黑科技：用來控管底層通訊協議
+    import socket  # 🌟 核心黑科技：控管底層通訊協議
     
     search_target = request.account or request.email or request.username
     if not search_target:
@@ -167,11 +167,10 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
     <p>請於 15 分鐘內在網頁畫面上輸入此驗證碼。若非本人操作，請忽略此郵件。</p>
     """
     
-    # 3. 🌟 核心黑科技：強制全域解析只准走 IPv4 路由，但代入域名確保 SSL 握手完美通關！
+    # 3. 🌟 終極黑科技：強制底層走 IPv4 路由，並切換為 Render 綠色通道 Port 587 + STARTTLS！
     original_getaddrinfo = socket.getaddrinfo
     try:
         def ipv4_only_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
-            # 強制將協定家族限定為 socket.AF_INET (即純 IPv4)，完美繞過 Render IPv6 撞牆地雷
             return original_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
         socket.getaddrinfo = ipv4_only_getaddrinfo
 
@@ -180,9 +179,11 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
         msg["From"] = smtp_user
         msg["To"] = user.email
 
-        print("⚡ [奇門發信] 正在建立 SMTP_SSL 加密連線 (域名相容 IPv4 模式)...")
-        # 將 timeout 寬容度拉長到 20 秒，確保免費伺服器有充足時間反應
-        server = smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=20)
+        print("⚡ [奇門發信] 正在建立 SMTP 連線 (IPv4 + Port 587 模式)...")
+        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=20)
+        
+        print("⚡ [奇門發信] 正在啟動 STARTTLS 安全升級加密...")
+        server.starttls()
         
         print("⚡ [奇門發信] 正在登入 Google 驗證中心...")
         server.login(smtp_user, smtp_pass)
@@ -197,7 +198,7 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"發送郵件失敗: {str(e)}")
     finally:
-        # 🌟 萬分重要：連線結束後務必還原全域設定，絕對不能影響到其他資料庫連線！
+        # 連線結束後務必還原全域設定，絕不影響其他元件
         socket.getaddrinfo = original_getaddrinfo
 
 @router.post("/api/v1/auth/reset-password")
