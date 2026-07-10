@@ -162,7 +162,7 @@ async def forgot_password(request: AuthRequest, db=Depends(get_db)):
         raise HTTPException(status_code=500, detail="發送郵件失敗，請檢查後端 SMTP 配置")
 
 
-# 🌟 萬能相容模型：不管前端丟什麼欄位過來，通通設為預設空字串，絕不噴 422 錯誤！
+# 🌟 萬能相容模型：阻絕一切前端欄位打架
 class ForgotPasswordRequest(BaseModel):
     account: str = ""
     email: str = ""
@@ -171,29 +171,29 @@ class ForgotPasswordRequest(BaseModel):
 
 @router.post("/api/v1/auth/forgot-password")
 async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
-    # 🌟 萬能解鎖鑰匙：哪一個欄位有填，就用哪一個當作查找目標！
+    import os  # 👈 核心修正：引入作業系統模組
+    
     search_target = request.account or request.email or request.username
     if not search_target:
         raise HTTPException(status_code=400, detail="請輸入帳號或電子信箱")
 
-    # 同時支援用戶輸入信箱或用戶名來查找
     user = db.query(User).filter((User.email == search_target) | (User.username == search_target)).first()
     if not user or not user.email:
         raise HTTPException(status_code=404, detail="找不到該用戶或該帳號未綁定信箱")
 
-    # 1. 隨機生成 6 位數純數字驗證碼
+    # 1. 生成 6 位數驗證碼
     code = "".join(secrets.choice(string.digits) for _ in range(6))
-    
-    # 2. 設定 15 分鐘有效期限
     user.reset_code = code
     user.reset_code_expires = datetime.utcnow() + timedelta(minutes=15)
     db.commit()
 
-    # 3. 取得發信設定
-    smtp_server = config.SMTP_SERVER if hasattr(config, "SMTP_SERVER") else "smtp.gmail.com"
-    smtp_port = config.SMTP_PORT if hasattr(config, "SMTP_PORT") else 587
-    smtp_user = config.SMTP_USER if hasattr(config, "SMTP_USER") else "您的發信郵件@gmail.com"
-    smtp_pass = config.SMTP_PASS if hasattr(config, "SMTP_PASS") else "您的密碼"
+    # 2. 🌟 盲點大突破：繞過 config.py，直接強行對接您在 Render 後台設定的環境變數！
+    smtp_user = os.environ.get("SMTP_USER")
+    smtp_pass = os.environ.get("SMTP_PASS")
+    
+    # 在 Render Logs 裡印出凡走過必留痕跡的雷達訊號
+    print(f"⚡ [奇門發信] 準備發送驗證碼至: {user.email}")
+    print(f"⚡ [奇門發信] 當前偵測到的發信帳號為: {smtp_user}")
 
     mail_body = f"""
     <h3>【奇門大師】密碼重置驗證碼</h3>
@@ -212,12 +212,20 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
         msg["From"] = smtp_user
         msg["To"] = user.email
 
-        # 🌟 終極修正：改用內建的 SMTP_SSL 走 Port 465 管道，強制繞過 Render 的 IPv6 路由死穴！
-        server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+        # 3. 🌟 限時強制令：改走 465 加密管道，並加上 timeout=10 秒限制，絕不允許連線無限期卡死！
+        print("⚡ [奇門發信] 正在建立 SMTP_SSL 安全加密連線...")
+        server = smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10)
+        
+        print("⚡ [奇門發信] 正在登入 Google 驗證中心...")
         server.login(smtp_user, smtp_pass)
+        
+        print("⚡ [奇門發信] 磁場大開！正在噴射郵件...")
         server.sendmail(smtp_user, [user.email], msg.as_string())
         server.quit()
+        
+        print("⚡ [奇門發信] 🎉 恭喜！信件已全自動成功送達！")
         return {"status": "success", "message": "驗證碼已成功送達您的信箱"}
     except Exception as e:
+        import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail="發送郵件失敗，請檢查後端 SMTP 配置")
+        raise HTTPException(status_code=500, detail=f"發送郵件失敗: {str(e)}")
