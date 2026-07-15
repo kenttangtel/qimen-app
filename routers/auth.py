@@ -105,12 +105,22 @@ async def login(request: AuthRequest, db=Depends(get_db)):
 
 @router.get("/api/v1/auth/me", response_model=UserResponse)
 def read_current_user(user: User = Depends(get_current_user)):
+    # 🌟 建立高雅的身分對照表
+    MEMBERSHIP_DISPLAY_MAP = {
+        "free": "緣起會員",
+        "monthly": "月費尊享會員",
+        "lifetime": "終身至尊會員"
+    }
+    
+    display_name = MEMBERSHIP_DISPLAY_MAP.get(user.membership_type, "緣起會員")
+
     return UserResponse(
         id=user.id,
         username=user.username,
         email=user.email,
         credits=user.credits,
         membership_type=user.membership_type,
+        membership_display=display_name,  # 🌟 實實地將稱號送往前端
         subscription_status=user.subscription_status,
         gender=user.gender,
         bazi_birth_time=user.bazi_birth_time,

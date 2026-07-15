@@ -1018,13 +1018,21 @@ async function fetchUserInfo() {
         
         const vBadge = document.getElementById('vipBadge');
         if (vBadge) {
-            if (d.is_vip) {
-                vBadge.innerText = '尊享會員';
-                // 順便幫您把徽章換成尊貴的琥珀金底色，更顯尊榮！
-                vBadge.className = 'text-xs font-bold text-amber-600 dark:text-amber-400 mt-1 bg-amber-50 dark:bg-amber-950/30 inline-block px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-900/30';
+            // 🌟 1. 直接讀取後端送過來的優雅稱號
+            vBadge.innerText = d.membership_display || '緣起會員';
+
+            // 🌟 2. 根據不同的會員類型（free / monthly / lifetime）渲染不同等級的能量磁場
+            const mType = d.membership_type || 'free';
+
+            if (mType === 'lifetime') {
+                // 👑 終身至尊會員：金光流轉，至尊霸氣
+                vBadge.className = 'text-xs font-bold text-amber-900 dark:text-amber-100 mt-1 bg-gradient-to-r from-amber-200 to-yellow-400 dark:from-amber-950/50 dark:to-yellow-700/50 inline-block px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-800 shadow-sm shadow-amber-500/20';
+            } else if (mType === 'monthly') {
+                // 💎 月費尊享會員：皇家深靛，優雅尊榮
+                vBadge.className = 'text-xs font-bold text-indigo-700 dark:text-indigo-300 mt-1 bg-indigo-50 dark:bg-indigo-950/30 inline-block px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-900/30';
             } else {
-                vBadge.innerText = '免費會員';
-                vBadge.className = 'text-xs font-bold text-slate-400 mt-1 bg-slate-100 dark:bg-slate-700 inline-block px-2 py-0.5 rounded-md';
+                // 🍃 緣起會員：沉穩低調，璞玉待琢
+                vBadge.className = 'text-xs font-bold text-slate-500 dark:text-slate-400 mt-1 bg-slate-100 dark:bg-slate-800/50 inline-block px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700/50';
             }
         }
 

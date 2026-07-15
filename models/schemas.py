@@ -81,6 +81,7 @@ class UserResponse(BaseModel):
     email: Optional[str] = None
     credits: int = 0
     membership_type: str = "free"
+    membership_display: str = "緣起會員"  # 🌟 加在這裡！預設顯示為緣起會員
     subscription_status: str = "inactive"
     gender: Optional[str] = None
     bazi_birth_time: Optional[str] = None
