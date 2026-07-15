@@ -1,7 +1,10 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import logging
 import re
 import pytz
+import traceback
+import secrets
+import string
 
 from fastapi import APIRouter, HTTPException, Depends, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -38,21 +41,24 @@ logger = logging.getLogger(__name__)
 if not logger.handlers:
     logging.basicConfig(level=logging.INFO)
 
-from datetime import datetime, timedelta
-from fastapi import HTTPException
 
 def verify_and_deduct_credits(user, category: str, db):
     """
-    🌟 奇門大師核心商業權限驗證閘門
+    🌟 奇門大師核心商業權限驗證閘門 (統一收納優化版)
     """
     current_time = datetime.now()
     today_date = current_time.date()
+    today_str = date.today().isoformat()
+    month_str = date.today().strftime("%Y-%m")
+    
+    membership = getattr(user, "membership_type", "free")
+    is_vip = membership in ("monthly", "lifetime")
 
     # -------------------------------------------------------------------------
-    # 核心邏輯 A：個人專屬運程報告 (深度推演)
+    # 核心邏輯 A：個人專屬每日運程報告 (深度推演)
     # -------------------------------------------------------------------------
-    if category in ["綜合運勢", "個人運程"]:
-        if user.membership_type == "free":
+    if "運程" in category or "運勢" in category:
+        if not is_vip:
             raise HTTPException(
                 status_code=403, 
                 detail="❌ 免費會員無法使用『個人專屬深度推演』！請先升級為尊享月費會員或永久會員。"
@@ -71,8 +77,9 @@ def verify_and_deduct_credits(user, category: str, db):
     # -------------------------------------------------------------------------
     # 核心邏輯 B：事盤推演
     # -------------------------------------------------------------------------
-    elif category == "事盤":
-        if user.membership_type == "lifetime":
+    elif "事盤" in category:
+        # 永久會員每 7 天可以免費推演一次
+        if membership == "lifetime":
             is_free_weekly_available = (
                 user.last_weekly_shipan_at is None or 
                 (current_time - user.last_weekly_shipan_at) >= timedelta(days=7)
@@ -91,8 +98,38 @@ def verify_and_deduct_credits(user, category: str, db):
         user.credits -= 1
         db.commit()
         return True
+
+    # -------------------------------------------------------------------------
+    # 核心邏輯 C：命盤推演
+    # -------------------------------------------------------------------------
+    elif "命盤" in category:
+        is_free = False
+        # VIP 會員每個月第一次看命盤免費
+        if is_vip:
+            # 查詢本月是否有過命盤歷史紀錄
+            result = db.execute(
+                text("SELECT count(*) AS cnt FROM history WHERE user_id=:user_id AND category LIKE :category AND created_at LIKE :created_at"),
+                {
+                    "user_id": user.id,
+                    "category": "%「命盤」%",
+                    "created_at": month_str + "%"
+                }
+            )
+            if result.mappings().first()["cnt"] == 0:
+                is_free = True
+
+        if not is_free:
+            if user.credits < 1:
+                raise HTTPException(
+                    status_code=402, 
+                    detail="🪙 您的基礎能量點數不足！無法進行命盤推演，請前往個人中心補充點數包。"
+                )
+            user.credits -= 1
+            db.commit()
+        return True
         
     return True
+
 
 def clean_stream_content(text: str) -> str:
     patterns = [
@@ -137,7 +174,6 @@ def normalize_time_to_hk(request_time: str) -> tuple[str, datetime]:
 def get_user_by_token(token: str | None) -> User | None:
     if not token:
         return None
-    # First try JWT decode (tokens issued by auth.login)
     try:
         payload = jwt.decode(token, config.SECRET_KEY, algorithms=[config.JWT_ALGORITHM])
         user_id = payload.get("sub")
@@ -146,12 +182,10 @@ def get_user_by_token(token: str | None) -> User | None:
                 res = conn.execute(text("SELECT id, credits, membership_type FROM users WHERE id=:uid"), {"uid": user_id})
                 row = res.mappings().first()
                 if row:
-                    # normalize is_vip flag for legacy code
                     row = dict(row)
                     row["is_vip"] = row.get("membership_type") in ("monthly", "lifetime")
                     return row
     except JWTError:
-        # not a JWT or invalid JWT, fallback to session lookup
         pass
 
     db = SessionLocal()
@@ -162,7 +196,6 @@ def get_user_by_token(token: str | None) -> User | None:
         user = db.query(User).filter(User.id == session_record.user_id).first()
         if not user:
             return None
-        # return mapping-like object similar to the SQL path above
         return {"id": user.id, "credits": user.credits, "membership_type": user.membership_type, "is_vip": user.membership_type in ("monthly", "lifetime")}
     finally:
         db.close()
@@ -186,30 +219,14 @@ def build_matrix_response(request_time: str, user: User | None = None) -> Calcul
     hour_xk = RuleEngine.calculate_xun_kong(h_s, h_b)
     ri_xk = RuleEngine.calculate_xun_kong(d_s, d_b)
     horse_map = {
-        "申": "艮宮",
-        "子": "艮宮",
-        "辰": "艮宮",
-        "寅": "坤宮",
-        "午": "坤宮",
-        "戌": "坤宮",
-        "亥": "巽宮",
-        "卯": "巽宮",
-        "未": "巽宮",
-        "巳": "乾宮",
-        "酉": "乾宮",
-        "丑": "乾宮",
+        "申": "艮宮", "子": "艮宮", "辰": "艮宮",
+        "寅": "坤宮", "午": "坤宮", "戌": "坤宮",
+        "亥": "巽宮", "卯": "巽宮", "未": "巽宮",
+        "巳": "乾宮", "酉": "乾宮", "丑": "乾宮",
     }
     wu_bu_yu_map = {
-        "甲": "庚",
-        "乙": "辛",
-        "丙": "壬",
-        "丁": "癸",
-        "戊": "甲",
-        "己": "乙",
-        "庚": "丙",
-        "辛": "丁",
-        "壬": "戊",
-        "癸": "己",
+        "甲": "庚", "乙": "辛", "丙": "壬", "丁": "癸", "戊": "甲",
+        "己": "乙", "庚": "丙", "辛": "丁", "壬": "戊", "癸": "己",
     }
     term = lunar.getPrevJieQi(True).getName()
     qj = QimenEngine.calculate_ju(term, d_s, d_b)
@@ -236,15 +253,7 @@ def build_matrix_response(request_time: str, user: User | None = None) -> Calcul
     )
     q_matrix = []
     for p_n in [
-        "坎宮",
-        "坤宮",
-        "震宮",
-        "巽宮",
-        "中宮",
-        "乾宮",
-        "兌宮",
-        "艮宮",
-        "離宮",
+        "坎宮", "坤宮", "震宮", "巽宮", "中宮", "乾宮", "兌宮", "艮宮", "離宮",
     ]:
         h_t = hp["stems"].get(p_n, "")
         e_t = ep.get(p_n, "")
@@ -326,7 +335,6 @@ async def calculate_route(request: CalculationRequest) -> CalculationResponse:
 
 async def calculate_matrix(request: CalculationRequest) -> CalculationResponse:
     user = get_user_by_token(request.token)
-    # support both ORM User and mapping returned by legacy token lookup
     user_membership = getattr(user, "membership_type", None) if user is not None else None
     if not user_membership and isinstance(user, dict):
         user_membership = user.get("membership_type")
@@ -339,7 +347,7 @@ async def calculate_matrix(request: CalculationRequest) -> CalculationResponse:
 async def interpret_matrix(
     request: CalculationRequest, 
     user: User = Depends(get_current_user),
-    db=Depends(get_db)  # 🌟 這裡直接帶入第 15 行已經準備好的 get_db
+    db=Depends(get_db)
 ):
     try:
         if not client:
@@ -348,66 +356,23 @@ async def interpret_matrix(
         if not user:
             raise HTTPException(status_code=401, detail="Unauthorized")
             
-        # 🌟 在發送給 AI 算命前，先執行權限攔截與扣點驗證！
+        # 🌟 1. 統一在守門員直接進行扣點與免費額度判斷！
         verify_and_deduct_credits(user, request.category, db)
 
-        with engine.connect() as conn:
-            # normalize VIP flag for downstream logic
-            is_vip = get_user_field(user, "membership_type") in ("monthly", "lifetime")
+        # 🌟 2. 為了後續提示詞生成，我們依然保持歷史記錄查詢，但完全移除了重複的 SQL 扣點代碼！
+        seeker_info_prompt = ""
+        is_destiny = "「命盤」" in request.category
+        is_vip = user.membership_type in ("monthly", "lifetime")
 
-            is_free = False
-            today_str = date.today().isoformat()
-            month_str = date.today().strftime("%Y-%m")
-
-            if is_vip:
-                if "專屬每日運程" in request.category:
+        if is_vip and not is_destiny:
+            seeker_match = re.search(r"\(求測人：(.*?)\)", request.question)
+            if seeker_match:
+                seeker_name = seeker_match.group(1)
+                with engine.connect() as conn:
                     result = conn.execute(
-                        text(
-                            "SELECT count(*) AS cnt FROM history WHERE user_id=:user_id AND category LIKE :category AND created_at LIKE :created_at"
-                        ),
+                        text("SELECT record_time FROM history WHERE user_id=:user_id AND category=:category ORDER BY created_at DESC LIMIT 1"),
                         {
-                            "user_id": get_user_field(user, "id"),
-                            "category": "%專屬每日運程%",
-                            "created_at": today_str + "%",
-                        },
-                    )
-                    if result.mappings().first()["cnt"] == 0:
-                        is_free = True
-                elif "「命盤」" in request.category:
-                    result = conn.execute(
-                        text(
-                            "SELECT count(*) AS cnt FROM history WHERE user_id=:user_id AND category LIKE :category AND created_at LIKE :created_at"
-                        ),
-                        {
-                            "user_id": get_user_field(user, "id"),
-                            "category": "%「命盤」%",
-                            "created_at": month_str + "%",
-                        },
-                    )
-                    if result.mappings().first()["cnt"] == 0:
-                        is_free = True
-
-            if not is_free:
-                if get_user_field(user, "credits", 0) < 1:
-                    return StreamingResponse(iter(["**💎 推演能量不足**"]), media_type="text/event-stream")
-                conn.execute(
-                    text("UPDATE users SET credits = credits - 1 WHERE id=:user_id"),
-                    {"user_id": get_user_field(user, "id")},
-                )
-
-            seeker_info_prompt = ""
-            is_destiny = "「命盤」" in request.category
-
-            if is_vip and not is_destiny:
-                seeker_match = re.search(r"\(求測人：(.*?)\)", request.question)
-                if seeker_match:
-                    seeker_name = seeker_match.group(1)
-                    result = conn.execute(
-                        text(
-                            "SELECT record_time FROM history WHERE user_id=:user_id AND category=:category ORDER BY created_at DESC LIMIT 1"
-                        ),
-                        {
-                            "user_id": get_user_field(user, "id"),
+                            "user_id": user.id,
                             "category": f"「命盤」{seeker_name}",
                         },
                     )
@@ -415,9 +380,7 @@ async def interpret_matrix(
                     if seeker_record:
                         try:
                             _, s_dt = normalize_time_to_hk(seeker_record["record_time"])
-                            s_solar = Solar.fromYmdHms(
-                                s_dt.year, s_dt.month, s_dt.day, s_dt.hour, s_dt.minute, 0
-                            )
+                            s_solar = Solar.fromYmdHms(s_dt.year, s_dt.month, s_dt.day, s_dt.hour, s_dt.minute, 0)
                             s_bazi = s_solar.getLunar().getEightChar()
                             bz_str = (
                                 f"{s_bazi.getYearGan()}{s_bazi.getYearZhi()}年 {s_bazi.getMonthGan()}{s_bazi.getMonthZhi()}月"
@@ -445,9 +408,11 @@ async def interpret_matrix(
                 media_type="text/event-stream",
                 status_code=400,
             )
+            
         if not getattr(matrix_data, "bazi", None):
             logger.error("build_matrix_response returned no bazi data")
             return StreamingResponse(iter(["**❌ 盤象產生失敗**"]), media_type="text/event-stream", status_code=500)
+            
         try:
             bazi_eval = QuantityEvaluator.evaluate(matrix_data.bazi)
         except Exception as exc:
@@ -591,7 +556,7 @@ async def interpret_matrix(
 
 ## 二、核心關鍵
 ### 🧭 盤象解析
-(指出當前面臨的實質壓力、阻礙或機會的專業客觀與星門生剋依據)
+(指出當前面臨的實質壓力、阻礙 or 機會的專業客觀與星門生剋依據)
 ### 💡 大師解讀
 (用香港繁體書面語，結合現代商務或生活，點出目前阻礙或轉機的核心癥結)
 
@@ -646,7 +611,6 @@ async def interpret_matrix(
         raise
     except Exception as exc:
         logger.exception("interpret_matrix unexpected error")
-        # Return a safe streaming error message and include the exception text for debugging in logs
         return StreamingResponse(
             iter([f"**❌ Internal Server Error: {str(exc)}**"]),
             media_type="text/event-stream",
