@@ -220,7 +220,6 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"HTTP 管道發信失敗: {str(e)}")
 
-
 @router.post("/api/v1/auth/reset-password")
 async def reset_password(request: ResetPasswordRequest, db=Depends(get_db)):
     try:
@@ -260,3 +259,45 @@ async def reset_password(request: ResetPasswordRequest, db=Depends(get_db)):
         print("❌ [奇門修改密碼] 後端執行期間發生未知崩潰！")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"後端內部錯誤: {str(e)}")
+
+@router.delete("/api/v1/auth/delete-account")
+async def delete_account(
+    current_user: User = Depends(get_current_user), 
+    db=Depends(get_db)
+):
+    """
+    🧹 Apple 審核強制要求：一鍵物理抹除帳號及所有關聯數據
+    """
+    try:
+        user_id = current_user.id
+        print(f"⚠️ [安全警報] 收到用戶帳號刪除請求！ID: {user_id}, Email: {current_user.email}")
+
+        # 1. 手動清除關聯數據（防禦資料庫外鍵未設定 CASCADE 的情況）
+        # 刪除該用戶的所有推演歷史紀錄
+        db.execute(
+            text("DELETE FROM history WHERE user_id = :uid"), 
+            {"uid": user_id}
+        )
+        # 刪除該用戶的所有登入 Session
+        db.execute(
+            text("DELETE FROM sessions WHERE user_id = :uid"), 
+            {"uid": user_id}
+        )
+
+        # 2. 刪除用戶本體
+        db.delete(current_user)
+        
+        # 3. 實實地提交事務，完成物理抹除
+        db.commit()
+        
+        print(f"🧹 [安全警報] 用戶 ID: {user_id} 及其所有關聯數據已成功從資料庫物理抹除！")
+        return {"status": "success", "message": "您的帳號及所有推演數據已完全抹除，感謝您的使用。"}
+
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500, 
+            detail=f"抹除帳號失敗，請聯絡客服處理。詳細原因: {str(e)}"
+        )

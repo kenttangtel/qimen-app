@@ -321,18 +321,25 @@
                 </div>
 
                 <div class="mt-4 space-y-3">
-                    <button onclick="triggerVibration(); toggleDarkMode()" class="w-full p-4 bg-slate-50 dark:bg-slate-700 rounded-2xl flex justify-between items-center active:scale-[0.98] transition">
-                        <div class="flex items-center gap-3 text-sm font-black text-slate-700 dark:text-slate-200"><i class="fa-solid fa-moon text-indigo-500 w-5"></i> 切換深夜模式</div>
-                        <i class="fa-solid fa-repeat text-slate-400 text-xs"></i>
-                    </button>
-                    
-                    <button onclick="triggerVibration(); logout();" class="w-full p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl flex justify-between items-center active:scale-[0.98] transition">
-                        <div class="flex items-center gap-3 text-sm font-black text-rose-600 dark:text-rose-400"><i class="fa-solid fa-right-from-bracket w-5"></i> 安全登出</div>
-                        <i class="fa-solid fa-chevron-right text-rose-300 text-xs"></i>
-                    </button>
-                </div>
+                <button onclick="triggerVibration(); toggleDarkMode()" class="w-full p-4 bg-slate-50 dark:bg-slate-700 rounded-2xl flex justify-between items-center active:scale-[0.98] transition">
+                    <div class="flex items-center gap-3 text-sm font-black text-slate-700 dark:text-slate-200"><i class="fa-solid fa-moon text-indigo-500 w-5"></i> 切換深夜模式</div>
+                    <i class="fa-solid fa-repeat text-slate-400 text-xs"></i>
+                </button>
+
+                <button onclick="triggerVibration(); logout();" class="w-full p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl flex justify-between items-center active:scale-[0.98] transition">
+                    <div class="flex items-center gap-3 text-sm font-black text-rose-600 dark:text-rose-400"><i class="fa-solid fa-right-from-bracket w-5"></i> 安全登出</div>
+                    <i class="fa-solid fa-chevron-right text-rose-300 text-xs"></i>
+                </button>
+
+                <button onclick="triggerVibration(); handleDeleteAccount();" class="w-full p-4 bg-rose-50/20 dark:bg-rose-950/20 rounded-2xl flex justify-between items-center active:scale-[0.98] transition border border-rose-500/20">
+                    <div class="flex items-center gap-3 text-sm font-black text-rose-600 dark:text-rose-400">
+                        <i class="fa-solid fa-trash-can w-5"></i> 註銷並抹除帳號
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-rose-300 text-xs"></i>
+                </button>
             </div>
         </div>
+    </div>
     </main>
 
     <nav class="fixed bottom-0 w-full glass-tabbar flex justify-around items-center pt-2 pb-1 text-[0.65rem] text-slate-400 font-bold shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)]">
