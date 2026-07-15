@@ -44,20 +44,22 @@ if not logger.handlers:
 
 def verify_and_deduct_credits(user, category: str, db):
     """
-    🌟 奇門大師核心商業權限驗證閘門 (統一收納優化版)
+    🌟 奇門大師核心商業權限驗證閘門 (完全還原業務邏輯版)
     """
     current_time = datetime.now()
     today_date = current_time.date()
     today_str = date.today().isoformat()
     month_str = date.today().strftime("%Y-%m")
     
+    user_id = getattr(user, "id", None) if hasattr(user, "id") else get_user_field(user, "id")
     membership = getattr(user, "membership_type", "free") if hasattr(user, "membership_type") else get_user_field(user, "membership_type", "free")
     is_vip = membership in ("monthly", "lifetime")
+    user_credits = getattr(user, "credits", 0) if hasattr(user, "credits") else get_user_field(user, "credits", 0)
 
     # -------------------------------------------------------------------------
-    # 核心邏輯 A：個人專屬每日運程報告 (深度推演)
+    # 核心邏輯 A1：個人專屬深度推演 (舊版的 綜合運勢 / 個人運程) -> 僅限 VIP
     # -------------------------------------------------------------------------
-    if "運程" in category or "運勢" in category:
+    if category in ["綜合運勢", "個人運程"]:
         if not is_vip:
             raise HTTPException(
                 status_code=403, 
@@ -65,14 +67,48 @@ def verify_and_deduct_credits(user, category: str, db):
             )
         
         user_last_daily = getattr(user, "last_daily_fortune_at", None) if hasattr(user, "last_daily_fortune_at") else get_user_field(user, "last_daily_fortune_at")
-        if user_last_daily and user_last_daily.date() == today_date:
-            raise HTTPException(
-                status_code=403, 
-                detail="⏳ 您今日的免費個人運程報告額度已用完，請明天再試！"
-            )
+        if user_last_daily:
+            if isinstance(user_last_daily, str):
+                try:
+                    user_last_daily = datetime.fromisoformat(user_last_daily.replace(" ", "T"))
+                except Exception:
+                    pass
+            if hasattr(user_last_daily, "date") and user_last_daily.date() == today_date:
+                raise HTTPException(
+                    status_code=403, 
+                    detail="⏳ 您今日的免費個人運程報告額度已用完，請明天再試！"
+                )
         
         user.last_daily_fortune_at = current_time
         db.commit()
+        return True
+
+    # -------------------------------------------------------------------------
+    # 核心邏輯 A2：專屬每日運程 (可用點數扣除，VIP 每日首發免費)
+    # -------------------------------------------------------------------------
+    elif "專屬每日運程" in category or "運程" in category or "運勢" in category:
+        is_free = False
+        if is_vip:
+            # VIP 查詢本日是否有過專屬每日運程歷史紀錄
+            result = db.execute(
+                text("SELECT count(*) AS cnt FROM history WHERE user_id=:user_id AND category LIKE :category AND created_at LIKE :created_at"),
+                {
+                    "user_id": user_id,
+                    "category": "%專屬每日運程%",
+                    "created_at": today_str + "%"
+                }
+            )
+            if result.mappings().first()["cnt"] == 0:
+                is_free = True
+
+        if not is_free:
+            if user_credits < 1:
+                raise HTTPException(
+                    status_code=402, 
+                    detail="🪙 您的基礎能量點數不足！無法進行每日運程推演，請前往個人中心補充點數包。"
+                )
+            user.credits -= 1
+            db.commit()
         return True
 
     # -------------------------------------------------------------------------
@@ -82,6 +118,11 @@ def verify_and_deduct_credits(user, category: str, db):
         # 永久會員每 7 天可以免費推演一次
         if membership == "lifetime":
             user_last_weekly = getattr(user, "last_weekly_shipan_at", None) if hasattr(user, "last_weekly_shipan_at") else get_user_field(user, "last_weekly_shipan_at")
+            if isinstance(user_last_weekly, str):
+                try:
+                    user_last_weekly = datetime.fromisoformat(user_last_weekly.replace(" ", "T"))
+                except Exception:
+                    pass
             is_free_weekly_available = (
                 user_last_weekly is None or 
                 (current_time - user_last_weekly) >= timedelta(days=7)
@@ -91,7 +132,6 @@ def verify_and_deduct_credits(user, category: str, db):
                 db.commit()
                 return True
         
-        user_credits = getattr(user, "credits", 0) if hasattr(user, "credits") else get_user_field(user, "credits", 0)
         if user_credits < 1:
             raise HTTPException(
                 status_code=402, 
@@ -109,7 +149,6 @@ def verify_and_deduct_credits(user, category: str, db):
         is_free = False
         # VIP 會員每個月第一次看命盤免費
         if is_vip:
-            user_id = getattr(user, "id", None) if hasattr(user, "id") else get_user_field(user, "id")
             # 查詢本月是否有過命盤歷史紀錄
             result = db.execute(
                 text("SELECT count(*) AS cnt FROM history WHERE user_id=:user_id AND category LIKE :category AND created_at LIKE :created_at"),
@@ -123,7 +162,6 @@ def verify_and_deduct_credits(user, category: str, db):
                 is_free = True
 
         if not is_free:
-            user_credits = getattr(user, "credits", 0) if hasattr(user, "credits") else get_user_field(user, "credits", 0)
             if user_credits < 1:
                 raise HTTPException(
                     status_code=402, 
@@ -361,15 +399,15 @@ async def interpret_matrix(
         if not user:
             raise HTTPException(status_code=401, detail="Unauthorized")
             
-        # 🌟 0. 先安全地將所需的用戶欄位提取成區域變數，防禦 db.commit() 後的 ORM 過期與脫鉤問題 (DetachedInstanceError)
+        # 🌟 0. 安全提取區域變數，徹底防禦 db.commit() 的 DetachedInstanceError 地雷
         user_id = getattr(user, "id", None) if hasattr(user, "id") else get_user_field(user, "id")
         user_membership = getattr(user, "membership_type", "free") if hasattr(user, "membership_type") else get_user_field(user, "membership_type", "free")
         is_vip = user_membership in ("monthly", "lifetime")
 
-        # 🌟 1. 統一在守門員直接進行扣點與免費額度判斷！
+        # 🌟 1. 統一在閘門安全判斷「雙軌制扣點」！
         verify_and_deduct_credits(user, request.category, db)
 
-        # 🌟 2. 為了後續提示詞生成，我們依然保持歷史記錄查詢，但完全使用區域變數，避免讀取已過期的 user 物件！
+        # 🌟 2. 歷史紀錄交叉分析，全線使用區域變數防過期
         seeker_info_prompt = ""
         is_destiny = "「命盤」" in request.category
 
@@ -381,7 +419,7 @@ async def interpret_matrix(
                     result = conn.execute(
                         text("SELECT record_time FROM history WHERE user_id=:user_id AND category=:category ORDER BY created_at DESC LIMIT 1"),
                         {
-                            "user_id": user_id,  # 🌟 完美使用安全提取的區域變數
+                            "user_id": user_id,
                             "category": f"「命盤」{seeker_name}",
                         },
                     )
@@ -577,7 +615,7 @@ async def interpret_matrix(
                     messages=[
                         {
                             "role": "system",
-                            "content": "你是香港頂級奇門遁甲大師，語氣莊重專業、客觀權威。請務必全程使用「香港繁體中文的書年語」進行解答（符合香港人的閱讀習慣，避免內地網絡用語，但保持高級命理顯問的質感）。絕對禁止透露 AI 身份。",
+                            "content": "你是香港頂級奇門遁甲大師，語氣莊重專業、客觀權威。請務必全程使用「香港繁體中文的書面語」進行解答（符合香港人的閱讀習慣，避免內地網絡用語，但保持高級命理顯問的質感）。絕對禁止透露 AI 身份。",
                         },
                         {"role": "user", "content": prompt},
                     ],
