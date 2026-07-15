@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>奇門大師</title>
     
-    <link rel="manifest" href="manifest.json">
+    <link class="main-manifest" rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f8fafc">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -25,7 +25,7 @@
         .dark .glass-tabbar { background: rgba(15, 23, 42, 0.95); border-top: 1px solid rgba(255,255,255,0.1); }
         .glass-overlay { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 60;}
 
-        /* 🌟 按鈕物理回饋：消除點擊遲鈍感 */
+        /* 🌟 按鈕物理回饋 */
         button, .tab-btn, [onclick] {
             transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), filter 0.1s !important;
             -webkit-tap-highlight-color: transparent; 
@@ -35,7 +35,7 @@
             filter: brightness(0.9) !important;
         }
 
-        /* 📅 日曆點擊熱區無限放大魔法 (解決自選日期按不出來的死穴) */
+        /* 📅 日曆點擊熱區 */
         input[type="datetime-local"]::-webkit-calendar-picker-indicator {
             position: absolute;
             top: 0;
@@ -46,7 +46,7 @@
             cursor: pointer;
         }
       
-        /* ✨ 升級版：護眼高對比五行色彩 (九宮格專用) ✨ */
+        /* 五行色彩 */
         .wx-wood { color: #15803d; text-shadow: 0 0 2px rgba(21,128,61,0.2); } 
         .wx-fire { color: #dc2626; text-shadow: 0 0 2px rgba(220,38,38,0.2); } 
         .wx-earth { color: #8b4513; text-shadow: 0 0 2px rgba(139,69,19,0.2); } 
@@ -69,7 +69,7 @@
             grid-template-areas: "巽 離 坤" "震 中 兌" "艮 坎 乾"; 
             grid-template-columns: repeat(3, minmax(0, 1fr)); 
             gap: 2px;
-            max-width: 100%; 
+            max-width: 100%;
             margin: 0 auto; 
             background-color: #cbd5e1;
             border: 2px solid #cbd5e1;
@@ -116,18 +116,8 @@
 
         .html2pdf__page-break { page-break-before: always !important; display: block; width: 100%; height: 0; border: none; margin: 0; padding: 0; clear: both; }
         
-        .report-print-mode { 
-            background: #ffffff !important; 
-            color: #000000 !important; 
-            padding: 20px !important; 
-            box-shadow: none !important; 
-            border: none !important;
-        }
-        
-        .report-print-mode * {
-            font-weight: 800 !important;
-            -webkit-font-smoothing: antialiased;
-        }
+        .report-print-mode { background: #ffffff !important; color: #000000 !important; padding: 20px !important; box-shadow: none !important; border: none !important; }
+        .report-print-mode * { font-weight: 800 !important; -webkit-font-smoothing: antialiased; }
         
         .report-print-mode .wx-wood { color: #059669 !important; } 
         .report-print-mode .wx-fire { color: #dc2626 !important; } 
@@ -136,35 +126,16 @@
         .report-print-mode .wx-water { color: #1e40af !important; } 
         
         .report-print-mode .pdf-cover-page { page-break-after: always; overflow: hidden; }
-        .report-print-mode .qimen-grid { 
-            gap: 1px !important; 
-            border: 2px solid #000000 !important;
-        }
-        .report-print-mode .palace-card { 
-            min-height: 95px !important; 
-            padding: 4px !important; 
-            padding-bottom: 10px !important; 
-            border: 1px solid #000000 !important;
-            background-color: #ffffff !important;
-        }
+        .report-print-mode .qimen-grid { gap: 1px !important; border: 2px solid #000000 !important; }
+        .report-print-mode .palace-card { min-height: 95px !important; padding: 4px !important; padding-bottom: 10px !important; border: 1px solid #000000 !important; background-color: #ffffff !important; }
         .report-print-mode .bg-center { background-color: #fffbeb !important; }
         
         .report-print-mode .palace-card .text-2xl { font-size: 1.2rem !important; }
         .report-print-mode .palace-card .text-xl { font-size: 1.0rem !important; }
         .report-print-mode .report-board-section { padding: 12px !important; margin-bottom: 0 !important; }
         
-        .report-print-mode #qimenInfoGrid { 
-            font-size: 0.75rem !important; 
-            display: flex !important; 
-            flex-direction: column !important; 
-            gap: 3px !important; 
-            color: #000000 !important; 
-        }
-        .report-print-mode #baziTable { 
-            transform: scale(0.95); 
-            transform-origin: top left; 
-            margin-bottom: 12px !important;
-        }
+        .report-print-mode #qimenInfoGrid { font-size: 0.75rem !important; display: flex !important; flex-direction: column !important; gap: 3px !important; color: #000000 !important; }
+        .report-print-mode #baziTable { transform: scale(0.95); transform-origin: top left; margin-bottom: 12px !important; }
         
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     </style>
@@ -188,27 +159,23 @@
 
     <main id="view-matrix" class="view-section active max-w-4xl mx-auto px-4 pt-[calc(env(safe-area-inset-top)+4.5rem)] pb-[calc(env(safe-area-inset-bottom)+6rem)]">
         
-<div id="todayFortuneInitialContainer" class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6 text-center">
+        <div id="todayFortuneInitialContainer" class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6 text-center">
             <button onclick="triggerVibration(); handleTodayFortuneClick()" class="w-full bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white py-4 rounded-xl font-black shadow-md active:scale-95 transition flex items-center justify-center gap-2 text-[1.05rem]">
                 <i class="fa-solid fa-sun text-amber-400 animate-pulse"></i> 今日運程預測
             </button>
         </div>
 
         <div id="todayFortuneResultSection" class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6 hidden">
-            
             <div class="mb-5">
                 <button onclick="triggerVibration(); openSeekerSelectionModal('daily')" class="w-full bg-gradient-to-tr from-amber-500 to-orange-500 text-white py-3.5 rounded-xl font-black shadow-md active:scale-95 transition text-[0.95rem] flex items-center justify-center gap-2 relative overflow-hidden">
                     <div class="absolute inset-0 bg-white/20 w-1/2 skew-x-12 -translate-x-full animate-[shimmer_3s_infinite]"></div>
                     <i class="fa-solid fa-star-and-crescent text-amber-200"></i> 查看個人專屬運程 (深度推演)
                 </button>
             </div>
-            
             <div class="border-t border-slate-100 dark:border-slate-700/60 my-4"></div>
-            
             <div class="flex items-center justify-center gap-2 text-base font-black text-slate-700 dark:text-slate-200 mb-4 tracking-wide">
                 <i class="fa-solid fa-compass text-indigo-500"></i> 今日運勢與方位
             </div>
-            
             <div id="dailyFortuneGridContent" class="text-sm text-slate-600 dark:text-slate-400">
                 <p class="text-center py-4 text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> 正在根據當前九宮盤天體磁場進行推演...</p>
             </div>
@@ -223,16 +190,14 @@
                 <button id="calcNowBtn" onclick="triggerVibration(); calculateNow()" class="w-1/2 bg-indigo-600 dark:bg-indigo-500 text-white py-4 rounded-2xl font-black shadow-md active:scale-95 transition flex items-center justify-center gap-2 text-[1rem]">
                     <i class="fa-solid fa-bolt"></i> 立即排盤
                 </button>
-                
-                <!-- 🎯 修復後的自選日期按鈕 -->
                 <div class="w-1/2 relative overflow-hidden rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95 transition">
                     <div class="w-full h-full py-4 flex items-center justify-center gap-2 text-slate-700 dark:text-slate-300 font-bold pointer-events-none">
                         <i class="fa-regular fa-calendar-days"></i> 自選日期
                     </div>
-                    <!-- 透明 input 覆蓋法 -->
                     <input type="datetime-local" id="timeInput" class="absolute top-0 left-0 w-full h-full opacity-0 z-10 cursor-pointer" onchange="handleTimeChange()" onclick="triggerVibration()">
                 </div>
             </div>
+        </div>
           
         <div id="initialLoading" class="text-center py-10 text-slate-400 hidden">
             <i class="fa-solid fa-spinner fa-spin text-3xl mb-3 text-indigo-500"></i>
@@ -321,25 +286,25 @@
                 </div>
 
                 <div class="mt-4 space-y-3">
-                <button onclick="triggerVibration(); toggleDarkMode()" class="w-full p-4 bg-slate-50 dark:bg-slate-700 rounded-2xl flex justify-between items-center active:scale-[0.98] transition">
-                    <div class="flex items-center gap-3 text-sm font-black text-slate-700 dark:text-slate-200"><i class="fa-solid fa-moon text-indigo-500 w-5"></i> 切換深夜模式</div>
-                    <i class="fa-solid fa-repeat text-slate-400 text-xs"></i>
-                </button>
+                    <button onclick="triggerVibration(); toggleDarkMode()" class="w-full p-4 bg-slate-50 dark:bg-slate-700 rounded-2xl flex justify-between items-center active:scale-[0.98] transition">
+                        <div class="flex items-center gap-3 text-sm font-black text-slate-700 dark:text-slate-200"><i class="fa-solid fa-moon text-indigo-500 w-5"></i> 切換深夜模式</div>
+                        <i class="fa-solid fa-repeat text-slate-400 text-xs"></i>
+                    </button>
 
-                <button onclick="triggerVibration(); logout();" class="w-full p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl flex justify-between items-center active:scale-[0.98] transition">
-                    <div class="flex items-center gap-3 text-sm font-black text-rose-600 dark:text-rose-400"><i class="fa-solid fa-right-from-bracket w-5"></i> 安全登出</div>
-                    <i class="fa-solid fa-chevron-right text-rose-300 text-xs"></i>
-                </button>
+                    <button onclick="triggerVibration(); logout();" class="w-full p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl flex justify-between items-center active:scale-[0.98] transition">
+                        <div class="flex items-center gap-3 text-sm font-black text-rose-600 dark:text-rose-400"><i class="fa-solid fa-right-from-bracket w-5"></i> 安全登出</div>
+                        <i class="fa-solid fa-chevron-right text-rose-300 text-xs"></i>
+                    </button>
 
-                <button onclick="triggerVibration(); handleDeleteAccount();" class="w-full p-4 bg-rose-50/20 dark:bg-rose-950/20 rounded-2xl flex justify-between items-center active:scale-[0.98] transition border border-rose-500/20">
-                    <div class="flex items-center gap-3 text-sm font-black text-rose-600 dark:text-rose-400">
-                        <i class="fa-solid fa-trash-can w-5"></i> 註銷並抹除帳號
-                    </div>
-                    <i class="fa-solid fa-chevron-right text-rose-300 text-xs"></i>
-                </button>
+                    <button onclick="triggerVibration(); handleDeleteAccount();" class="w-full p-4 bg-rose-50/20 dark:bg-rose-950/20 rounded-2xl flex justify-between items-center active:scale-[0.98] transition border border-rose-500/20">
+                        <div class="flex items-center gap-3 text-sm font-black text-rose-600 dark:text-rose-400">
+                            <i class="fa-solid fa-trash-can w-5"></i> 註銷並抹除帳號
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-rose-300 text-xs"></i>
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
     </main>
 
     <nav class="fixed bottom-0 w-full glass-tabbar flex justify-around items-center pt-2 pb-1 text-[0.65rem] text-slate-400 font-bold shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)]">
@@ -361,7 +326,6 @@
                 </div>
             </div>
             <div id="resultActions" class="mt-0 p-6 flex flex-col md:flex-row justify-center gap-3 border-t border-slate-100 bg-slate-50 hidden no-print">
-                
                 <div class="flex items-center bg-indigo-500 rounded-xl shadow-md transition-all" id="voiceBtnGroup">
                     <button id="voiceBtn" onclick="triggerVibration(); toggleVoice()" class="text-white px-4 py-3 font-bold active:scale-95 transition flex-grow flex justify-center items-center gap-2 border-r border-indigo-400">
                         <i class="fa-solid fa-volume-high"></i> 語音播報
@@ -471,7 +435,7 @@
 
     <div id="shareFallbackModal" class="hidden fixed inset-0 glass-overlay flex justify-center items-center z-[70] p-4 transition-opacity">
         <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl relative flex flex-col max-h-[90vh] animate-[slideUp_0.2s_ease-out]">
-            <button onclick="closeShareModal()" class="absolute top-4 right-5 text-slate-400 hover:text-slate-600 font-bold text-xl bg-slate-50 dark:bg-slate-700 w-8 h-8 rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            <button onclick="closeShareModal()" class="absolute top-4 right-5 text-slate-300 hover:text-slate-600 font-bold text-xl bg-slate-50 dark:bg-slate-700 w-8 h-8 rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
             <h3 class="text-xl font-black text-indigo-800 dark:text-indigo-400 mb-4 text-center">📸 儲存與分享預測</h3>
             <div class="overflow-y-auto no-scrollbar flex-grow text-center rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 p-2"><img id="shareImagePreview" src="" class="w-full rounded-lg shadow-sm" alt="分享圖卡"><p class="text-xs text-slate-400 mt-2 font-bold"><i class="fa-solid fa-mobile-screen"></i> 手機版可長按圖片直接儲存</p></div>
             <div class="mt-4 grid grid-cols-2 gap-2"><a id="downloadShareBtn" href="" download="奇門大師預測.jpg" class="bg-slate-800 dark:bg-slate-700 text-white font-bold py-3 rounded-xl shadow-md text-center text-sm flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> 下載圖片</a><button onclick="triggerVibration(); copyShareText()" class="bg-indigo-600 text-white font-bold py-3 rounded-xl shadow-md text-center text-sm flex items-center justify-center gap-2 active:scale-95 transition"><i class="fa-solid fa-copy"></i> 複製測文</button></div>
@@ -482,23 +446,18 @@
     <div id="igCardContainer" style="position: fixed; top: -9999px; left: -9999px; width: 1080px; height: 1440px; background: linear-gradient(135deg, #0f172a, #1e1b4b, #312e81); color: white; padding: 100px; box-sizing: border-box; font-family: 'PingFang TC', sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;"><div style="font-size: 70px; font-weight: 900; margin-bottom: 60px; display: flex; align-items: center; justify-content: center; gap: 20px;"><span>🔮</span> 奇門大師</div><div id="igCardTitle" style="font-size: 55px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); padding: 25px 60px; border-radius: 50px; margin-bottom: 70px; font-weight: bold; color: #cbd5e1;">主題 : 今日財運</div><div id="igCardContent" style="font-size: 60px; line-height: 1.5; font-weight: 900; text-align: center; width: 90%; background: rgba(0,0,0,0.3); padding: 70px; border-radius: 40px; border: 4px solid #6366f1; color: #fde047; box-shadow: 0 10px 30px rgba(0,0,0,0.3); word-wrap: break-word; white-space: pre-wrap;">測文 : 大吉，財星高照，放手一搏。</div><div style="position: absolute; bottom: 80px; font-size: 35px; opacity: 0.5; font-weight: bold; letter-spacing: 2px;">天體磁場演算法生成</div></div>
 
     <div id="mysticalLoading" class="hidden fixed inset-0 z-[100] bg-slate-900/90 flex flex-col justify-center items-center backdrop-blur-md transition-all duration-300 opacity-0">
-    <div class="relative w-28 h-28 flex justify-center items-center">
-        <div class="absolute inset-0 border-2 border-dashed border-indigo-500/40 rounded-full animate-[spin_6s_linear_reverse_infinite]"></div>
-        <div class="absolute inset-2 border-4 border-t-indigo-400 border-r-transparent border-b-purple-500 border-l-transparent rounded-full animate-spin"></div>
-        <div class="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-purple-400 rounded-full animate-pulse shadow-[0_0_25px_rgba(129,140,248,0.8)]"></div>
+        <div class="relative w-28 h-28 flex justify-center items-center">
+            <div class="absolute inset-0 border-2 border-dashed border-indigo-500/40 rounded-full animate-[spin_6s_linear_reverse_infinite]"></div>
+            <div class="absolute inset-2 border-4 border-t-indigo-400 border-r-transparent border-b-purple-500 border-l-transparent rounded-full animate-spin"></div>
+            <div class="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-purple-400 rounded-full animate-pulse shadow-[0_0_25px_rgba(129,140,248,0.8)]"></div>
+        </div>
+        <div id="loadingText" class="mt-8 text-indigo-300 font-black tracking-[0.25em] animate-pulse text-lg text-center shadow-indigo-500/50 drop-shadow-md">大師推演中</div>
+        <div class="mt-2 text-xs text-indigo-400/60 font-medium tracking-widest">正在共振宇宙磁場，請稍候...</div>
     </div>
-    
-    <div id="loadingText" class="mt-8 text-indigo-300 font-black tracking-[0.25em] animate-pulse text-lg text-center shadow-indigo-500/50 drop-shadow-md">
-        大師推演中
-    </div>
-    <div class="mt-2 text-xs text-indigo-400/60 font-medium tracking-widest">
-        正在共振宇宙磁場，請稍候...
-    </div>
-</div>
-  <div id="topupModal" class="hidden fixed inset-0 glass-overlay flex justify-center items-end md:items-center z-[100] p-0 md:p-4 transition-opacity">
+
+    <div id="topupModal" class="hidden fixed inset-0 glass-overlay flex justify-center items-end md:items-center z-[100] p-0 md:p-4 transition-opacity">
         <div class="bg-slate-50 dark:bg-slate-900 rounded-t-[2rem] md:rounded-[2rem] p-6 pb-[calc(env(safe-area-inset-bottom)+2rem)] md:pb-6 w-full max-w-md shadow-2xl relative animate-[slideUp_0.3s_ease-out] max-h-[90vh] flex flex-col">
             <button onclick="closeTopupModal()" class="absolute top-4 right-5 text-slate-400 hover:text-slate-600 font-bold text-2xl bg-white dark:bg-slate-800 w-8 h-8 rounded-full flex items-center justify-center shadow-sm z-10"><i class="fa-solid fa-xmark"></i></button>
-            
             <div class="text-center mb-4 shrink-0 mt-2">
                 <div class="inline-block bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40 p-3 rounded-full mb-2">
                     <i class="fa-solid fa-store text-3xl text-amber-500"></i>
@@ -549,26 +508,26 @@
             </div>
 
             <div class="mb-1">
-    <label class="block text-slate-400 text-xs font-bold mb-2 ml-1">密碼</label>
-    <div class="relative">
-        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-lock"></i></span>
-        <input type="password" id="auth_pass" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-10 pr-12 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition" placeholder="請輸入密碼">
-        <span class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer text-slate-400 hover:text-purple-500 transition" onclick="togglePasswordVisibility('auth_pass', this)">
-            <i class="fa-solid fa-eye"></i>
-        </span>
-    </div>
-</div>
+                <label class="block text-slate-400 text-xs font-bold mb-2 ml-1">密碼</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-lock"></i></span>
+                    <input type="password" id="auth_pass" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-10 pr-12 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition" placeholder="請輸入密碼">
+                    <span class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer text-slate-400 hover:text-purple-500 transition" onclick="togglePasswordVisibility('auth_pass', this)">
+                        <i class="fa-solid fa-eye"></i>
+                    </span>
+                </div>
+            </div>
 
-<div id="confirmPasswordField" class="hidden mb-1 mt-3">
-    <label class="block text-slate-400 text-xs font-bold mb-2 ml-1">確認密碼</label>
-    <div class="relative">
-        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-lock"></i></span>
-        <input type="password" id="reg_pass_confirm" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-10 pr-12 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition" placeholder="請再次確認密碼">
-        <span class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer text-slate-400 hover:text-purple-500 transition" onclick="togglePasswordVisibility('reg_pass_confirm', this)">
-            <i class="fa-solid fa-eye"></i>
-        </span>
-    </div>
-</div>
+            <div id="confirmPasswordField" class="hidden mb-1 mt-3">
+                <label class="block text-slate-400 text-xs font-bold mb-2 ml-1">確認密碼</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-lock"></i></span>
+                    <input type="password" id="reg_pass_confirm" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-10 pr-12 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition" placeholder="請再次確認密碼">
+                    <span class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer text-slate-400 hover:text-purple-500 transition" onclick="togglePasswordVisibility('reg_pass_confirm', this)">
+                        <i class="fa-solid fa-eye"></i>
+                    </span>
+                </div>
+            </div>
 
             <div id="forgotPasswordBtn" class="flex justify-end mb-4">
                 <button type="button" onclick="openForgotPasswordModal()" class="text-[11px] text-purple-500 hover:text-purple-400 font-bold transition">忘記密碼？</button>
@@ -591,7 +550,7 @@
         </div>
     </div>
 
- <div id="forgotPasswordModal" class="fixed inset-0 glass-overlay flex justify-center items-center z-[115] p-4 hidden">
+    <div id="forgotPasswordModal" class="fixed inset-0 glass-overlay flex justify-center items-center z-[115] p-4 hidden">
         <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 w-full max-w-md shadow-2xl relative border border-slate-100 dark:border-slate-700 text-slate-800 dark:text-slate-100">
             <button onclick="closeForgotPasswordModal()" class="absolute top-4 right-5 text-slate-400 hover:text-slate-600 transition text-2xl font-bold">&times;</button>
             <h3 class="text-2xl font-black text-center mb-6 tracking-wide">找回您的密碼</h3>
@@ -631,6 +590,48 @@ let currentReportTitle = '';
 let pendingInterpretationType = '';
 let tempSelectedSeekerId = null;
 
+// 👑 兩棲安全儲存大腦：同時完美相容網頁版與手機 App 原生端
+const SecurityStorage = {
+    // 讀取 Token
+    async getToken() {
+        try {
+            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
+                const { value } = await window.Capacitor.Plugins.Preferences.get({ key: 'qimen_token' });
+                return value;
+            }
+        } catch (e) {
+            console.warn("Capacitor Preferences 讀取失敗，切換至網頁版儲存機制");
+        }
+        return localStorage.getItem('qimen_token');
+    },
+
+    // 寫入 Token
+    async setToken(token) {
+        try {
+            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
+                await window.Capacitor.Plugins.Preferences.set({ key: 'qimen_token', value: token });
+                return;
+            }
+        } catch (e) {
+            console.warn("Capacitor Preferences 寫入失敗，切換至網頁版儲存機制");
+        }
+        localStorage.setItem('qimen_token', token);
+    },
+
+    // 刪除 Token
+    async removeToken() {
+        try {
+            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
+                await window.Capacitor.Plugins.Preferences.remove({ key: 'qimen_token' });
+                return;
+            }
+        } catch (e) {
+            console.warn("Capacitor Preferences 刪除失敗，切換至網頁版儲存機制");
+        }
+        localStorage.removeItem('qimen_token');
+    }
+};
+
 function handleTimeChange() {
     const input = document.getElementById('timeInput');
     const dText = document.getElementById('displayTimeText');
@@ -644,7 +645,6 @@ function handleTimeChange() {
     }
     
     if (navigator.vibrate) navigator.vibrate(50);
-    
     if (typeof fetchData === 'function') {
         const loader = document.getElementById('initialLoading');
         if (loader) loader.classList.remove('hidden');
@@ -654,7 +654,6 @@ function handleTimeChange() {
 const areaMap = { "巽宮":"巽", "離宮":"離", "坤宮":"坤", "震宮":"震", "中宮":"中", "兌宮":"兌", "艮宮":"艮", "坎宮":"坎", "乾宮":"乾" };
 const numMap = { "坎宮":1, "坤宮":2, "震宮":3, "巽宮":4, "中宮":5, "乾宮":6, "兌宮":7, "艮宮":8, "離宮":9 };
 const qimenDict = { "值符":"貴人、名譽", "騰蛇":"虛驚、變動", "太陰":"庇護、女性", "六合":"合作、姻緣", "白虎":"凶災、阻礙", "玄武":"小人、欺騙", "九地":"堅固、遲緩", "九天":"威嚴、張揚", "休門":"貴人、休整", "生門":"財富、生機", "傷門":"破壞、受傷", "杜門":"隱藏、防守", "景門":"消息、虛幻", "死門":"停滯、凶災", "驚門":"官非、口舌", "開門":"事業、開創", "天蓬星":"大盜、破財", "天芮星":"疾病、問題", "天衝星":"衝動、武力", "天輔星":"文化、學業", "天禽星":"方正、穩重", "天心星":"管理、醫藥", "天柱星":"破壞、口舌", "天任星":"固執、任勞", "天英星":"烈火、名氣" };
-
 function getWuxingClass(str) {
     if (!str) return 'wx-none';
     if (['甲','乙','寅','卯','震宮','巽宮','天衝星','天輔星','傷門','杜門'].some(x => str.includes(x))) return 'wx-wood';
@@ -695,7 +694,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(async () => {
             if (sessionId) {
                 try {
-                    const token = getAuthToken();
+                    const token = await getAuthToken();
                     const confirmRes = await fetch(`/api/v1/payment/confirm-checkout-session?session_id=${encodeURIComponent(sessionId)}`, {
                         method: 'GET',
                         headers: {
@@ -775,13 +774,15 @@ function showLoading(text = "大師推演中") {
 function hideLoading() {
     const loader = document.getElementById('mysticalLoading');
     if (loader) {
-        loader.classList.remove('opacity-100'); loader.classList.add('opacity-0');
+        loader.classList.remove('opacity-100');
+        loader.classList.add('opacity-0');
         setTimeout(() => { loader.classList.add('hidden'); }, 300);
     }
 }
 
-function getAuthToken() {
-    const token = localStorage.getItem('qimen_token');
+// 👑 兩棲非同步安全讀取
+async function getAuthToken() {
+    const token = await SecurityStorage.getToken();
     if (!token || token === 'null' || token === 'undefined') return null;
     return token;
 }
@@ -832,7 +833,6 @@ function toggleAuthMode() {
     const emailField = document.getElementById('emailField');
     const confirmPasswordField = document.getElementById('confirmPasswordField');
     const forgotBtn = document.getElementById('forgotPasswordBtn');
-
     if (authTitle.innerText === '歡迎回來') {
         authTitle.innerText = '加入會員';
         authSwitchText.innerText = '已經有帳號了？';
@@ -887,13 +887,12 @@ async function handleAuth() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-        
         let data = {};
         try { data = await res.json(); } catch (parseErr) { data = {}; }
 
         if (!res.ok) {
             let detail = data.detail || data.error || data.message || `伺服器錯誤 (${res.status})`;
-            if (typeof detail === 'object') detail = JSON.stringify(detail); // 解決 [object Object] 的問題
+            if (typeof detail === 'object') detail = JSON.stringify(detail);
             throw new Error(detail);
         }
 
@@ -902,7 +901,7 @@ async function handleAuth() {
             throw new Error('伺服器回傳缺少 token');
         }
 
-        localStorage.setItem('qimen_token', token);
+        await SecurityStorage.setToken(token); // 兩棲寫入升級
         closeAuthModal();
         window.location.reload();
     } catch (e) {
@@ -912,9 +911,7 @@ async function handleAuth() {
     }
 }
 
-// 🌟 忘記密碼 UI 視窗開關控制
 function openForgotPasswordModal() {
-    // 順手把原本的登入 Modal 藏起來，騰出乾淨空間
     const authModal = document.getElementById('authModal');
     if (authModal) authModal.classList.add('hidden');
     
@@ -927,7 +924,6 @@ function closeForgotPasswordModal() {
     document.getElementById('forgotPasswordModal').classList.add('hidden');
 }
 
-// 🌟 降維打擊版：同時送出新舊後端想要的所有欄位，徹底繞過 Render 的 422 快取死穴！
 async function submitForgotPasswordEmail() {
     const account = document.getElementById('forgotAccountInput').value.trim();
     if (!account) return showToast("請輸入用戶名稱或信箱", true);
@@ -935,15 +931,14 @@ async function submitForgotPasswordEmail() {
     const btn = document.getElementById('forgotSendBtn');
     btn.disabled = true;
     btn.innerText = "正在傳送磁場信號...";
-
     try {
         const res = await fetch('/api/v1/auth/forgot-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 account: account, 
-                username: account,               // 👈 餵給舊後端當作查找目標
-                password: "bypass_422_dummy_pwd" // 👈 餵給舊後端通過欄位檢查
+                username: account,        
+                password: "bypass_422_dummy_pwd" 
             })
         });
         const data = await res.json();
@@ -962,7 +957,6 @@ async function submitForgotPasswordEmail() {
     }
 }
 
-// 🌟 送出 6 位數密碼與驗證碼進行修改
 async function submitResetPasswordFinal() {
     const account = document.getElementById('forgotAccountInput').value.trim();
     const code = document.getElementById('forgotCodeInput').value.trim();
@@ -992,7 +986,7 @@ async function submitResetPasswordFinal() {
 }
 
 async function fetchUserInfo() {
-    const t = getAuthToken();
+    const t = await getAuthToken(); // 升級 await
     if (!t) return;
     try {
         const res = await fetch('/api/v1/auth/me', {
@@ -1003,7 +997,7 @@ async function fetchUserInfo() {
             }
         });
         if (!res.ok) {
-            localStorage.removeItem('qimen_token');
+            await SecurityStorage.removeToken();
             return;
         }
         const d = await res.json();
@@ -1022,23 +1016,16 @@ async function fetchUserInfo() {
         const pName = document.getElementById('profileUsername');
         if (pName) pName.innerText = d.username;
         window.isVipUser = d.is_vip;
-        
         const vBadge = document.getElementById('vipBadge');
         if (vBadge) {
-            // 🌟 1. 直接讀取後端送過來的優雅稱號
             vBadge.innerText = d.membership_display || '緣起會員';
-
-            // 🌟 2. 根據不同的會員類型（free / monthly / lifetime）渲染不同等級的能量磁場
             const mType = d.membership_type || 'free';
 
             if (mType === 'lifetime') {
-                // 👑 終身至尊會員：金光流轉，至尊霸氣
                 vBadge.className = 'text-xs font-bold text-amber-900 dark:text-amber-100 mt-1 bg-gradient-to-r from-amber-200 to-yellow-400 dark:from-amber-950/50 dark:to-yellow-700/50 inline-block px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-800 shadow-sm shadow-amber-500/20';
             } else if (mType === 'monthly') {
-                // 💎 月費尊享會員：皇家深靛，優雅尊榮
                 vBadge.className = 'text-xs font-bold text-indigo-700 dark:text-indigo-300 mt-1 bg-indigo-50 dark:bg-indigo-950/30 inline-block px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-900/30';
             } else {
-                // 🍃 緣起會員：沉穩低調，璞玉待琢
                 vBadge.className = 'text-xs font-bold text-slate-500 dark:text-slate-400 mt-1 bg-slate-100 dark:bg-slate-800/50 inline-block px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700/50';
             }
         }
@@ -1046,12 +1033,12 @@ async function fetchUserInfo() {
         if (typeof fetchHistoryAndSync === 'function') fetchHistoryAndSync(true);
     } catch (e) {
         console.error('UserInfo 抓取失敗');
-        localStorage.removeItem('qimen_token');
+        await SecurityStorage.removeToken();
     }
 }
 
-function logout() {
-    localStorage.removeItem('qimen_token');
+async function logout() { // 升級為兩棲 async
+    await SecurityStorage.removeToken();
     showToast("已安全登出");
     location.reload();
 }
@@ -1064,7 +1051,6 @@ async function fetchData(keepMasterBox = false, isSilent = false) {
     if (!timeEl || !timeEl.value) { initTime(); }
     const rawTime = timeEl.value;
     const btn = document.getElementById('calcNowBtn');
-    
     if (!isSilent && btn) { btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 推演中...'; btn.disabled = true; }
     if (!isSilent) showLoading("排盤中...");
 
@@ -1076,7 +1062,6 @@ async function fetchData(keepMasterBox = false, isSilent = false) {
         const data = await response.json();
         
         const dirMap = { "坎宮":"正北", "艮宮":"東北", "震宮":"正東", "巽宮":"東南", "離宮":"正南", "坤宮":"西南", "兌宮":"正西", "乾宮":"西北" };
-        
         let gridItems = '';
         if(data.qimen_matrix) {
             data.qimen_matrix.forEach(p => {
@@ -1097,7 +1082,6 @@ async function fetchData(keepMasterBox = false, isSilent = false) {
                         </div>
                     </div>
                 `;
-
                 const addGridItem = (icon, title, purpose, coreDesc) => {
                     const fullDesc = `<p class="text-sm font-bold text-indigo-700 dark:text-indigo-400 mb-2">${coreDesc}</p>` + getActionText(purpose, dir);
                     const safeDesc = encodeURIComponent(fullDesc); 
@@ -1143,7 +1127,6 @@ async function fetchData(keepMasterBox = false, isSilent = false) {
 
         const baziEl = document.getElementById('freeDailyBazi');
         if(data.bazi && baziEl) baziEl.innerText = `今日干支：${data.bazi.year} ${data.bazi.month} ${data.bazi.day}`;
-        
         renderUI(data);
     } catch (e) {
         if (!isSilent) showToast("排盤失敗，請檢查網路", true);
@@ -1155,12 +1138,12 @@ async function fetchData(keepMasterBox = false, isSilent = false) {
 
 function renderUI(data) {
     if (!data) return;
-    currentMatrixData = data.qimen_matrix || []; currentBazi = data.bazi || {};
+    currentMatrixData = data.qimen_matrix || [];
+    currentBazi = data.bazi || {};
     const infoBox = document.getElementById('infoBox'); if(infoBox) infoBox.classList.remove('hidden'); 
-    const gridContainer = document.getElementById('gridContainer'); if(gridContainer) gridContainer.classList.remove('hidden'); 
+    const gridContainer = document.getElementById('gridContainer'); if(gridContainer) gridContainer.classList.remove('hidden');
     const legendBox = document.getElementById('legendBox'); if(legendBox) legendBox.classList.remove('hidden'); 
     const askTriggerBox = document.getElementById('askTriggerBox'); if(askTriggerBox) askTriggerBox.classList.remove('hidden');
-    
     if (data.qimen_info) {
         const qimenGrid = document.getElementById('qimenInfoGrid');
         if (qimenGrid) {
@@ -1184,7 +1167,6 @@ function renderUI(data) {
             let bottomBadgeHtml = firstPattern ? `<span class="bg-indigo-100 dark:bg-indigo-900/80 text-indigo-700 dark:text-indigo-200 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-700 shadow-sm">${firstPattern}</span>` : '';
             let marksBadgeHtml = marksHtml ? `<span class="text-rose-500">${marksHtml}</span>` : '';
             let combinedBottom = (bottomBadgeHtml || marksBadgeHtml) ? `<div class="absolute bottom-1 left-1/2 transform -translate-x-1/2 text-[0.55rem] font-bold whitespace-nowrap flex items-center gap-1 z-20">${marksBadgeHtml}${bottomBadgeHtml}</div>` : '';
-            
             gridContainer.innerHTML += `
                 <div class="palace-card ${p.palace_id === '中宮' ? 'bg-center' : ''} relative" style="grid-area: ${areaMap[p.palace_id] || ''};" onclick="triggerVibration(); openModal('${p.palace_id}')">
                     <div class="flex justify-between items-start w-full leading-none z-10">
@@ -1210,7 +1192,7 @@ function renderUI(data) {
 
 function openModal(id) {
     const p = currentMatrixData.find(x => x.palace_id === id);
-    if (!p) return; 
+    if (!p) return;
     document.getElementById('modalTitle').innerHTML = `📍 ${p.palace_id}`;
     
     let harmsArr = (p.logic_states && p.logic_states.description !== '正常') ? p.logic_states.description.split('，') : [];
@@ -1219,7 +1201,6 @@ function openModal(id) {
     let patternHtml = patternArr.map(pt => `<span class="bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded text-xs font-bold border border-purple-200 dark:border-purple-800">${pt}</span>`).join('');
     let topBadges = `<div class="col-span-2 flex flex-wrap justify-center gap-2 mb-3">${harmsHtml}${patternHtml}</div>`;
     let modalDoorWarn = p.door_strength === '迫' ? `<span class="bg-rose-200 dark:bg-rose-800 text-rose-800 dark:text-rose-200 text-[0.6rem] px-1 rounded font-bold">迫</span>` : `<span class="bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 text-[0.6rem] px-1 rounded">${p.door_strength || ''}</span>`;
-    
     let html = `${(harmsArr.length > 0 || patternArr.length > 0) ? topBadges : ''}
         <div class="grid grid-cols-2 gap-3 shrink-0">
             <div class="bg-slate-50 dark:bg-slate-700 p-3 rounded-2xl text-center flex flex-col justify-center"><div class="text-[0.65rem] text-slate-400 font-bold mb-1">八神</div><div class="font-black text-indigo-700 dark:text-indigo-400 text-lg">${p.deity || ''}</div><div class="text-[0.65rem] text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">${qimenDict[p.deity] || ''}</div></div>
@@ -1237,7 +1218,7 @@ function closeModal() { document.getElementById('palaceModal').classList.add('hi
 // 📜 6. 歷史紀錄與本命人管理
 // ==========================================
 async function fetchHistoryAndSync(isSilent = false) {
-    const t = getAuthToken();
+    const t = await getAuthToken(); // 升級 await
     if(!t) return;
     try {
         if (!isSilent) {
@@ -1248,25 +1229,18 @@ async function fetchHistoryAndSync(isSilent = false) {
         const res = await fetch('/api/v1/history/list', { method: 'POST', headers: buildAuthorizedHeaders(t) });
         const d = await res.json();
 
-        // 🌟 修正防禦 1：自動相容「物件帶 data」或「直接回傳陣列」兩種後端格式
         const rawList = Array.isArray(d) ? d : (d.data || []);
-        
-        // 🌟 修正防禦 2：同時相容「有空格」與「沒空格」的命盤標籤，絕不漏看
         const dbDestinyRecords = rawList.filter(h => h.category && (h.category.startsWith('「命盤」') || h.category.startsWith('「命盤」 ')));
-
         window.destinySeekers = dbDestinyRecords.map(r => {
-            // 清理標籤時同時相容有無空格的情況
             let sName = r.category.replace('「命盤」 ', '').replace('「命盤」', '').trim();
             return { id: r.id, name: sName, time: r.record_time };
         });
-
         let pid = localStorage.getItem('qimen_primary_id');
         if (!window.destinySeekers.find(s => s.id === pid) && window.destinySeekers.length > 0) {
             pid = window.destinySeekers[0].id;
             localStorage.setItem('qimen_primary_id', pid);
         }
 
-        // 🌟 修正防禦 3：同步修正渲染列表的過濾邏輯
         renderHistoryList('divination', rawList.filter(h => !h.category || (!h.category.startsWith('「命盤」') && !h.category.startsWith('「命盤」 '))));
         renderHistoryList('destiny', dbDestinyRecords, pid);
 
@@ -1277,7 +1251,8 @@ function renderHistoryList(type, dataList, pid = null) {
     const targetId = type === 'destiny' ? 'destinyHistoryList' : 'reportHistoryList';
     const container = document.getElementById(targetId);
     if (dataList.length === 0) { 
-        container.innerHTML = '<div class="text-center py-10 opacity-30">尚無紀錄</div>'; return; 
+        container.innerHTML = '<div class="text-center py-10 opacity-30">尚無紀錄</div>';
+        return; 
     }
 
     let batchBar = `
@@ -1290,7 +1265,6 @@ function renderHistoryList(type, dataList, pid = null) {
             </div>
             <button id="toggle-edit-btn-${type}" onclick="window.toggleEditMode('${type}')" class="text-xs text-slate-400 hover:text-rose-500 px-2 py-2 rounded-lg font-black transition whitespace-nowrap"><i class="fa-solid fa-trash-can"></i> 刪除</button>
         </div>`;
-    
     let items = dataList.map(h => {
         let cbHtml = `
             <div class="cb-item-${type}-wrapper w-12 h-12 flex items-center justify-center shrink-0 -ml-3 mr-1 hidden cursor-pointer" onclick="event.stopPropagation(); const cb = this.querySelector('input'); cb.checked = !cb.checked; window.checkSelectStatus('${type}');">
@@ -1333,18 +1307,17 @@ window.toggleEditMode = function(type) {
     if (controls.classList.contains('hidden')) {
         controls.classList.remove('hidden'); 
         toggleBtn.innerHTML = '取消'; 
-        toggleBtn.classList.add('text-slate-500'); 
+        toggleBtn.classList.add('text-slate-500');
         wrappers.forEach(w => w.classList.remove('hidden'));
     } else {
         controls.classList.add('hidden'); 
-        toggleBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i> 刪除'; 
+        toggleBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i> 刪除';
         toggleBtn.classList.remove('text-slate-500'); 
         checkboxes.forEach(cb => { cb.checked = false; }); 
         wrappers.forEach(w => w.classList.add('hidden')); 
         window.checkSelectStatus(type);
     }
 };
-
 window.toggleSelectAll = function(type, isChecked) { document.querySelectorAll(`.cb-item-${type}`).forEach(cb => cb.checked = isChecked); window.checkSelectStatus(type); };
 window.checkSelectStatus = function(type) {
     const checkedCount = document.querySelectorAll(`.cb-item-${type}:checked`).length;
@@ -1360,14 +1333,10 @@ window.deleteSelected = async function(type) {
     if (selectedItems.length === 0) return;
     if (!confirm(`確定要刪除這 ${selectedItems.length} 筆紀錄嗎？`)) return;
     
-    const t = getAuthToken(); 
+    const t = await getAuthToken(); // 升級 await
     let currentPid = localStorage.getItem('qimen_primary_id');
-    
     for (let cb of selectedItems) {
-        // 🌟 超強防禦：多重路徑抓取真實 ID，防止 cb.value 綁定失敗或變成 "on"
         const id = (cb.value && cb.value !== 'on') ? cb.value : (cb.dataset.id || cb.id || cb.getAttribute('data-id'));
-        
-        // 🌟 關鍵修正：補齊 Content-Type 與 Authorization Headers，並雙重保險發送 ID
         await fetch('/api/v1/history/delete', { 
             method: 'POST', 
             headers: {
@@ -1376,13 +1345,11 @@ window.deleteSelected = async function(type) {
             }, 
             body: JSON.stringify({ id: id, record_id: id }) 
         });
-        
         if (currentPid === id) localStorage.removeItem('qimen_primary_id');
     }
     showToast(`已成功刪除 ${selectedItems.length} 筆紀錄`); 
     fetchHistoryAndSync();
 };
-
 window.setPrimarySeeker = function(id) {
     if (window.isVipUser === false) { showToast("「本命人」為月費專屬功能，請先開通", true); setTimeout(openTopupModal, 1500); return; }
     localStorage.setItem('qimen_primary_id', id); fetchHistoryAndSync(); showToast("已成功設定為本命人");
@@ -1409,7 +1376,7 @@ window.toggleSeekerSelection = function(id) {
 };
 
 async function openSeekerSelectionModal(type) {
-    const token = getAuthToken();
+    const token = await getAuthToken(); // 升級 await
     if (!token) { openAuthModal(); return; }
     
     pendingInterpretationType = type;
@@ -1445,7 +1412,7 @@ async function openSeekerSelectionModal(type) {
             if(container) container.innerHTML = '<div class="text-center text-slate-400 py-4 text-xs font-bold">尚未建立任何命盤，本次將以純局勢推演。<br>算過「終身命盤」後即可於此處選擇。</div>'; 
             tempSelectedSeekerId = null;
         } else { 
-            tempSelectedSeekerId = null; 
+            tempSelectedSeekerId = null;
             window.renderModalSeekerList(); 
         }
     }
@@ -1468,11 +1435,12 @@ function confirmSeekerAndPrepare() {
     closeSeekerSelectionModal(); prepareInterpretation(pendingInterpretationType, tempSelectedSeekerId);
 }
 
-function prepareInterpretation(type, selectedSeekerId = null) {
-    const t = getAuthToken();
+async function prepareInterpretation(type, selectedSeekerId = null) { // 升級 async
+    const t = await getAuthToken(); // 升級 await
     if (!t) { openAuthModal(); return; }
     if (type === 'destiny') {
-        const n = document.getElementById('d_name').value; const dt = document.getElementById('d_date').value;
+        const n = document.getElementById('d_name').value;
+        const dt = document.getElementById('d_date').value;
         if (!n || !dt) { showToast("請填寫姓名與出生日期！", true); return; }
     }
     if (selectedSeekerId) tempSelectedSeekerId = selectedSeekerId;
@@ -1502,7 +1470,7 @@ async function executeInterpretation() {
     closeConfirmModal();
     
     const type = pendingInterpretationType;
-    const t = getAuthToken();
+    const t = await getAuthToken(); // 升級 await
     if (!t) { openAuthModal(); return; }
     let req = { token: t };
     let targetSeeker = (window.destinySeekers && tempSelectedSeekerId) ? window.destinySeekers.find(s => s.id === tempSelectedSeekerId) : null;
@@ -1510,16 +1478,20 @@ async function executeInterpretation() {
     let shortQ = "";
 
     if (type === 'divination') {
-        req.time = document.getElementById('timeInput').value.replace('T', ' '); req.category = `「事盤」${selectedCategory}`;
+        req.time = document.getElementById('timeInput').value.replace('T', ' ');
+        req.category = `「事盤」${selectedCategory}`;
         let rawQ = document.getElementById('userQuestion').value.trim(); shortQ = rawQ ? rawQ.substring(0, 20) : '未提供細節';
         req.question = targetSeeker ? `(求測人：${sName}) ${rawQ}` : rawQ; req.main_title = '奇門大師深度推演';
     } else if (type === 'daily') {
-        req.time = document.getElementById('timeInput').value.replace('T', ' '); req.category = `「事盤」專屬每日運程`;
+        req.time = document.getElementById('timeInput').value.replace('T', ' ');
+        req.category = `「事盤」專屬每日運程`;
         req.question = targetSeeker ? `(求測人：${sName}) 今日運程建議` : "今日整體運程建議"; req.main_title = '奇門大師深度推演';
     } else if (type === 'destiny') {
-        const n = document.getElementById('d_name').value; let d = document.getElementById('d_date').value; let tv = document.getElementById('d_time_select').value;
+        const n = document.getElementById('d_name').value;
+        let d = document.getElementById('d_date').value; let tv = document.getElementById('d_time_select').value;
         if (tv === 'unknown') tv = document.getElementById('d_random_num').value;
-        req.time = d + " " + tv; req.category = `「命盤」${n}`; req.gender = document.getElementById('destinyGender').value; req.status = document.getElementById('destinyStatus').value; req.main_title = '命理深度解析報告'; sName = n;
+        req.time = d + " " + tv; req.category = `「命盤」${n}`; req.gender = document.getElementById('destinyGender').value; req.status = document.getElementById('destinyStatus').value; req.main_title = '命理深度解析報告';
+        sName = n;
         closeDestinyModal();
     }
             
@@ -1529,7 +1501,7 @@ async function executeInterpretation() {
     } catch (e) { console.error("盤局抓取失敗", e); }
 
     if (type === 'destiny') { 
-        switchView('view-destiny', document.querySelectorAll('.tab-btn')[2]); 
+        switchView('view-destiny', document.querySelectorAll('.tab-btn')[2]);
         if(window.moveResultBoxTo) window.moveResultBoxTo('view-destiny');
     }
     else { 
@@ -1537,7 +1509,6 @@ async function executeInterpretation() {
         if(window.moveResultBoxTo) window.moveResultBoxTo('view-report');
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
     setTimeout(async () => {
         try {
             const res = await fetch('/api/v1/divination/interpret', { method: 'POST', headers: buildAuthorizedHeaders(t), body: JSON.stringify(req) });
@@ -1550,6 +1521,7 @@ async function executeInterpretation() {
             while(true){
                 const {done,value} = await reader.read(); if(done) break;
                 full += decoder.decode(value);
+    
                 console.debug('interpret stream progress', { len: full.length });
                 
                 let goldenText = '磁場感應中...';
@@ -1615,6 +1587,7 @@ async function executeInterpretation() {
                 document.getElementById('masterContent').innerHTML = beautifyQimenText(finalReportHtml);
             }
             document.getElementById('resultActions').classList.remove('hidden');
+            
             try {
                 const saveRes = await fetch('/api/v1/history/save', {
                     method: 'POST',
@@ -1637,7 +1610,7 @@ async function executeInterpretation() {
         } catch(e) { 
             console.error('executeInterpretation error:', e);
             if (masterContent) masterContent.innerHTML = `<div class='text-center py-20 text-rose-500 font-bold'><i class='fa-solid fa-triangle-exclamation text-4xl mb-3'></i><p>推演失敗，請稍後重試。</p></div>`;
-            showToast("連線或推演異常，請重試", true); 
+            showToast("連線或推演異常，請重試", true);
         } finally {
             hideLoading();
         }
@@ -1650,7 +1623,8 @@ async function executeInterpretation() {
 async function sharePrediction() {
     const igContainer = document.getElementById('igCardContainer');
     const titleEl = document.getElementById('igCardTitle'); const contentEl = document.getElementById('igCardContent'); const btn = document.getElementById('igBtn');
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 準備分享...'; btn.disabled = true; titleEl.innerText = `主題 : ${currentReportTitle}`;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 準備分享...';
+    btn.disabled = true; titleEl.innerText = `主題 : ${currentReportTitle}`;
     
     const rawHTML = document.getElementById('masterContent').innerHTML; const tempDiv = document.createElement("div"); tempDiv.innerHTML = rawHTML;
     let goldenSentence = "大吉，吉星高照，凡事順遂。"; 
@@ -1691,7 +1665,7 @@ function downloadPDF() {
 // 🛒 9. 商城、排版與語音播報
 // ==========================================
 async function buyProduct(planType) {
-    const token = getAuthToken();
+    const token = await getAuthToken(); // 升級 await
     if (!token) { showToast("請先登入大師系統喔！", true); return; }
     showToast("開啟專屬結帳通道中...");
     try {
@@ -1713,11 +1687,11 @@ function closeTopupModal() { document.getElementById('topupModal').classList.add
 function openFreeDailyModal() { document.getElementById('freeDailyDate').innerText = document.getElementById('displayTimeText').innerText; document.getElementById('freeDailyModal').classList.remove('hidden'); }
 function closeFreeDailyModal() { document.getElementById('freeDailyModal').classList.add('hidden'); }
 function openDestinyModal() { 
-    document.getElementById('destinyModal').classList.remove('hidden'); 
+    document.getElementById('destinyModal').classList.remove('hidden');
     const dDateInput = document.getElementById('d_date');
     const dTimeSelect = document.getElementById('d_time_select');
     if (dDateInput && !dDateInput.value) { 
-        const now = new Date(); 
+        const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
@@ -1739,8 +1713,11 @@ function openDestinyModal() {
 function closeDestinyModal() { document.getElementById('destinyModal').classList.add('hidden'); }
 function beautifyQimenText(rawText) {
     if (!rawText) return ""; let htmlText = rawText;
-    htmlText = htmlText.replace(/木/g, '<span style="color:#15803d;" class="font-bold text-lg mx-0.5">木</span>'); htmlText = htmlText.replace(/火/g, '<span style="color:#dc2626;" class="font-bold text-lg mx-0.5">火</span>'); htmlText = htmlText.replace(/土/g, '<span style="color:#8b4513;" class="font-bold text-lg mx-0.5">土</span>'); htmlText = htmlText.replace(/金/g, '<span style="color:#d97706;" class="font-bold text-lg mx-0.5">金</span>'); htmlText = htmlText.replace(/水/g, '<span style="color:#2563eb;" class="font-bold text-lg mx-0.5">水</span>');
-    htmlText = htmlText.replace(/(大吉|吉|順利|貴人)/g, '<span style="color: #b91c1c; background-color: #fee2e2; border: 1px solid #fca5a5; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.95em;">$&</span>'); htmlText = htmlText.replace(/(大凶|凶|阻礙|小人)/g, '<span style="color: #334155; background-color: #f1f5f9; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.95em;">$&</span>');
+    htmlText = htmlText.replace(/木/g, '<span style="color:#15803d;" class="font-bold text-lg mx-0.5">木</span>'); htmlText = htmlText.replace(/火/g, '<span style="color:#dc2626;" class="font-bold text-lg mx-0.5">火</span>');
+    htmlText = htmlText.replace(/土/g, '<span style="color:#8b4513;" class="font-bold text-lg mx-0.5">土</span>'); htmlText = htmlText.replace(/金/g, '<span style="color:#d97706;" class="font-bold text-lg mx-0.5">金</span>');
+    htmlText = htmlText.replace(/水/g, '<span style="color:#2563eb;" class="font-bold text-lg mx-0.5">水</span>');
+    htmlText = htmlText.replace(/(大吉|吉|順利|貴人)/g, '<span style="color: #b91c1c; background-color: #fee2e2; border: 1px solid #fca5a5; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.95em;">$&</span>');
+    htmlText = htmlText.replace(/(大凶|凶|阻礙|小人)/g, '<span style="color: #334155; background-color: #f1f5f9; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.95em;">$&</span>');
     return htmlText;
 }
 
@@ -1753,7 +1730,8 @@ function toggleVoice() {
     const btn = document.getElementById('voiceBtn'); const group = document.getElementById('voiceBtnGroup'); const langSelect = document.getElementById('voiceLang');
     if (isSpeaking) { window.speechSynthesis.cancel(); isSpeaking = false; btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> 語音播報'; group.classList.remove('animate-pulse', 'bg-indigo-700'); group.classList.add('bg-indigo-500'); return; }
     let aiTextContainer = document.getElementById('aiInterpretationText'); let textToRead = aiTextContainer ? aiTextContainer.innerText : document.getElementById('masterContent').innerText;
-    if (!textToRead) return; textToRead = textToRead.replace(/推演報告生成中.../g, '');
+    if (!textToRead) return;
+    textToRead = textToRead.replace(/推演報告生成中.../g, '');
     masterUtterance = new SpeechSynthesisUtterance(textToRead); masterUtterance.lang = langSelect.value; masterUtterance.rate = 0.95; masterUtterance.pitch = 1.0;
     const voices = window.speechSynthesis.getVoices();
     if (langSelect.value === 'zh-HK') { const hkVoice = voices.find(v => v.lang === 'zh-HK' || v.lang === 'yue-HK'); if (hkVoice) masterUtterance.voice = hkVoice; } else { const twVoice = voices.find(v => v.lang === 'zh-TW' || v.lang === 'zh-CN'); if (twVoice) masterUtterance.voice = twVoice; }
@@ -1771,7 +1749,7 @@ async function handleDeleteAccount() {
     const secondConfirm = confirm("🔥 最後確認：您真的決定要完全抹除您在【奇門大師】的所有磁場數據嗎？");
     if (!secondConfirm) return;
 
-    const token = localStorage.getItem('qimen_token');
+    const token = await SecurityStorage.getToken(); // 兩棲讀取升級
     if (!token) {
         alert("未偵測到登入狀態");
         return;
@@ -1788,12 +1766,10 @@ async function handleDeleteAccount() {
         });
 
         const resData = await response.json();
-
         if (response.ok) {
             alert("🧹 您的帳號及所有推演數據已完全抹除。");
-            
             // 3. 成功後，立刻清除本地緩存並強制重整，退回登入/註冊畫面
-            localStorage.removeItem('qimen_token');
+            await SecurityStorage.removeToken(); // 兩棲刪除升級
             window.location.reload();
         } else {
             alert("❌ 註銷帳號失敗: " + (resData.detail || "未知錯誤"));
@@ -1804,31 +1780,24 @@ async function handleDeleteAccount() {
     }
 }
 
-// 🌟 升級完全體：處理「今日運程預測」點擊事件（全自動背景排盤 + 內容內嵌）
+// 🌟 升級完全體：處理「今日運程預測」點擊事件
 async function handleTodayFortuneClick() {
-    // 1. 立即掀開蓋子：隱藏初始大按鈕，亮出運勢方位結果版面
     document.getElementById('todayFortuneInitialContainer').classList.add('hidden');
     document.getElementById('todayFortuneResultSection').classList.remove('hidden');
     
-    // 2. 核心大招：自動觸發當前時間的奇門九宮盤排盤（再也不用手動點立即排盤了！）
     if (typeof calculateNow === "function") {
         console.log("正在自動依據當前時間進行奇門盤局天體磁場校準...");
-        await calculateNow(); // 呼叫原本的「立即排盤」函數
+        await calculateNow(); 
     }
     
-    // 3. 偷天換日：把原本要彈窗顯示的免費吉凶內容，直接「複製」並內嵌到我們的方框中
     setTimeout(() => {
         const originModal = document.getElementById('freeDailyModal');
         const targetContainer = document.getElementById('dailyFortuneGridContent');
         
         if (originModal && targetContainer) {
-            // 抓取彈窗內層真正裝文字的白盒子（排除半透明背景遮罩）
             const contentBox = originModal.querySelector('.bg-white') || originModal.querySelector('div[class*="bg-"]') || originModal;
-            
-            // 複製一份內容結構，避免破壞原本的功能
             const clonedContent = contentBox.cloneNode(true);
             
-            // 強制拔掉所有會讓它變成全螢幕死板彈窗的定位樣式（fixed, absolute, inset 等），讓它變溫順的內嵌區塊
             clonedContent.className = clonedContent.className
                 .replace(/\bfixed\b/g, '')
                 .replace(/\babsolute\b/g, '')
@@ -1836,22 +1805,18 @@ async function handleTodayFortuneClick() {
                 .replace(/\bz-\d+\b/g, '')
                 .replace(/\bhidden\b/g, '');
             
-            // 順手把原本彈窗右上角的「關閉按鈕 (X)」藏起來，因為內嵌在網頁裡就不需要打叉關閉了
             const closeBtn = clonedContent.querySelector('button[onclick*="closeFreeDailyModal"]') || clonedContent.querySelector('.fa-xmark')?.parentElement;
             if (closeBtn) closeBtn.style.display = 'none';
-            
-            // 完美刷入藍色框框，大功告成！
             targetContainer.innerHTML = '';
             targetContainer.appendChild(clonedContent);
         }
-    }, 400); // 稍微延遲 400 毫秒，等待後端 API 排盤算命完成
+    }, 400); 
 }
 
 // ==========================================
 // 🚑 大師修補包：歷史紀錄與視圖隔離路由
 // ==========================================
 
-// 1. 視圖隔離路由：將報告區塊精準搬移到當前分頁
 window.moveResultBoxTo = function(targetViewId) {
     const box = document.getElementById('masterResultBoxContainer');
     const targetView = document.getElementById(targetViewId);
@@ -1860,9 +1825,8 @@ window.moveResultBoxTo = function(targetViewId) {
     }
 };
 
-// 2. 查看歷史紀錄詳情 (包含秒開、讀取轉圈與平滑滾動)
 window.viewHistoryDetail = async function(id) {
-    const t = getAuthToken();
+    const t = await getAuthToken(); // 升級 await
     if (!t) { openAuthModal(); return; }
     
     showLoading("讀取過往卷宗...");
@@ -1873,7 +1837,7 @@ window.viewHistoryDetail = async function(id) {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + t
             },
-            body: JSON.stringify({ record_id: id }) // 🌟 補上這行！把要查詢的紀錄 ID 傳給後端
+            body: JSON.stringify({ record_id: id }) 
         });
         const d = await res.json();
         
@@ -1882,7 +1846,6 @@ window.viewHistoryDetail = async function(id) {
             document.getElementById('masterContent').innerHTML = r.report_text || "<div class='text-center py-10 text-slate-400'>無法解析紀錄內容</div>";
             document.getElementById('masterResultBoxContainer').classList.remove('hidden');
             document.getElementById('resultActions').classList.remove('hidden');
-            
             if (r.category && r.category.startsWith('「命盤」')) {
                 switchView('view-destiny', document.querySelectorAll('.tab-btn')[2]);
                 if(window.moveResultBoxTo) window.moveResultBoxTo('view-destiny');
@@ -1904,24 +1867,18 @@ window.viewHistoryDetail = async function(id) {
     }
 };
 
-// 3. 緊急救災喚醒腳本：確保載入遮罩絕對會消失
 window.forceWakeUp = function() {
     hideLoading();
     const initialLoading = document.getElementById('initialLoading');
     if (initialLoading) initialLoading.classList.add('hidden');
-    
     const timeEl = document.getElementById('timeInput');
     if (timeEl && !timeEl.value) { initTime(); }
 };
 window.addEventListener('load', forceWakeUp);
 
-// ==========================================
-// 🧭 免費運勢：四宮格與出行訣切換邏輯
-// ==========================================
 window.showFdDetail = function(title, dir, encodedDesc) {
     document.getElementById('fdDetailTitle').innerText = title;
     document.getElementById('fdDetailDir').innerText = dir;
-    
     document.getElementById('fdDetailText').innerHTML = decodeURIComponent(encodedDesc);
     
     document.getElementById('fdGrid').classList.add('hidden');
@@ -1930,7 +1887,7 @@ window.showFdDetail = function(title, dir, encodedDesc) {
 };
 
 window.closeFreeDailyModal = function() { 
-    document.getElementById('freeDailyModal').classList.add('hidden'); 
+    document.getElementById('freeDailyModal').classList.add('hidden');
     const fdGrid = document.getElementById('fdGrid');
     const fdDetail = document.getElementById('fdDetail');
     if (fdGrid && fdDetail) {
