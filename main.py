@@ -11,9 +11,26 @@ from models.db import init_db
 from routers import auth, divination, history, payment, debug
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-# global logger
+# 🌟 新增跨域白名單，徹底打通網頁端與手機 iOS / Android 原生端
+origins = [
+    "https://qimen-app-xwie.onrender.com",  # 您的 Render 前端網頁
+    "http://localhost",                    # Android 原生域名 & 本地調試
+    "http://localhost:5173",               # Vite 本地預設
+    "http://localhost:3000",               # 其它前端本地預設
+    "capacitor://localhost",               # iOS 原生網域 (App Store 上架必備)
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# # global logger (下面原本的第 16 行保持不變...)
+
 logger = logging.getLogger("qimen_app")
 if not logger.handlers:
     logging.basicConfig(level=logging.INFO)
