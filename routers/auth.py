@@ -266,28 +266,23 @@ async def delete_account(
     db=Depends(get_db)
 ):
     """
-    🧹 Apple 審核強制要求：一鍵物理抹除帳號及所有關聯數據
+    🧹 Apple 審核強制要求：一鍵物理抹除帳號及所有關聯數據 (ORM 安全升級版)
     """
     try:
+        # 🌟 1. 動態導入關聯模型，直接讓 SQLAlchemy 自動辨識正確的資料表名稱
+        from models.db import History, Session
+        
         user_id = current_user.id
         print(f"⚠️ [安全警報] 收到用戶帳號刪除請求！ID: {user_id}, Email: {current_user.email}")
 
-        # 1. 手動清除關聯數據（防禦資料庫外鍵未設定 CASCADE 的情況）
-        # 刪除該用戶的所有推演歷史紀錄
-        db.execute(
-            text("DELETE FROM history WHERE user_id = :uid"), 
-            {"uid": user_id}
-        )
-        # 刪除該用戶的所有登入 Session
-        db.execute(
-            text("DELETE FROM sessions WHERE user_id = :uid"), 
-            {"uid": user_id}
-        )
+        # 🌟 2. 透過 ORM 級聯清理關聯數據，完美避開 Raw SQL 單複數命名錯誤的死穴！
+        db.query(History).filter(History.user_id == user_id).delete(synchronize_session=False)
+        db.query(Session).filter(Session.user_id == user_id).delete(synchronize_session=False)
 
-        # 2. 刪除用戶本體
+        # 3. 刪除用戶本體
         db.delete(current_user)
         
-        # 3. 實實地提交事務，完成物理抹除
+        # 4. 提交事務，寫入資料庫
         db.commit()
         
         print(f"🧹 [安全警報] 用戶 ID: {user_id} 及其所有關聯數據已成功從資料庫物理抹除！")
@@ -296,6 +291,7 @@ async def delete_account(
     except Exception as e:
         db.rollback()
         import traceback
+        print("❌ [帳號註銷] 發生內部崩潰，錯誤詳情：")
         traceback.print_exc()
         raise HTTPException(
             status_code=500, 
