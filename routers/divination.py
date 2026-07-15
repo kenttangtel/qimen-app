@@ -51,7 +51,7 @@ def verify_and_deduct_credits(user, category: str, db):
     today_str = date.today().isoformat()
     month_str = date.today().strftime("%Y-%m")
     
-    membership = getattr(user, "membership_type", "free")
+    membership = getattr(user, "membership_type", "free") if hasattr(user, "membership_type") else get_user_field(user, "membership_type", "free")
     is_vip = membership in ("monthly", "lifetime")
 
     # -------------------------------------------------------------------------
@@ -64,7 +64,8 @@ def verify_and_deduct_credits(user, category: str, db):
                 detail="❌ 免費會員無法使用『個人專屬深度推演』！請先升級為尊享月費會員或永久會員。"
             )
         
-        if user.last_daily_fortune_at and user.last_daily_fortune_at.date() == today_date:
+        user_last_daily = getattr(user, "last_daily_fortune_at", None) if hasattr(user, "last_daily_fortune_at") else get_user_field(user, "last_daily_fortune_at")
+        if user_last_daily and user_last_daily.date() == today_date:
             raise HTTPException(
                 status_code=403, 
                 detail="⏳ 您今日的免費個人運程報告額度已用完，請明天再試！"
@@ -80,16 +81,18 @@ def verify_and_deduct_credits(user, category: str, db):
     elif "事盤" in category:
         # 永久會員每 7 天可以免費推演一次
         if membership == "lifetime":
+            user_last_weekly = getattr(user, "last_weekly_shipan_at", None) if hasattr(user, "last_weekly_shipan_at") else get_user_field(user, "last_weekly_shipan_at")
             is_free_weekly_available = (
-                user.last_weekly_shipan_at is None or 
-                (current_time - user.last_weekly_shipan_at) >= timedelta(days=7)
+                user_last_weekly is None or 
+                (current_time - user_last_weekly) >= timedelta(days=7)
             )
             if is_free_weekly_available:
                 user.last_weekly_shipan_at = current_time
                 db.commit()
                 return True
         
-        if user.credits < 1:
+        user_credits = getattr(user, "credits", 0) if hasattr(user, "credits") else get_user_field(user, "credits", 0)
+        if user_credits < 1:
             raise HTTPException(
                 status_code=402, 
                 detail="🪙 您的基礎能量點數不足！無法進行事盤推演，請前往個人中心補充點數包。"
@@ -106,11 +109,12 @@ def verify_and_deduct_credits(user, category: str, db):
         is_free = False
         # VIP 會員每個月第一次看命盤免費
         if is_vip:
+            user_id = getattr(user, "id", None) if hasattr(user, "id") else get_user_field(user, "id")
             # 查詢本月是否有過命盤歷史紀錄
             result = db.execute(
                 text("SELECT count(*) AS cnt FROM history WHERE user_id=:user_id AND category LIKE :category AND created_at LIKE :created_at"),
                 {
-                    "user_id": user.id,
+                    "user_id": user_id,
                     "category": "%「命盤」%",
                     "created_at": month_str + "%"
                 }
@@ -119,7 +123,8 @@ def verify_and_deduct_credits(user, category: str, db):
                 is_free = True
 
         if not is_free:
-            if user.credits < 1:
+            user_credits = getattr(user, "credits", 0) if hasattr(user, "credits") else get_user_field(user, "credits", 0)
+            if user_credits < 1:
                 raise HTTPException(
                     status_code=402, 
                     detail="🪙 您的基礎能量點數不足！無法進行命盤推演，請前往個人中心補充點數包。"
@@ -356,13 +361,17 @@ async def interpret_matrix(
         if not user:
             raise HTTPException(status_code=401, detail="Unauthorized")
             
+        # 🌟 0. 先安全地將所需的用戶欄位提取成區域變數，防禦 db.commit() 後的 ORM 過期與脫鉤問題 (DetachedInstanceError)
+        user_id = getattr(user, "id", None) if hasattr(user, "id") else get_user_field(user, "id")
+        user_membership = getattr(user, "membership_type", "free") if hasattr(user, "membership_type") else get_user_field(user, "membership_type", "free")
+        is_vip = user_membership in ("monthly", "lifetime")
+
         # 🌟 1. 統一在守門員直接進行扣點與免費額度判斷！
         verify_and_deduct_credits(user, request.category, db)
 
-        # 🌟 2. 為了後續提示詞生成，我們依然保持歷史記錄查詢，但完全移除了重複的 SQL 扣點代碼！
+        # 🌟 2. 為了後續提示詞生成，我們依然保持歷史記錄查詢，但完全使用區域變數，避免讀取已過期的 user 物件！
         seeker_info_prompt = ""
         is_destiny = "「命盤」" in request.category
-        is_vip = user.membership_type in ("monthly", "lifetime")
 
         if is_vip and not is_destiny:
             seeker_match = re.search(r"\(求測人：(.*?)\)", request.question)
@@ -372,7 +381,7 @@ async def interpret_matrix(
                     result = conn.execute(
                         text("SELECT record_time FROM history WHERE user_id=:user_id AND category=:category ORDER BY created_at DESC LIMIT 1"),
                         {
-                            "user_id": user.id,
+                            "user_id": user_id,  # 🌟 完美使用安全提取的區域變數
                             "category": f"「命盤」{seeker_name}",
                         },
                     )
@@ -483,9 +492,7 @@ async def interpret_matrix(
 
 ## 一、性格特徵（外表與內在）
 ### 🧭 盤象解析
-(針對懂得奇門遁甲的使用者，使用專業術語解釋用神落宮、星門神儀、格局生剋等客觀依據)
 ### 💡 大師解讀
-(針對一般求測人，用香港繁體書面語，清晰地解釋性格與特質)
 
 ## 二、家庭背景（早年與六親）
 ### 🧭 盤象解析
@@ -508,7 +515,6 @@ async def interpret_matrix(
 ### 💡 大師解讀
 
 ## 七、未來五年運勢推演表
-(強制輸出 Markdown 表格，請勿加上【盤象解析】或【大師解讀】的子標題，直接輸出下方格式的表格即可)
 | 年份 | 干支 | 運勢基調 | 詳細解析與建議 |
 |---|---|---|---|
 | (推演第1年) | | | |
@@ -518,7 +524,6 @@ async def interpret_matrix(
 | (推演第5年) | | | |
 
 ## 八、雙系統專屬開運指南
-(直接用香港繁體書面語給予總結。請務必啟動「雙系統玄學融合校準指令」，清晰說明如何根據其八字喜用神過濾並轉譯奇門五行，最終給出最精準的【專屬幸運五行】與【專屬幸運顏色】。最後提供人生心法，不需分解析與解讀標題。)
 """
         else:
             event_context = """
@@ -550,27 +555,19 @@ async def interpret_matrix(
 
 ## 一、局勢解讀
 ### 🧭 盤象解析
-(針對懂得奇門遁甲的使用者，使用專業術語解釋用神落宮、星門神儀、格局生剋等客觀依據)
 ### 💡 大師解讀
-(針對一般求測人，用香港繁體書面語，清晰地解釋目前求測事項的大環境與局勢)
 
 ## 二、核心關鍵
 ### 🧭 盤象解析
-(指出當前面臨的實質壓力、阻礙 or 機會的專業客觀與星門生剋依據)
 ### 💡 大師解讀
-(用香港繁體書面語，結合現代商務或生活，點出目前阻礙或轉機的核心癥結)
 
 ## 三、未來演化
 ### 🧭 盤象解析
-(推演此事未來動態變化的專業依據)
 ### 💡 大師解讀
-(用香港繁體書面語，說明事情接下來的發展趨勢與階段變化)
 
 ## 四、建議化解
 ### 🧭 盤象解析
-(提出化解方針的專業五行/時空依據)
 ### 💡 大師解讀
-(用香港繁體書面語，給予具體可行的執行行動建議，包括有利方向或轉折借氣建議)
 """
 
         async def generate():
@@ -580,7 +577,7 @@ async def interpret_matrix(
                     messages=[
                         {
                             "role": "system",
-                            "content": "你是香港頂級奇門遁甲大師，語氣莊重專業、客觀權威。請務必全程使用「香港繁體中文的書面語」進行解答（符合香港人的閱讀習慣，避免內地網絡用語，但保持高級命理顯問的質感）。絕對禁止透露 AI 身份。",
+                            "content": "你是香港頂級奇門遁甲大師，語氣莊重專業、客觀權威。請務必全程使用「香港繁體中文的書年語」進行解答（符合香港人的閱讀習慣，避免內地網絡用語，但保持高級命理顯問的質感）。絕對禁止透露 AI 身份。",
                         },
                         {"role": "user", "content": prompt},
                     ],
