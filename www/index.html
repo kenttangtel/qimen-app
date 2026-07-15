@@ -1762,6 +1762,48 @@ function toggleVoice() {
     isSpeaking = true; btn.innerHTML = '<i class="fa-solid fa-stop"></i> 停止播報'; group.classList.add('animate-pulse', 'bg-indigo-700'); group.classList.remove('bg-indigo-500');
 }
 
+// ⚠️ Apple 審核強制合規：一鍵註銷並物理抹除帳號
+async function handleDeleteAccount() {
+    // 1. 二次強確認，防止用戶手殘誤觸
+    const firstConfirm = confirm("⚠️ 警告：這將會永久物理刪除您的帳號，包括您所有的奇門推演記錄與剩餘點數，且此操作無法復原！您確定要繼續嗎？");
+    if (!firstConfirm) return;
+
+    const secondConfirm = confirm("🔥 最後確認：您真的決定要完全抹除您在【奇門大師】的所有磁場數據嗎？");
+    if (!secondConfirm) return;
+
+    const token = localStorage.getItem('qimen_token');
+    if (!token) {
+        alert("未偵測到登入狀態");
+        return;
+    }
+
+    try {
+        // 2. 向後端發射 DELETE 物理抹除請求
+        const response = await fetch('https://qimen-app-xwie.onrender.com/api/v1/auth/delete-account', {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const resData = await response.json();
+
+        if (response.ok) {
+            alert("🧹 您的帳號及所有推演數據已完全抹除。");
+            
+            // 3. 成功後，立刻清除本地緩存並強制重整，退回登入/註冊畫面
+            localStorage.removeItem('qimen_token');
+            window.location.reload();
+        } else {
+            alert("❌ 註銷帳號失敗: " + (resData.detail || "未知錯誤"));
+        }
+    } catch (error) {
+        console.error("Delete account error:", error);
+        alert("❌ 網路異常，無法連接伺服器，請稍後再試。");
+    }
+}
+
 // 🌟 升級完全體：處理「今日運程預測」點擊事件（全自動背景排盤 + 內容內嵌）
 async function handleTodayFortuneClick() {
     // 1. 立即掀開蓋子：隱藏初始大按鈕，亮出運勢方位結果版面
