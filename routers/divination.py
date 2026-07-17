@@ -5,8 +5,9 @@ import pytz
 import traceback
 import secrets
 import string
-import asyncio # 🌟 新增：用於控制 Asynchronous 佇列與超時防禦
-from collections import defaultdict # 🌟 新增：用於高效率記憶體限流計數器
+import asyncio
+from collections import defaultdict
+
 from fastapi import APIRouter, HTTPException, Depends, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
@@ -41,6 +42,7 @@ client = AsyncOpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.co
 logger = logging.getLogger(__name__)
 if not logger.handlers:
     logging.basicConfig(level=logging.INFO)
+
 # 🛡️ 全域記憶體限流閘：防止惡意腳本刷爆 DeepSeek 餘額
 user_request_timestamps = defaultdict(list)
 
@@ -59,6 +61,7 @@ def is_rate_limited(user_id: int, limit: int = 5, window_minutes: int = 1) -> bo
         
     user_request_timestamps[user_id].append(now)
     return False # 放行
+
 
 def verify_and_deduct_credits(user, category: str, db):
     """
@@ -403,6 +406,7 @@ async def calculate_matrix(request: CalculationRequest) -> CalculationResponse:
         user = None
     return build_matrix_response(request.time, user)
 
+
 @router.post("/api/v1/divination/interpret")
 async def interpret_matrix(
     request: CalculationRequest, 
@@ -410,16 +414,16 @@ async def interpret_matrix(
     db=Depends(get_db)
 ):
     try:
-        if not client: [cite: 616]
-            return StreamingResponse(iter(["**❌ 磁場連接異常**"]), media_type="text/event-stream") [cite: 616]
+        if not client:
+            return StreamingResponse(iter(["**❌ 磁場連接異常**"]), media_type="text/event-stream")
         
-        if not user: [cite: 616]
-            raise HTTPException(status_code=401, detail="Unauthorized") [cite: 616]
+        if not user:
+            raise HTTPException(status_code=401, detail="Unauthorized")
             
         # 🌟 0. 安全提取區域變數，徹底防禦 db.commit() 的 DetachedInstanceError 地雷
-        user_id = getattr(user, "id", None) if hasattr(user, "id") else get_user_field(user, "id") [cite: 616]
-        user_membership = getattr(user, "membership_type", "free") if hasattr(user, "membership_type") else get_user_field(user, "membership_type", "free") [cite: 617]
-        is_vip = user_membership in ("monthly", "lifetime") [cite: 617]
+        user_id = getattr(user, "id", None) if hasattr(user, "id") else get_user_field(user, "id")
+        user_membership = getattr(user, "membership_type", "free") if hasattr(user, "membership_type") else get_user_field(user, "membership_type", "free")
+        is_vip = user_membership in ("monthly", "lifetime")
 
         # 🛡️ 【新增限流檢查】限制每位用戶每分鐘最多只能發起 5 次深度解盤，防禦惡意攻擊
         if is_rate_limited(user_id, limit=5, window_minutes=1):
@@ -429,66 +433,66 @@ async def interpret_matrix(
             )
 
         # 🌟 1. 統一在閘門安全判斷「雙軌制扣點」！
-        verify_and_deduct_credits(user, request.category, db) [cite: 617]
+        verify_and_deduct_credits(user, request.category, db)
 
         # 🌟 2. 歷史紀錄交叉分析，全線使用區域變數防過期
-        seeker_info_prompt = "" [cite: 617]
-        is_destiny = "「命盤」" in request.category [cite: 617]
+        seeker_info_prompt = ""
+        is_destiny = "「命盤」" in request.category
 
-        if is_vip and not is_destiny: [cite: 617]
-            seeker_match = re.search(r"\(求測人：(.*?)\)", request.question) [cite: 618]
-            if seeker_match: [cite: 618]
-                seeker_name = seeker_match.group(1) [cite: 618]
-                with engine.connect() as conn: [cite: 618]
-                    result = conn.execute( [cite: 618]
-                        text("SELECT record_time FROM history WHERE user_id=:user_id AND category=:category ORDER BY created_at DESC LIMIT 1"), [cite: 619]
-                        { [cite: 619]
-                            "user_id": user_id, [cite: 619]
-                            "category": f"「命盤」{seeker_name}", [cite: 620]
-                        }, [cite: 619]
-                    ) [cite: 618]
-                    seeker_record = result.mappings().first() [cite: 620]
-                    if seeker_record: [cite: 620]
-                        try: [cite: 621]
-                            _, s_dt = normalize_time_to_hk(seeker_record["record_time"]) [cite: 621]
-                            s_solar = Solar.fromYmdHms(s_dt.year, s_dt.month, s_dt.day, s_dt.hour, s_dt.minute, 0) [cite: 621]
-                            s_bazi = s_solar.getLunar().getEightChar() [cite: 622]
-                            bz_str = ( [cite: 622]
-                                f"{s_bazi.getYearGan()}{s_bazi.getYearZhi()}年 {s_bazi.getMonthGan()}{s_bazi.getMonthZhi()}月" [cite: 622]
-                                f" {s_bazi.getDayGan()}{s_bazi.getDayZhi()}日 {s_bazi.getTimeGan()}{s_bazi.getTimeZhi()}時" [cite: 623]
-                            ) [cite: 622]
-                            seeker_info_prompt = ( [cite: 623]
-                                f"\n\n【💎 VIP 專屬交叉分析】\n求測人「{seeker_name}」本命八字：{bz_str}。" [cite: 623]
-                                "請務必將此奇門局象與本命人的八字進行交叉共振分析，給出專屬指引！" [cite: 624]
-                            ) [cite: 623]
-                        except Exception: [cite: 624]
-                            pass [cite: 625]
+        if is_vip and not is_destiny:
+            seeker_match = re.search(r"\(求測人：(.*?)\)", request.question)
+            if seeker_match:
+                seeker_name = seeker_match.group(1)
+                with engine.connect() as conn:
+                    result = conn.execute(
+                        text("SELECT record_time FROM history WHERE user_id=:user_id AND category=:category ORDER BY created_at DESC LIMIT 1"),
+                        {
+                            "user_id": user_id,
+                            "category": f"「命盤」{seeker_name}",
+                        },
+                    )
+                    seeker_record = result.mappings().first()
+                    if seeker_record:
+                        try:
+                            _, s_dt = normalize_time_to_hk(seeker_record["record_time"])
+                            s_solar = Solar.fromYmdHms(s_dt.year, s_dt.month, s_dt.day, s_dt.hour, s_dt.minute, 0)
+                            s_bazi = s_solar.getLunar().getEightChar()
+                            bz_str = (
+                                f"{s_bazi.getYearGan()}{s_bazi.getYearZhi()}年 {s_bazi.getMonthGan()}{s_bazi.getMonthZhi()}月"
+                                f" {s_bazi.getDayGan()}{s_bazi.getDayZhi()}日 {s_bazi.getTimeGan()}{s_bazi.getTimeZhi()}時"
+                            )
+                            seeker_info_prompt = (
+                                f"\n\n【💎 VIP 專屬交叉分析】\n求測人「{seeker_name}」本命八字：{bz_str}。"
+                                "請務必將此奇門局象與本命人的八字進行交叉共振分析，給出專屬指引！"
+                            )
+                        except Exception:
+                            pass
 
-        try: [cite: 625]
-            matrix_data = build_matrix_response(request.time) [cite: 625]
-        except HTTPException as exc: [cite: 625]
-            return StreamingResponse( [cite: 625]
-                iter([f"**❌ {exc.detail}**"]), [cite: 625]
-                media_type="text/event-stream", [cite: 625]
-                status_code=exc.status_code, [cite: 626]
-            ) [cite: 625]
-        except Exception as exc: [cite: 625]
-            logger.exception("build_matrix_response failed") [cite: 626]
-            return StreamingResponse( [cite: 626]
-                iter(["**❌ 盤象產生失敗**"]), [cite: 626]
-                media_type="text/event-stream", [cite: 626]
-                status_code=400, [cite: 627]
-            ) [cite: 626]
+        try:
+            matrix_data = build_matrix_response(request.time)
+        except HTTPException as exc:
+            return StreamingResponse(
+                iter([f"**❌ {exc.detail}**"]),
+                media_type="text/event-stream",
+                status_code=exc.status_code,
+            )
+        except Exception as exc:
+            logger.exception("build_matrix_response failed")
+            return StreamingResponse(
+                iter(["**❌ 盤象產生失敗**"]),
+                media_type="text/event-stream",
+                status_code=400,
+            )
             
-        if not getattr(matrix_data, "bazi", None): [cite: 627]
-            logger.error("build_matrix_response returned no bazi data") [cite: 627]
-            return StreamingResponse(iter(["**❌ 盤象產生失敗**"]), media_type="text/event-stream", status_code=500) [cite: 627]
+        if not getattr(matrix_data, "bazi", None):
+            logger.error("build_matrix_response returned no bazi data")
+            return StreamingResponse(iter(["**❌ 盤象產生失敗**"]), media_type="text/event-stream", status_code=500)
             
-        try: [cite: 627]
-            bazi_eval = QuantityEvaluator.evaluate(matrix_data.bazi) [cite: 628]
-        except Exception as exc: [cite: 628]
-            logger.exception("QuantityEvaluator failed") [cite: 628]
-            return StreamingResponse(iter(["**❌ 盤象量化失敗**"]), media_type="text/event-stream", status_code=500) [cite: 628]
+        try:
+            bazi_eval = QuantityEvaluator.evaluate(matrix_data.bazi)
+        except Exception as exc:
+            logger.exception("QuantityEvaluator failed")
+            return StreamingResponse(iter(["**❌ 盤象量化失敗**"]), media_type="text/event-stream", status_code=500)
 
         eval_text = f"""
 \n【⚖️ 核心數據：五行量化能量分析 (LLM 必讀)】
@@ -499,30 +503,30 @@ async def interpret_matrix(
 - 決策指令：若奇門方位/顏色與忌諱五行衝突，必須使用『通關轉譯法』。
 """
 
-        palace_details = "".join( [cite: 628]
-            [ [cite: 628]
-                f"[{p.palace_id}] 天:{p.heaven_stem}/{p.earth_stem}, 星:{p.star}, 門:{p.door}, 神:{p.deity}, 格:{p.pattern}\n" [cite: 629]
-                for p in matrix_data.qimen_matrix [cite: 629]
-            ] [cite: 628]
-        ) [cite: 628]
+        palace_details = "".join(
+            [
+                f"[{p.palace_id}] 天:{p.heaven_stem}/{p.earth_stem}, 星:{p.star}, 門:{p.door}, 神:{p.deity}, 格:{p.pattern}\n"
+                for p in matrix_data.qimen_matrix
+            ]
+        )
 
-        day_stem = matrix_data.bazi["day"][0] [cite: 629]
-        hour_stem = matrix_data.bazi["hour"][0] [cite: 629]
-        bazi_str = ( [cite: 629]
-            f"{matrix_data.bazi['year']} {matrix_data.bazi['month']} {matrix_data.bazi['day']} {matrix_data.bazi['hour']}" [cite: 629]
-        ) [cite: 630]
+        day_stem = matrix_data.bazi["day"][0]
+        hour_stem = matrix_data.bazi["hour"][0]
+        bazi_str = (
+            f"{matrix_data.bazi['year']} {matrix_data.bazi['month']} {matrix_data.bazi['day']} {matrix_data.bazi['hour']}"
+        )
 
-        try: [cite: 630]
-            dt = datetime.strptime(request.time[:16].replace("T", " "), "%Y-%m-%d %H:%M") [cite: 630]
-            age = date.today().year - dt.year [cite: 630]
-        except Exception: [cite: 630]
-            age = "未知" [cite: 630]
+        try:
+            dt = datetime.strptime(request.time[:16].replace("T", " "), "%Y-%m-%d %H:%M")
+            age = date.today().year - dt.year
+        except Exception:
+            age = "未知"
 
-        identity_prompt = ( [cite: 630]
-            f"\n【代體識別】求測人(日干)為「{day_stem}」，事體(時干)為「{hour_stem}」。請精確定位。" [cite: 630]
-        ) [cite: 630]
+        identity_prompt = (
+            f"\n【代體識別】求測人(日干)為「{day_stem}」，事體(時干)為「{hour_stem}」。請精確定位。"
+        )
 
-        if is_destiny: [cite: 631]
+        if is_destiny:
             destiny_context = f"""
 \n【⚠️ 核心鐵律：終身命卦架構與年齡適配】
 1. 視角隔離：此為【終身格局】推演。請從「本命身分」出發，解讀求測人一生的人格特質、天賦能量與家庭根基。
@@ -533,7 +537,7 @@ async def interpret_matrix(
 
 【🔥 終極密令：雙系統玄學融合校準 (Bazi-Qimen Calibration Protocol)】
 1. 確立主從關係：子平八字為【體】（主、核心底色），奇門遁甲為【用】（從、時空工具）。
-2. 規則：奇門遁甲所生成的「幸幸五行」與「顏色」，必須在八字的「喜用神」框架內進行過濾，絕對不允許輸出與八字喜用神相衝、相剋的五行/顏色。
+2. 規則：奇門遁甲所生成的「幸運五行」與「顏色」，必須在八字的「喜用神」框架內進行過濾，絕對不允許輸出與八字喜用神相衝、相剋的五行/顏色。
 3. 動態校準演算法：
    - Step 1：獲取八字底色（確認求測人八字喜用神，如：喜水木、忌土金）。
    - Step 2：解讀奇門局部（找出當前盤中帶吉門吉星的奇門五行）。
@@ -542,7 +546,7 @@ async def interpret_matrix(
 """
 
             prompt = f"""
-你是奇門遁甲頂頂頂級大師。推演類別：【{request.category}】。{identity_prompt}{destiny_context}{eval_text}
+你是奇門遁甲頂級大師。推演類別：【{request.category}】。{identity_prompt}{destiny_context}{eval_text}
 求測人八字：{bazi_str}
 起盤數據：局勢：{matrix_data.qimen_info.description}，旬首：{matrix_data.qimen_info.hour_xun}，詳情：
 {palace_details}
@@ -565,7 +569,7 @@ async def interpret_matrix(
 ### 💡 大師解讀
 
 ## 四、愛情及婚姻（感情特質與建議）
-### 🧭 盤象解析 [cite: 632]
+### 🧭 盤象解析
 ### 💡 大師解讀
 
 ## 五、財運與生意（事業格局與求財方針）
@@ -577,13 +581,13 @@ async def interpret_matrix(
 ### 💡 大師解讀
 
 ## 七、未來五年運勢推演表
-| 年份 | 干支 | 運勢基調 | 詳細解析與建議 | [cite: 633]
+| 年份 | 干支 | 運勢基調 | 詳細解析與建議 |
 |---|---|---|---|
 | (推演第1年) | | | |
 | (推演第2年) | | | |
-| (推演第3年) | | | [cite: 634]
+| (推演第3年) | | | |
 | (推演第4年) | | | |
-| (推演第5年) | | | | [cite: 635]
+| (推演第5年) | | | |
 
 ## 八、雙系統專屬開運指南
 """
@@ -598,12 +602,12 @@ async def interpret_matrix(
 3. 糾正宮位星門生剋與現代化解讀：
    - 務必遵循客觀生剋邏輯！例如天芮星落巽宮，巽木剋芮土，此為「星受宮剋(星受剋)」，代表原本繁雜的困擾受到環境制度、文化或紀律的實質制約與壓制。
    - 傷門落坤宮，傷木剋坤土，此為「門剋宮(宮受剋，即門迫)」，代表行動或衝突會對環境體制造成實質破壞，並產生直接摩擦。
-   - 嚴禁直接生搬硬套古代農耕社會的封建「六親公式」或刑罰恐嚇！必須結合九星旺衰與八門克應，給出符合「現代商務、職場、個人心理與生活抉擇」的邏輯轉譯和正面實戰建議。
+   - 嚴禁直接生搬硬套古代農耕社會的封建「六親公式()」或刑罰恐嚇！必須結合九星旺衰與八門克應，給出符合「現代商務、職場、個人心理與生活抉擇」的邏輯轉譯和正面實戰建議。
 """
             yongshen_prompt = (
                 f"\n【用神定位法則】此次推演類別為【{request.category}】。"
                 "請大師務必嚴格依據類別選取「專屬用神」（例如：求財看生門/戊，事業看開門，運勢看日干與時干生剋），並以此作為解盤核心！"
-            ) [cite: 635, 636]
+            )
 
             prompt = f"""
 你是奇門遁甲國師。推演類別：【{request.category}】，背景：【{request.question}】{identity_prompt}{event_context}{yongshen_prompt}
@@ -639,35 +643,35 @@ async def interpret_matrix(
             # 🚀 背景生產者任務：負責向 DeepSeek 索取串流並壓入佇列
             async def fetch_deepseek_stream():
                 try:
-                    stream = await client.chat.completions.create( [cite: 636]
-                        model="deepseek-chat", [cite: 637]
-                        messages=[ [cite: 637]
-                            { [cite: 637]
-                                "role": "system", [cite: 638]
-                                "content": "你是香港頂級奇門遁甲大師，語氣莊重專業、客觀權威。請務必全程使用「香港繁體中文的書面語」進行解答（符合香港人的閱讀習慣，避免內地網絡用語，但保持高級命理顯問的質感）。絕對禁止透露 AI 身份。", [cite: 638]
-                            }, [cite: 638]
-                            {"role": "user", "content": prompt}, [cite: 638]
-                        ], [cite: 637]
-                        temperature=0.7, [cite: 639]
-                        stream=True, [cite: 639]
-                    ) [cite: 636]
+                    stream = await client.chat.completions.create(
+                        model="deepseek-chat",
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": "你是香港頂級奇門遁甲大師，語氣莊重專業、客觀權威。請務必全程使用「香港繁體中文的書面語」進行解答（符合香港人的閱讀習慣，避免內地網絡用語，但保持高級命理顯問的質感）。絕對禁止透露 AI 身份。",
+                            },
+                            {"role": "user", "content": prompt},
+                        ],
+                        temperature=0.7,
+                        stream=True,
+                    )
                     
-                    async for chunk in stream: [cite: 640]
-                        content = None [cite: 640]
-                        try: [cite: 640]
-                            content = chunk.choices[0].delta.content [cite: 641]
-                        except Exception: [cite: 641]
-                            continue [cite: 641]
-                        if content: [cite: 641]
+                    async for chunk in stream:
+                        content = None
+                        try:
+                            content = chunk.choices[0].delta.content
+                        except Exception:
+                            continue
+                        if content:
                             # 經過字詞清洗後，火速壓入佇列
-                            await token_queue.put(clean_stream_content(content)) [cite: 642]
+                            await token_queue.put(clean_stream_content(content))
                     # 生產結束，塞入 None 作為終端信號
                     await token_queue.put(None)
                 except Exception as exc:
-                    logger.exception("AI stream generation/iteration failed") [cite: 642]
+                    logger.exception("AI stream generation/iteration failed")
                     await token_queue.put(exc)
 
-            # 啟動背景生產者工作，讓它去跟 DeepSeek 泡茶
+            # 啟動背景生產者工作，讓它去跟 DeepSeek 連線
             asyncio.create_task(fetch_deepseek_stream())
 
             # 👑 主消費者迴圈：智能監聽佇列，2.5 秒超時就自動朝前端發射隱形 HTML 心跳
@@ -686,15 +690,15 @@ async def interpret_matrix(
                     
                 except asyncio.TimeoutError:
                     # 💥 觸發防超時核心：向前端發射隱形 HTML 註解，維持 Render 網道連線暢通！
-                    yield ""
+                    yield "<!-- keepalive -->"
 
-        return StreamingResponse(generate(), media_type="text/event-stream") [cite: 642]
-    except HTTPException: [cite: 642]
-        raise [cite: 642]
-    except Exception as exc: [cite: 643]
-        logger.exception("interpret_matrix unexpected error") [cite: 643]
-        return StreamingResponse( [cite: 643]
-            iter([f"**❌ Internal Server Error: {str(exc)}**"]), [cite: 643]
-            media_type="text/event-stream", [cite: 643]
-            status_code=500, [cite: 643]
-        ) [cite: 643]
+        return StreamingResponse(generate(), media_type="text/event-stream")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("interpret_matrix unexpected error")
+        return StreamingResponse(
+            iter([f"**❌ Internal Server Error: {str(exc)}**"]),
+            media_type="text/event-stream",
+            status_code=500,
+        )
