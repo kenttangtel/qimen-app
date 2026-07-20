@@ -138,6 +138,21 @@
         .report-print-mode #qimenInfoGrid { font-size: 0.75rem !important; display: flex !important; flex-direction: column !important; gap: 3px !important; color: #000000 !important; }
         .report-print-mode #baziTable { transform: scale(0.95); transform-origin: top left; margin-bottom: 12px !important; }
         
+        @media (min-width: 640px) {
+            .destiny-report-wrapper { padding: 40px 20px !important; box-shadow: inset 0 0 0 1px #e5dfd3, inset 0 0 0 10px #fdfbf7, inset 0 0 0 11px #e5dfd3 !important; }
+        }
+        .destiny-report-wrapper h1, .destiny-report-wrapper h2, .destiny-report-wrapper h3 { font-family: 'Noto Serif TC', serif; }
+        .destiny-report-wrapper .chinese-seal { font-family: 'Noto Serif TC', serif; color: #8b2626; border: 2px solid #8b2626; border-radius: 4px; padding: 4px 8px; display: inline-block; font-weight: bold; letter-spacing: 2px; transform: rotate(-3deg); opacity: 0.85; }
+        #aiInterpretationText h2 { color: #8b2626; border-bottom: 2px solid #8b2626; display: inline-block; padding-bottom: 4px; margin-bottom: 1.5rem; position: relative; font-size: 1.4rem; margin-top: 2rem; border-left: none !important; background: transparent !important;}
+        #aiInterpretationText h2::after { content: ''; position: absolute; bottom: -6px; left: 0; width: 30px; height: 2px; background-color: #c4a661; }
+        #aiInterpretationText p { margin-bottom: 1rem; line-height: 1.8; text-align: justify; }
+        #aiInterpretationText ul { list-style: none; padding-left: 1rem; border-left: 2px solid #e5dfd3; margin-bottom: 1.5rem; }
+        #aiInterpretationText li { margin-bottom: 0.75rem; }
+        #aiInterpretationText strong { color: #8b2626; }
+        #aiInterpretationText table { width: 100%; text-align: left; border-collapse: collapse; background: white; margin-top: 1rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 0.9rem; }
+        #aiInterpretationText th { background-color: #f4f0e6; color: #8b2626; border-bottom: 2px solid #c4a661; padding: 12px; font-family: 'Noto Serif TC', serif; }
+        #aiInterpretationText td { padding: 12px; border-bottom: 1px solid #e5dfd3; vertical-align: top; }
+
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     </style>
 </head>
@@ -161,14 +176,14 @@
     <main id="view-matrix" class="view-section active max-w-4xl mx-auto px-4 pt-[calc(env(safe-area-inset-top)+4.5rem)] pb-[calc(env(safe-area-inset-bottom)+6rem)]">
         
         <div id="todayFortuneInitialContainer" class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6 text-center">
-            <button onclick="triggerVibration(); handleTodayFortuneClick()" class="w-full bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white py-4 rounded-xl font-black shadow-md active:scale-95 transition flex items-center justify-center gap-2 text-[1.05rem]">
+            <button onclick="triggerVibration(); handleTodayFortuneClick()" class="w-full bg-gradient-to-tr from-indigo-600 to-indigo-50 text-white py-4 rounded-xl font-black shadow-md active:scale-95 transition flex items-center justify-center gap-2 text-[1.05rem]">
                 <i class="fa-solid fa-sun text-amber-400 animate-pulse"></i> 今日運程預測
             </button>
         </div>
 
         <div id="todayFortuneResultSection" class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6 hidden">
             <div class="mb-5">
-                <button onclick="triggerVibration(); openSeekerSelectionModal('daily')" class="w-full bg-gradient-to-tr from-amber-500 to-orange-500 text-white py-3.5 rounded-xl font-black shadow-md active:scale-95 transition text-[0.95rem] flex items-center justify-center gap-2 relative overflow-hidden">
+                <button onclick="triggerVibration(); openSeekerSelectionModal('daily')" class="w-full bg-gradient-to-tr from-amber-500 to-orange-50 text-white py-3.5 rounded-xl font-black shadow-md active:scale-95 transition text-[0.95rem] flex items-center justify-center gap-2 relative overflow-hidden">
                     <div class="absolute inset-0 bg-white/20 w-1/2 skew-x-12 -translate-x-full animate-[shimmer_3s_infinite]"></div>
                     <i class="fa-solid fa-star-and-crescent text-amber-200"></i> 查看個人專屬運程 (深度推演)
                 </button>
@@ -188,7 +203,7 @@
             </div>
             
             <div class="flex gap-3 relative">
-                <button id="calcNowBtn" onclick="triggerVibration(); calculateNow()" class="w-1/2 bg-indigo-600 dark:bg-indigo-500 text-white py-4 rounded-2xl font-black shadow-md active:scale-95 transition flex items-center justify-center gap-2 text-[1rem]">
+                <button id="calcNowBtn" onclick="triggerVibration(); calculateNow()" class="w-1/2 bg-indigo-600 dark:bg-indigo-50 text-white py-4 rounded-2xl font-black shadow-md active:scale-95 transition flex items-center justify-center gap-2 text-[1rem]">
                     <i class="fa-solid fa-bolt"></i> 立即排盤
                 </button>
                 <div class="w-1/2 relative overflow-hidden rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95 transition">
@@ -340,7 +355,7 @@
                     </div>
                 </div>
                 
-                <button id="igBtn" onclick="triggerVibration(); sharePrediction()" class="bg-gradient-to-r from-pink-500 to-orange-500 text-white px-6 py-3 rounded-xl font-bold shadow-md active:scale-95 transition flex justify-center items-center gap-2"><i class="fa-solid fa-share-nodes"></i> 分享</button>
+                <button id="igBtn" onclick="triggerVibration(); sharePrediction()" class="bg-gradient-to-r from-pink-500 to-orange-50 text-white px-6 py-3 rounded-xl font-bold shadow-md active:scale-95 transition flex justify-center items-center gap-2"><i class="fa-solid fa-share-nodes"></i> 分享</button>
                 <button id="pdfBtn" onclick="triggerVibration(); downloadPDF()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold shadow-md active:scale-95 transition flex justify-center items-center gap-2"><i class="fa-solid fa-file-pdf"></i> 儲存 PDF</button>
             </div>
         </div>
@@ -372,7 +387,7 @@
                 <div class="grid grid-cols-3 gap-2.5 mb-4" id="catGrid"></div>
                 <div class="mb-5"><textarea id="userQuestion" placeholder="輸入想問的具體細節 (選填)..." class="unified-input resize-none h-20"></textarea></div>
             </div>
-            <button onclick="triggerVibration(); confirmSeekerAndPrepare()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition flex justify-center items-center gap-2 text-lg"><i class="fa-solid fa-crystal-ball"></i> 確認推演</button>
+            <button onclick="triggerVibration(); confirmSeekerAndPrepare()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition flex justify-center items-center gap-2 text-lg tracking-wide"><i class="fa-solid fa-crystal-ball"></i> 確認推演</button>
         </div>
     </div>
 
@@ -476,7 +491,7 @@
             
                 <button onclick="triggerVibration(); buyProduct('vip_lifetime')" class="w-full bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-2 border-amber-500 p-5 rounded-3xl flex justify-between items-center relative shadow-sm hover:bg-amber-100 active:scale-[0.98] transition-all text-left">
                     <div class="absolute -top-3 right-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[0.7rem] font-black px-3 py-1 rounded-full shadow-md tracking-wider">✨ 終身解鎖</div>
-                    <div class="flex items-center gap-4"><div class="w-12 h-12 shrink-0 bg-amber-200 dark:bg-amber-700/50 rounded-full flex items-center justify-center text-xl">🏆</div><div><div class="font-black text-amber-900 dark:text-amber-300 text-lg">永久會員</div><div class="text-[0.65rem] text-amber-700 dark:text-amber-400 font-bold mt-0.5 leading-tight">永久享有VIP再加送10點推演能量<br>每日個人專屬運情，解鎖「本命人」設定</div></div></div>
+                    <div class="flex items-center gap-4"><div class="w-12 h-12 shrink-0 bg-amber-200 dark:bg-amber-700/50 rounded-full flex items-center justify-center text-xl">🏆</div><div><div class="font-black text-amber-900 dark:text-amber-300 text-lg">永久會員</div><div class="text-[0.65rem] text-amber-700 dark:text-amber-400 font-bold mt-0.5 leading-tight">永久享有VIP再加送10點推演能量<br>每日個人專屬運情，解鎖「本命人']設定</div></div></div>
                     <div class="font-black text-2xl text-amber-600 shrink-0">HK$ 138</div>
                 </button>
             
@@ -525,7 +540,7 @@
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-lock"></i></span>
                     <input type="password" id="reg_pass_confirm" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-10 pr-12 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition" placeholder="請再次確認密碼">
                     <span class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer text-slate-400 hover:text-purple-500 transition" onclick="togglePasswordVisibility('reg_pass_confirm', this)">
-                        <i class="fa-solid fa-eye"></i>
+                        <i class="fa-solid fa-lock"></i>
                     </span>
                 </div>
             </div>
@@ -580,1323 +595,1308 @@
         </div>
     </div>   
 
-<script>
-// ==========================================
-// 🌟 1. 全域變數與核心字典
-// ==========================================
-let currentMatrixData = [];
-let currentBazi = {};
-let selectedCategory = '';
-let currentReportTitle = '';
-let pendingInterpretationType = '';
-let tempSelectedSeekerId = null;
+    <script>
+    // ==========================================
+    // 🌟 1. 全域變數與核心字典
+    // ==========================================
+    const API_BASE_URL = 'https://qimen-app-xwie.onrender.com';
 
-// 👑 兩棲安全儲存大腦：同時完美相容網頁版與手機 App 原生端
-const SecurityStorage = {
-    // 讀取 Token
-    async getToken() {
-        try {
-            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-                const { value } = await window.Capacitor.Plugins.Preferences.get({ key: 'qimen_token' });
-                return value;
+    let currentMatrixData = [];
+    let currentBazi = {};
+    let selectedCategory = '';
+    let currentReportTitle = '';
+    let pendingInterpretationType = '';
+    let tempSelectedSeekerId = null;
+
+    const SecurityStorage = {
+        async getToken() {
+            try {
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
+                    const { value } = await window.Capacitor.Plugins.Preferences.get({ key: 'qimen_token' });
+                    return value;
+                }
+            } catch (e) {
+                console.warn("Capacitor Preferences 讀取失敗，切換至網頁版儲存機制");
             }
-        } catch (e) {
-            console.warn("Capacitor Preferences 讀取失敗，切換至網頁版儲存機制");
-        }
-        return localStorage.getItem('qimen_token');
-    },
-
-    // 寫入 Token
-    async setToken(token) {
-        try {
-            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-                await window.Capacitor.Plugins.Preferences.set({ key: 'qimen_token', value: token });
-                return;
+            return localStorage.getItem('qimen_token');
+        },
+        async setToken(token) {
+            try {
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
+                    await window.Capacitor.Plugins.Preferences.set({ key: 'qimen_token', value: token });
+                    return;
+                }
+            } catch (e) {
+                console.warn("Capacitor Preferences 寫入失敗，切換至網頁版儲存機制");
             }
-        } catch (e) {
-            console.warn("Capacitor Preferences 寫入失敗，切換至網頁版儲存機制");
-        }
-        localStorage.setItem('qimen_token', token);
-    },
-
-    // 刪除 Token
-    async removeToken() {
-        try {
-            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-                await window.Capacitor.Plugins.Preferences.remove({ key: 'qimen_token' });
-                return;
+            localStorage.setItem('qimen_token', token);
+        },
+        async removeToken() {
+            try {
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
+                    await window.Capacitor.Plugins.Preferences.remove({ key: 'qimen_token' });
+                    return;
+                }
+            } catch (e) {
+                console.warn("Capacitor Preferences 刪除失敗，切換至網頁版儲存機制");
             }
-        } catch (e) {
-            console.warn("Capacitor Preferences 刪除失敗，切換至網頁版儲存機制");
+            localStorage.removeItem('qimen_token');
         }
-        localStorage.removeItem('qimen_token');
-    }
-};
-
-function handleTimeChange() {
-    const input = document.getElementById('timeInput');
-    const dText = document.getElementById('displayTimeText');
-    if (!input || !input.value) return;
-    
-    // 更新畫面上方的「盤局時間」文字
-    const dateObj = new Date(input.value);
-    const pad = (n) => String(n).padStart(2, '0');
-    if (dText) {
-        dText.innerText = `${dateObj.getFullYear()}年${pad(dateObj.getMonth()+1)}月${pad(dateObj.getDate())}日 ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}`;
-    }
-    
-    if (navigator.vibrate) navigator.vibrate(50);
-    if (typeof fetchData === 'function') {
-        const loader = document.getElementById('initialLoading');
-        if (loader) loader.classList.remove('hidden');
-        fetchData(false, true); 
-    }
-}
-const areaMap = { "巽宮":"巽", "離宮":"離", "坤宮":"坤", "震宮":"震", "中宮":"中", "兌宮":"兌", "艮宮":"艮", "坎宮":"坎", "乾宮":"乾" };
-const numMap = { "坎宮":1, "坤宮":2, "震宮":3, "巽宮":4, "中宮":5, "乾宮":6, "兌宮":7, "艮宮":8, "離宮":9 };
-const qimenDict = { "值符":"貴人、名譽", "騰蛇":"虛驚、變動", "太陰":"庇護、女性", "六合":"合作、姻緣", "白虎":"凶災、阻礙", "玄武":"小人、欺騙", "九地":"堅固、遲緩", "九天":"威嚴、張揚", "休門":"貴人、休整", "生門":"財富、生機", "傷門":"破壞、受傷", "杜門":"隱藏、防守", "景門":"消息、虛幻", "死門":"停滯、凶災", "驚門":"官非、口舌", "開門":"事業、開創", "天蓬星":"大盜、破財", "天芮星":"疾病、問題", "天衝星":"衝動、武力", "天輔星":"文化、學業", "天禽星":"方正、穩重", "天心星":"管理、醫藥", "天柱星":"破壞、口舌", "天任星":"固執、任勞", "天英星":"烈火、名氣" };
-function getWuxingClass(str) {
-    if (!str) return 'wx-none';
-    if (['甲','乙','寅','卯','震宮','巽宮','天衝星','天輔星','傷門','杜門'].some(x => str.includes(x))) return 'wx-wood';
-    if (['丙','丁','巳','午','離宮','天英星','景門'].some(x => str.includes(x))) return 'wx-fire';
-    if (['戊','己','辰','戌','丑','未','坤宮','艮宮','中宮','天芮星','天禽星','天任星','生門','死門'].some(x => str.includes(x))) return 'wx-earth';
-    if (['庚','辛','申','酉','乾宮','兌宮','天心星','天柱星','開門','驚門'].some(x => str.includes(x))) return 'wx-metal';
-    if (['壬','癸','亥','子','坎宮','天蓬星','休門'].some(x => str.includes(x))) return 'wx-water';
-    return 'wx-none';
-}
-function colorizeStem(stem) { return stem; }
-
-// ==========================================
-// 🚀 2. 系統啟動與時間控制
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("🔮 奇門系統啟動中...");
-    if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
-    try { initTime(); } catch (e) { console.error(e); }
-
-    const onLoadCleanup = () => {
-        const initialLoading = document.getElementById('initialLoading');
-        if (initialLoading) initialLoading.classList.add('hidden');
     };
 
-    if (typeof fetchUserInfo === 'function') {
-        fetchUserInfo().then(() => {
-            onLoadCleanup();
-        }).catch(e => {
-            console.error(e);
-            onLoadCleanup();
-        });
-    } else {
-        onLoadCleanup();
-    }
-
-    if (new URLSearchParams(window.location.search).get('payment') === 'success') {
-        const sessionId = new URLSearchParams(window.location.search).get('session_id');
-        setTimeout(async () => {
-            if (sessionId) {
-                try {
-                    const token = await getAuthToken();
-                    const confirmRes = await fetch(`/api/v1/payment/confirm-checkout-session?session_id=${encodeURIComponent(sessionId)}`, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-                    const confirmData = await confirmRes.json();
-                    if (confirmRes.ok && confirmData.status === 'success') {
-                        showToast("付款成功！系統已為您補充能量。", false);
-                        if (typeof fetchUserInfo === 'function') fetchUserInfo(true);
-                    } else {
-                        const message = confirmData.detail || confirmData.message || '付款確認失敗';
-                        showToast(`付款已成功，系統未完成交付：${message}`, true);
-                    }
-                } catch (err) {
-                    console.error('Confirm checkout failed', err);
-                    showToast("付款成功，但交付流程異常，請稍後重試或聯繫客服。", true);
-                }
-            } else {
-                showToast("付款成功！系統已為您補充能量。", false);
-                if (typeof fetchUserInfo === 'function') fetchUserInfo(true);
-            }
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }, 1500);
-    }
-});
-
-function initTime() {
-    const i = document.getElementById('timeInput');
-    const dText = document.getElementById('displayTimeText');
-    if (i) {
-        const now = new Date();
-        const pad = (n) => String(n).padStart(2,'0');
-        const formatted = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-        i.value = formatted;
-        if (dText) dText.innerText = `${now.getFullYear()}年${pad(now.getMonth()+1)}月${pad(now.getDate())}日 ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-    }
-}
-
-function calculateNow() { fetchData(false, false); }
-
-// ==========================================
-// 🎨 3. UI 互動與動畫模組
-// ==========================================
-function triggerVibration() { if (navigator.vibrate) navigator.vibrate(50); }
-
-function showToast(msg, isError = false) {
-    const toast = document.getElementById('toastMessage');
-    const toastText = document.getElementById('toastText');
-    const toastIcon = document.getElementById('toastIcon');
-    if (!toast) return;
-    
-    toast.style.zIndex = "9999"; 
-    if (toastText) toastText.innerText = msg;
-    if (toastIcon) {
-        toastIcon.className = isError ? "fa-solid fa-circle-exclamation text-rose-400" : "fa-solid fa-circle-check text-emerald-400";
-    }
-    toast.classList.remove('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
-    toast.classList.add('opacity-100', 'translate-y-0');
-    setTimeout(() => {
-        toast.classList.remove('opacity-100', 'translate-y-0');
-        toast.classList.add('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
-    }, 3000);
-}
-
-function showLoading(text = "大師推演中") {
-    const loader = document.getElementById('mysticalLoading');
-    const loaderText = document.getElementById('loadingText');
-    if (loaderText) loaderText.innerText = text;
-    if (loader) {
-        loader.classList.remove('hidden');
-        setTimeout(() => { loader.classList.remove('opacity-0'); loader.classList.add('opacity-100'); }, 10);
-    }
-}
-
-function hideLoading() {
-    const loader = document.getElementById('mysticalLoading');
-    if (loader) {
-        loader.classList.remove('opacity-100');
-        loader.classList.add('opacity-0');
-        setTimeout(() => { loader.classList.add('hidden'); }, 300);
-    }
-}
-
-// 👑 兩棲非同步安全讀取
-async function getAuthToken() {
-    const token = await SecurityStorage.getToken();
-    if (!token || token === 'null' || token === 'undefined') return null;
-    return token;
-}
-
-function buildAuthorizedHeaders(token) {
-    const headers = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    return headers;
-}
-
-function switchView(viewId, btnEl = null) {
-    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-    document.getElementById(viewId).classList.add('active');
-    if (btnEl) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active', 'text-indigo-600', 'dark:text-indigo-400'));
-        btnEl.classList.add('tab-active', 'text-indigo-600', 'dark:text-indigo-400');
-    }
-}
-function toggleDarkMode() {
-    const html = document.documentElement;
-    html.classList.toggle('dark');
-    localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
-}
-
-// ==========================================
-// 🔐 4. 會員認證與用戶資訊
-// ==========================================
-function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
-function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
-
-function togglePasswordVisibility(inputId, icon) {
-    const input = document.getElementById(inputId);
-    if (input.type === "password") {
-        input.type = "text";
-        icon.classList.remove("fa-eye");
-        icon.classList.add("fa-eye-slash");
-    } else {
-        input.type = "password";
-        icon.classList.remove("fa-eye-slash");
-        icon.classList.add("fa-eye");
-    }
-}
-
-function toggleAuthMode() {
-    const authTitle = document.getElementById('authTitle');
-    const authSwitchText = document.getElementById('authSwitchText');
-    const authSwitchBtn = document.getElementById('authSwitchBtn');
-    const emailField = document.getElementById('emailField');
-    const confirmPasswordField = document.getElementById('confirmPasswordField');
-    const forgotBtn = document.getElementById('forgotPasswordBtn');
-    if (authTitle.innerText === '歡迎回來') {
-        authTitle.innerText = '加入會員';
-        authSwitchText.innerText = '已經有帳號了？';
-        authSwitchBtn.innerText = '立即登入';
-        if(emailField) emailField.classList.remove('hidden');
-        if(confirmPasswordField) confirmPasswordField.classList.remove('hidden'); 
-        if(forgotBtn) forgotBtn.classList.add('hidden');
-    } else {
-        authTitle.innerText = '歡迎回來';
-        authSwitchText.innerText = '還沒有帳號嗎？';
-        authSwitchBtn.innerText = '立即註冊';
-        if(emailField) emailField.classList.add('hidden');
-        if(confirmPasswordField) confirmPasswordField.classList.add('hidden'); 
-        if(forgotBtn) forgotBtn.classList.remove('hidden');
-    }
-}
-
-function resetSubmitButton() {
-    const submitBtn = document.getElementById('authSubmitBtn');
-    if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = submitBtn.dataset.originalText || '確認送出';
-    }
-}
-
-async function handleAuth() {
-    const submitBtn = document.getElementById('authSubmitBtn');
-    if (submitBtn) {
-        submitBtn.dataset.originalText = submitBtn.dataset.originalText || submitBtn.innerHTML;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...';
-    }
-
-    const u = document.getElementById('auth_user').value;
-    const p = document.getElementById('auth_pass').value;
-    const authTitle = document.getElementById('authTitle').innerText;
-    const isRegister = (authTitle === '加入會員');
-    const email = isRegister ? document.getElementById('reg_email').value : null;
-    const p_confirm = isRegister ? document.getElementById('reg_pass_confirm').value : null;
-
-    if (!u || !p) { showToast("請填寫帳號與密碼", true); resetSubmitButton(); return; }
-    if (isRegister && !email) { showToast("註冊請填寫 Email", true); resetSubmitButton(); return; }
-    if (isRegister && p !== p_confirm) { showToast("兩次密碼輸入不一致", true); resetSubmitButton(); return; }
-
-    const endpoint = isRegister ? '/api/v1/auth/register' : '/api/v1/auth/login';
-    const payload = isRegister ? { username: u, password: p, email } : { username: u, password: p };
-
-    let res;
-    try {
-        res = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        let data = {};
-        try { data = await res.json(); } catch (parseErr) { data = {}; }
-
-        if (!res.ok) {
-            let detail = data.detail || data.error || data.message || `伺服器錯誤 (${res.status})`;
-            if (typeof detail === 'object') detail = JSON.stringify(detail);
-            throw new Error(detail);
-        }
-
-        const token = data.access_token || data.token;
-        if (!token) {
-            throw new Error('伺服器回傳缺少 token');
-        }
-
-        await SecurityStorage.setToken(token); // 兩棲寫入升級
-        closeAuthModal();
-        window.location.reload();
-    } catch (e) {
-        showToast(e.message || '認證失敗', true);
-    } finally {
-        resetSubmitButton();
-    }
-}
-
-function openForgotPasswordModal() {
-    const authModal = document.getElementById('authModal');
-    if (authModal) authModal.classList.add('hidden');
-    
-    document.getElementById('forgotPasswordModal').classList.remove('hidden');
-    document.getElementById('forgotStep1').classList.remove('hidden');
-    document.getElementById('forgotStep2').classList.add('hidden');
-}
-
-function closeForgotPasswordModal() {
-    document.getElementById('forgotPasswordModal').classList.add('hidden');
-}
-
-async function submitForgotPasswordEmail() {
-    const account = document.getElementById('forgotAccountInput').value.trim();
-    if (!account) return showToast("請輸入用戶名稱或信箱", true);
-    
-    const btn = document.getElementById('forgotSendBtn');
-    btn.disabled = true;
-    btn.innerText = "正在傳送磁場信號...";
-    try {
-        const res = await fetch('/api/v1/auth/forgot-password', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                account: account, 
-                username: account,        
-                password: "bypass_422_dummy_pwd" 
-            })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            showToast("驗證碼已火速飛往您的信箱！");
-            document.getElementById('forgotStep1').classList.add('hidden');
-            document.getElementById('forgotStep2').classList.remove('hidden');
-        } else {
-            showToast(data.detail || "發送失敗，請確認資料是否正確", true);
-        }
-    } catch (err) {
-        showToast("天體連線異常，請稍後再試", true);
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "發送安全驗證碼";
-    }
-}
-
-async function submitResetPasswordFinal() {
-    const account = document.getElementById('forgotAccountInput').value.trim();
-    const code = document.getElementById('forgotCodeInput').value.trim();
-    const newPassword = document.getElementById('forgotNewPasswordInput').value.trim();
-
-    if (!code || code.length !== 6) return showToast("請輸入完整的 6 位數驗證碼", true);
-    if (!newPassword || newPassword.length < 4) return showToast("新密碼長度太短", true);
-
-    try {
-        const res = await fetch('/api/v1/auth/reset-password', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ account: account, code: code, new_password: newPassword })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            showToast("🌟 密碼改運成功！請用新密碼進行登入。");
-            closeForgotPasswordModal();
-            const authModal = document.getElementById('authModal');
-            if (authModal) authModal.classList.remove('hidden');
-        } else {
-            showToast(data.detail || "重置失敗，驗證碼可能不正確", true);
-        }
-    } catch (err) {
-        showToast("磁場紊亂，重置失敗", true);
-    }
-}
-
-async function fetchUserInfo() {
-    const t = await getAuthToken(); // 升級 await
-    if (!t) return;
-    try {
-        const res = await fetch('/api/v1/auth/me', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${t}`
-            }
-        });
-        if (!res.ok) {
-            await SecurityStorage.removeToken();
-            return;
-        }
-        const d = await res.json();
-        const creditsEl = document.getElementById('headerCredits');
-        const creditsVal = document.getElementById('userCredits');
-        const profileCredits = document.getElementById('profileCreditsView');
-        if (creditsEl) creditsEl.style.display = 'flex';
-        if (creditsVal) creditsVal.innerText = d.credits;
-        if (profileCredits) profileCredits.innerText = d.credits;
-
-        const pGuest = document.getElementById('profileGuest');
-        const pUser = document.getElementById('profileUser');
-        if (pGuest) pGuest.style.display = 'none';
-        if (pUser) pUser.style.display = 'flex';
-
-        const pName = document.getElementById('profileUsername');
-        if (pName) pName.innerText = d.username;
-        window.isVipUser = d.is_vip;
-        const vBadge = document.getElementById('vipBadge');
-        if (vBadge) {
-            vBadge.innerText = d.membership_display || '緣起會員';
-            const mType = d.membership_type || 'free';
-
-            if (mType === 'lifetime') {
-                vBadge.className = 'text-xs font-bold text-amber-900 dark:text-amber-100 mt-1 bg-gradient-to-r from-amber-200 to-yellow-400 dark:from-amber-950/50 dark:to-yellow-700/50 inline-block px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-800 shadow-sm shadow-amber-500/20';
-            } else if (mType === 'monthly') {
-                vBadge.className = 'text-xs font-bold text-indigo-700 dark:text-indigo-300 mt-1 bg-indigo-50 dark:bg-indigo-950/30 inline-block px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-900/30';
-            } else {
-                vBadge.className = 'text-xs font-bold text-slate-500 dark:text-slate-400 mt-1 bg-slate-100 dark:bg-slate-800/50 inline-block px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700/50';
-            }
-        }
-
-        if (typeof fetchHistoryAndSync === 'function') fetchHistoryAndSync(true);
-    } catch (e) {
-        console.error('UserInfo 抓取失敗');
-        await SecurityStorage.removeToken();
-    }
-}
-
-async function logout() { // 升級為兩棲 async
-    await SecurityStorage.removeToken();
-    showToast("已安全登出");
-    location.reload();
-}
-
-// ==========================================
-// 🔮 5. 核心排盤與渲染
-// ==========================================
-async function fetchData(keepMasterBox = false, isSilent = false) {
-    const timeEl = document.getElementById('timeInput');
-    if (!timeEl || !timeEl.value) { initTime(); }
-    const rawTime = timeEl.value;
-    const btn = document.getElementById('calcNowBtn');
-    if (!isSilent && btn) { btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 推演中...'; btn.disabled = true; }
-    if (!isSilent) showLoading("排盤中...");
-
-    try {
-        const response = await fetch('https://kenttangtel-qimen-api.hf.space/api/v1/divination/calculate', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify({ time: rawTime.replace('T', ' ') }) 
-        });
-        const data = await response.json();
+    function handleTimeChange() {
+        const input = document.getElementById('timeInput');
+        const dText = document.getElementById('displayTimeText');
+        if (!input || !input.value) return;
         
-        const dirMap = { "坎宮":"正北", "艮宮":"東北", "震宮":"正東", "巽宮":"東南", "離宮":"正南", "坤宮":"西南", "兌宮":"正西", "乾宮":"西北" };
-        let gridItems = '';
-        if(data.qimen_matrix) {
-            data.qimen_matrix.forEach(p => {
-                const dir = dirMap[p.palace_id] || '中宮';
-                
-                const getActionText = (purpose, dirName) => `
-                    <div class="space-y-4 text-left mt-3">
-                        <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                            <strong>📍 奇門原理：</strong>出門見客取的是「當下時辰」的空間吉氣。此時【${dirName}】正是最能助旺您<strong>${purpose}</strong>的方位。
-                        </p>
-                        <div class="bg-rose-50 dark:bg-rose-900/20 p-4 rounded-xl border border-rose-100 dark:border-rose-800/30">
-                            <p class="font-black text-rose-600 dark:text-rose-400 mb-2">🚶‍♂️ 實戰出行訣（折返借氣法）：</p>
-                            <ul class="list-disc pl-5 space-y-1.5 text-sm text-rose-700 dark:text-rose-300 font-medium">
-                                <li>出門第一步，請先向<strong>【${dirName}】</strong>步行或開車前進 10-15 分鐘。</li>
-                                <li>在當地的咖啡廳或路邊稍作停留（約 5-10 分鐘），喝口水定神，此謂「納吉氣」。</li>
-                                <li>吸收吉氣後，再前往客戶實際所在地。就算客戶在凶方，您也已完成了「借方奪氣」，能讓事情事半功倍！</li>
-                            </ul>
-                        </div>
-                    </div>
-                `;
-                const addGridItem = (icon, title, purpose, coreDesc) => {
-                    const fullDesc = `<p class="text-sm font-bold text-indigo-700 dark:text-indigo-400 mb-2">${coreDesc}</p>` + getActionText(purpose, dir);
-                    const safeDesc = encodeURIComponent(fullDesc); 
-                    gridItems += `
-                        <div onclick="triggerVibration(); window.showFdDetail('${icon} ${title}', '${dir}', '${safeDesc}')" class="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-800/30 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-800/50 active:scale-95 transition shadow-sm">
-                            <div class="text-4xl mb-2">${icon}</div>
-                            <div class="text-[0.95rem] font-black text-slate-700 dark:text-slate-200">${title}</div>
-                            <div class="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-2 bg-white dark:bg-slate-800 px-3 py-1 rounded-lg shadow-sm border border-indigo-100 dark:border-indigo-700">${dir}</div>
-                        </div>
-                    `;
-                };
+        const dateObj = new Date(input.value);
+        const pad = (n) => String(n).padStart(2, '0');
+        if (dText) {
+            dText.innerText = `${dateObj.getFullYear()}年${pad(dateObj.getMonth()+1)}月${pad(dateObj.getDate())}日 ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}`;
+        }
+        
+        if (navigator.vibrate) navigator.vibrate(50);
+        if (typeof fetchData === 'function') {
+            const loader = document.getElementById('initialLoading');
+            if (loader) loader.classList.remove('hidden');
+            fetchData(false, true); 
+        }
+    }
+    const areaMap = { "巽宮":"巽", "離宮":"離", "坤宮":"坤", "震宮":"震", "中宮":"中", "兌宮":"兌", "艮宮":"艮", "坎宮":"坎", "乾宮":"乾" };
+    const numMap = { "坎宮":1, "坤宮":2, "震宮":3, "巽宮":4, "中宮":5, "乾宮":6, "兌宮":7, "艮宮":8, "離宮":9 };
+    const qimenDict = { "值符":"貴人、名譽", "騰蛇":"虛驚、變動", "太陰":"庇護、女性", "六合":"合作、姻緣", "白虎":"凶災、阻礙", "玄武":"小人、欺騙", "九地":"堅固、遲緩", "九天":"威嚴、張揚", "休門":"貴人、休整", "生門":"財富、生機", "傷門":"破壞、受傷", "杜門":"隱藏、防守", "景門":"消息、虛幻", "死門":"停滯、凶災", "驚門":"官非、口舌", "開門":"事業、開創", "天蓬星":"大盜、破財", "天芮星":"疾病、問題", "天衝星":"衝動、武力", "天輔星":"文化、學業", "天禽星":"方正、穩重", "天心星":"管理、醫藥", "天柱星":"破壞、口舌", "天任星":"固執、任勞", "天英星":"烈火、名氣" };
+    function getWuxingClass(str) {
+        if (!str) return 'wx-none';
+        if (['甲','乙','寅','卯','震宮','巽宮','天衝星','天輔星','傷門','杜門'].some(x => str.includes(x))) return 'wx-wood';
+        if (['丙','丁','巳','午','離宮','天英星','景門'].some(x => str.includes(x))) return 'wx-fire';
+        if (['戊','己','辰','戌','丑','未','坤宮','艮宮','中宮','天芮星','天禽星','天任星','生門','死門'].some(x => str.includes(x))) return 'wx-earth';
+        if (['庚','辛','申','酉','乾宮','兌宮','天心星','天柱星','開門','驚門'].some(x => str.includes(x))) return 'wx-metal';
+        if (['壬','癸','亥','子','坎宮','天蓬星','休門'].some(x => str.includes(x))) return 'wx-water';
+        return 'wx-none';
+    }
+    function colorizeStem(stem) { return stem; }
 
-                if ((p.door || "").includes("生門")) {
-                    addGridItem("💰", "生門・求財", "直接談錢、利潤與資產", `此時【生門】落於 ${dir} (${p.palace_id})。利於直接談錢、爭取利潤、資產或產值評估。`);
+    // ==========================================
+    // 🚀 2. 系統啟動與時間控制
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log("🔮 奇門系統啟動中...");
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+        try { initTime(); } catch (e) { console.error(e); }
+
+        const onLoadCleanup = () => {
+            const initialLoading = document.getElementById('initialLoading');
+            if (initialLoading) initialLoading.classList.add('hidden');
+        };
+
+        if (typeof fetchUserInfo === 'function') {
+            fetchUserInfo().then(() => {
+                onLoadCleanup();
+            }).catch(e => {
+                console.error(e);
+                onLoadCleanup();
+            });
+        } else {
+            onLoadCleanup();
+        }
+
+        if (new URLSearchParams(window.location.search).get('payment') === 'success') {
+            const sessionId = new URLSearchParams(window.location.search).get('session_id');
+            setTimeout(async () => {
+                if (sessionId) {
+                    try {
+                        const token = await getAuthToken();
+                        const confirmRes = await fetch(`${API_BASE_URL}/api/v1/payment/confirm-checkout-session?session_id=${encodeURIComponent(sessionId)}`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        const confirmData = await confirmRes.json();
+                        if (confirmRes.ok && confirmData.status === 'success') {
+                            showToast("付款成功！系統已為您補充能量。", false);
+                            if (typeof fetchUserInfo === 'function') fetchUserInfo(true);
+                        } else {
+                            const message = confirmData.detail || confirmData.message || '付款確認失敗';
+                            showToast(`付款已成功，系統未完成交付：${message}`, true);
+                        }
+                    } catch (err) {
+                        console.error('Confirm checkout failed', err);
+                        showToast("付款成功，但交付流程異常，請稍後重試或聯繫客服。", true);
+                    }
+                } else {
+                    showToast("付款成功！系統已為您補充能量。", false);
+                    if (typeof fetchUserInfo === 'function') fetchUserInfo(true);
                 }
-                if ((p.door || "").includes("開門")) {
-                    addGridItem("💼", "開門・事業", "談公司業務、簽約與展現專業", `此時【開門】落於 ${dir} (${p.palace_id})。利於談公司業務、簽署重要合同、展現專業度與拓展事業。`);
-                }
-                if ((p.door || "").includes("休門")) {
-                    addGridItem("❤️", "休門・和合", "拉近關係、和諧溝通與化解敵意", `此時【休門】落於 ${dir} (${p.palace_id})。極度利於拉近關係、和諧溝通、吃茶敘舊、化解雙方敵意。`);
-                }
-                if ((p.deity || "").includes("六合")) {
-                    addGridItem("🤝", "六合・談判", "尋求共識、談判與締結盟約", `此時【六合】貴神落於 ${dir} (${p.palace_id})。在此方位進行溝通、談判或尋求雙方共識最為有利。`);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }, 1500);
+        }
+    });
+
+    function initTime() {
+        const i = document.getElementById('timeInput');
+        const dText = document.getElementById('displayTimeText');
+        if (i) {
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2,'0');
+            const formatted = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            i.value = formatted;
+            if (dText) dText.innerText = `${now.getFullYear()}年${pad(now.getMonth()+1)}月${pad(now.getDate())}日 ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        }
+    }
+
+    function calculateNow() { fetchData(false, false); }
+
+    // ==========================================
+    // 🎨 3. UI 互動與動畫模組
+    // ==========================================
+    function triggerVibration() { if (navigator.vibrate) navigator.vibrate(50); }
+
+    function showToast(msg, isError = false) {
+        const toast = document.getElementById('toastMessage');
+        const toastText = document.getElementById('toastText');
+        const toastIcon = document.getElementById('toastIcon');
+        if (!toast) return;
+        
+        toast.style.zIndex = "9999"; 
+        if (toastText) toastText.innerText = msg;
+        if (toastIcon) {
+            toastIcon.className = isError ? "fa-solid fa-circle-exclamation text-rose-400" : "fa-solid fa-circle-check text-emerald-400";
+        }
+        toast.classList.remove('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
+        toast.classList.add('opacity-100', 'translate-y-0');
+        setTimeout(() => {
+            toast.classList.remove('opacity-100', 'translate-y-0');
+            toast.classList.add('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
+        }, 3000);
+    }
+
+    function showLoading(text = "大師推演中") {
+        const loader = document.getElementById('mysticalLoading');
+        const loaderText = document.getElementById('loadingText');
+        if (loaderText) loaderText.innerText = text;
+        if (loader) {
+            loader.classList.remove('hidden');
+            setTimeout(() => { loader.classList.remove('opacity-0'); loader.classList.add('opacity-100'); }, 10);
+        }
+    }
+
+    function hideLoading() {
+        const loader = document.getElementById('mysticalLoading');
+        if (loader) {
+            loader.classList.remove('opacity-100');
+            loader.classList.add('opacity-0');
+            setTimeout(() => { loader.classList.add('hidden'); }, 300);
+        }
+    }
+
+    async function getAuthToken() {
+        const token = await SecurityStorage.getToken();
+        if (!token || token === 'null' || token === 'undefined') return null;
+        return token;
+    }
+
+    function buildAuthorizedHeaders(token) {
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        return headers;
+    }
+
+    function switchView(viewId, btnEl = null) {
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        if (btnEl) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active', 'text-indigo-600', 'dark:text-indigo-400'));
+            btnEl.classList.add('tab-active', 'text-indigo-600', 'dark:text-indigo-400');
+        }
+    }
+    function toggleDarkMode() {
+        const html = document.documentElement;
+        html.classList.toggle('dark');
+        localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+    }
+
+    // ==========================================
+    // 🔐 4. 會員認證與用戶資訊
+    // ==========================================
+    function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
+    function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
+
+    function togglePasswordVisibility(inputId, icon) {
+        const input = document.getElementById(inputId);
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        } else {
+            input.type = "password";
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
+    }
+
+    function toggleAuthMode() {
+        const authTitle = document.getElementById('authTitle');
+        const authSwitchText = document.getElementById('authSwitchText');
+        const authSwitchBtn = document.getElementById('authSwitchBtn');
+        const emailField = document.getElementById('emailField');
+        const confirmPasswordField = document.getElementById('confirmPasswordField');
+        const forgotBtn = document.getElementById('forgotPasswordBtn');
+        if (authTitle.innerText === '歡迎回來') {
+            authTitle.innerText = '加入會員';
+            authSwitchText.innerText = '已經有帳號了？';
+            authSwitchBtn.innerText = '立即登入';
+            if(emailField) emailField.classList.remove('hidden');
+            if(confirmPasswordField) confirmPasswordField.classList.remove('hidden'); 
+            if(forgotBtn) forgotBtn.classList.add('hidden');
+        } else {
+            authTitle.innerText = '歡迎回來';
+            authSwitchText.innerText = '還沒有帳號嗎？';
+            authSwitchBtn.innerText = '立即註冊';
+            if(emailField) emailField.classList.add('hidden');
+            if(confirmPasswordField) confirmPasswordField.classList.add('hidden'); 
+            if(forgotBtn) forgotBtn.classList.remove('hidden');
+        }
+    }
+
+    function resetSubmitButton() {
+        const submitBtn = document.getElementById('authSubmitBtn');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = submitBtn.dataset.originalText || '確認送出';
+        }
+    }
+
+    async function handleAuth() {
+        const submitBtn = document.getElementById('authSubmitBtn');
+        if (submitBtn) {
+            submitBtn.dataset.originalText = submitBtn.dataset.originalText || submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...';
+        }
+
+        const u = document.getElementById('auth_user').value;
+        const p = document.getElementById('auth_pass').value;
+        const authTitle = document.getElementById('authTitle').innerText;
+        const isRegister = (authTitle === '加入會員');
+        const email = isRegister ? document.getElementById('reg_email').value : null;
+        const p_confirm = isRegister ? document.getElementById('reg_pass_confirm').value : null;
+
+        if (!u || !p) { showToast("請填寫帳號與密碼", true); resetSubmitButton(); return; }
+        if (isRegister && !email) { showToast("註冊請填寫 Email", true); resetSubmitButton(); return; }
+        if (isRegister && p !== p_confirm) { showToast("兩次密碼輸入不一致", true); resetSubmitButton(); return; }
+
+        const endpoint = isRegister ? `${API_BASE_URL}/api/v1/auth/register` : `${API_BASE_URL}/api/v1/auth/login`;
+        const payload = isRegister ? { username: u, password: p, email } : { username: u, password: p };
+
+        let res;
+        try {
+            res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            let data = {};
+            try { data = await res.json(); } catch (parseErr) { data = {}; }
+
+            if (!res.ok) {
+                let detail = data.detail || data.error || data.message || `伺服器錯誤 (${res.status})`;
+                if (typeof detail === 'object') detail = JSON.stringify(detail);
+                throw new Error(detail);
+            }
+
+            const token = data.access_token || data.token;
+            if (!token) {
+                throw new Error('伺服器回傳缺少 token');
+            }
+
+            await SecurityStorage.setToken(token); 
+            closeAuthModal();
+            window.location.reload();
+        } catch (e) {
+            showToast(e.message || '認證失敗', true);
+        } finally {
+            resetSubmitButton();
+        }
+    }
+
+    function openForgotPasswordModal() {
+        const authModal = document.getElementById('authModal');
+        if (authModal) authModal.classList.add('hidden');
+        
+        document.getElementById('forgotPasswordModal').classList.remove('hidden');
+        document.getElementById('forgotStep1').classList.remove('hidden');
+        document.getElementById('forgotStep2').classList.add('hidden');
+    }
+
+    function closeForgotPasswordModal() {
+        document.getElementById('forgotPasswordModal').classList.add('hidden');
+    }
+
+    async function submitForgotPasswordEmail() {
+        const account = document.getElementById('forgotAccountInput').value.trim();
+        if (!account) return showToast("請輸入用戶名稱或信箱", true);
+        
+        const btn = document.getElementById('forgotSendBtn');
+        btn.disabled = true;
+        btn.innerText = "正在傳送磁場信號...";
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    account: account, 
+                    username: account,        
+                    password: "bypass_422_dummy_pwd" 
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showToast("驗證碼已火速飛往您的信箱！");
+                document.getElementById('forgotStep1').classList.add('hidden');
+                document.getElementById('forgotStep2').classList.remove('hidden');
+            } else {
+                showToast(data.detail || "發送失敗，請確認資料是否正確", true);
+            }
+        } catch (err) {
+            showToast("天體連線異常，請稍後再試", true);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "發送安全驗證碼";
+        }
+    }
+
+    async function submitResetPasswordFinal() {
+        const account = document.getElementById('forgotAccountInput').value.trim();
+        const code = document.getElementById('forgotCodeInput').value.trim();
+        const newPassword = document.getElementById('forgotNewPasswordInput').value.trim();
+
+        if (!code || code.length !== 6) return showToast("請輸入完整的 6 位數驗證碼", true);
+        if (!newPassword || newPassword.length < 4) return showToast("新密碼長度太短", true);
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/v1/auth/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ account: account, code: code, new_password: newPassword })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showToast("🌟 密碼改運成功！請用新密碼進行登入。");
+                closeForgotPasswordModal();
+                const authModal = document.getElementById('authModal');
+                if (authModal) authModal.classList.remove('hidden');
+            } else {
+                showToast(data.detail || "重置失敗，驗證碼可能不正確", true);
+            }
+        } catch (err) {
+            showToast("磁場紊亂，重置失敗", true);
+        }
+    }
+
+    async function fetchUserInfo() {
+        const t = await getAuthToken(); 
+        if (!t) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${t}`
                 }
             });
-        }
+            if (!res.ok) {
+                await SecurityStorage.removeToken();
+                return;
+            }
+            const d = await res.json();
+            const creditsEl = document.getElementById('headerCredits');
+            const creditsVal = document.getElementById('userCredits');
+            const profileCredits = document.getElementById('profileCreditsView');
+            if (creditsEl) creditsEl.style.display = 'flex';
+            if (creditsVal) creditsVal.innerText = d.credits;
+            if (profileCredits) profileCredits.innerText = d.credits;
 
-        const fdC = document.getElementById('fdContainer');
-        if(fdC) {
-            fdC.innerHTML = `
-                <div id="fdGrid" class="grid grid-cols-2 gap-3">${gridItems}</div>
-                <div id="fdDetail" class="hidden flex-col items-center justify-center text-center animate-[fadeIn_0.2s_ease-out]">
-                    <h4 id="fdDetailTitle" class="text-xl font-black text-slate-800 dark:text-slate-200 mb-3"></h4>
-                    <div class="bg-indigo-100 dark:bg-indigo-900/50 w-full py-4 rounded-2xl mb-4 border border-indigo-200 dark:border-indigo-800">
-                        <div class="text-xs font-bold text-indigo-500 mb-1">大吉方位</div>
-                        <div id="fdDetailDir" class="text-4xl font-black text-indigo-700 dark:text-indigo-400 tracking-wider"></div>
-                    </div>
-                    <div id="fdDetailText" class="w-full"></div>
-                    <button onclick="triggerVibration(); document.getElementById('fdDetail').classList.add('hidden'); document.getElementById('fdGrid').classList.remove('hidden');" class="mt-6 text-sm font-black text-slate-500 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 px-8 py-3 rounded-full active:scale-95 transition shadow-sm"><i class="fa-solid fa-arrow-left mr-1"></i> 返回選單</button>
-                </div>
-            `;
-        }
+            const pGuest = document.getElementById('profileGuest');
+            const pUser = document.getElementById('profileUser');
+            if (pGuest) pGuest.style.display = 'none';
+            if (pUser) pUser.style.display = 'flex';
 
-        const baziEl = document.getElementById('freeDailyBazi');
-        if(data.bazi && baziEl) baziEl.innerText = `今日干支：${data.bazi.year} ${data.bazi.month} ${data.bazi.day}`;
-        renderUI(data);
-    } catch (e) {
-        if (!isSilent) showToast("排盤失敗，請檢查網路", true);
-    } finally {
-        if(!isSilent) hideLoading();
-        if(!isSilent && btn) { btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 立即排盤'; btn.disabled = false; }
-    }
-}
+            const pName = document.getElementById('profileUsername');
+            if (pName) pName.innerText = d.username;
+            window.isVipUser = d.is_vip;
+            const vBadge = document.getElementById('vipBadge');
+            if (vBadge) {
+                vBadge.innerText = d.membership_display || '緣起會員';
+                const mType = d.membership_type || 'free';
 
-function renderUI(data) {
-    if (!data) return;
-    currentMatrixData = data.qimen_matrix || [];
-    currentBazi = data.bazi || {};
-    const infoBox = document.getElementById('infoBox'); if(infoBox) infoBox.classList.remove('hidden'); 
-    const gridContainer = document.getElementById('gridContainer'); if(gridContainer) gridContainer.classList.remove('hidden');
-    const legendBox = document.getElementById('legendBox'); if(legendBox) legendBox.classList.remove('hidden'); 
-    const askTriggerBox = document.getElementById('askTriggerBox'); if(askTriggerBox) askTriggerBox.classList.remove('hidden');
-    if (data.qimen_info) {
-        const qimenGrid = document.getElementById('qimenInfoGrid');
-        if (qimenGrid) {
-            qimenGrid.innerHTML = `<div class="flex items-center"><span class="text-slate-400 w-10">選局:</span><span class="text-indigo-700 dark:text-indigo-400 font-black ml-1">${data.qimen_info.description || ''}</span></div><div class="flex items-center"><span class="text-slate-400 w-10">值符:</span><span class="font-black dark:text-slate-200 ml-1">${data.qimen_info.zhi_fu || ''}</span></div><div class="flex items-center"><span class="text-slate-400 w-10">旬首:</span><span class="font-black dark:text-slate-200 ml-1">${data.qimen_info.hour_xun || ''}</span></div><div class="flex items-center"><span class="text-slate-400 w-10">值使:</span><span class="font-black dark:text-slate-200 ml-1">${data.qimen_info.zhi_shi || ''}</span></div><div class="flex items-center col-span-1"><span class="text-slate-400 w-10">空亡:</span><span class="text-rose-500 font-bold ml-1 text-[0.7rem]">時:<span>${data.bazi.day_empty || ''}</span> 日:<span>${data.qimen_info.ri_kong || ''}</span></span></div><div class="flex items-center"><span class="text-slate-400 w-10">節氣:</span><span class="font-black dark:text-slate-200 ml-1">${data.qimen_info.solar_term || ''}</span></div>`;
+                if (mType === 'lifetime') {
+                    vBadge.className = 'text-xs font-bold text-amber-900 dark:text-amber-100 mt-1 bg-gradient-to-r from-amber-200 to-yellow-400 dark:from-amber-950/50 dark:to-yellow-700/50 inline-block px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-800 shadow-sm shadow-amber-500/20';
+                } else if (mType === 'monthly') {
+                    vBadge.className = 'text-xs font-bold text-indigo-700 dark:text-indigo-300 mt-1 bg-indigo-50 dark:bg-indigo-950/30 inline-block px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-900/30';
+                } else {
+                    vBadge.className = 'text-xs font-bold text-slate-500 dark:text-slate-400 mt-1 bg-slate-100 dark:bg-slate-800/50 inline-block px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700/50';
+                }
+            }
+
+            if (typeof fetchHistoryAndSync === 'function') fetchHistoryAndSync(true);
+        } catch (e) {
+            console.error('UserInfo 抓取失敗');
+            await SecurityStorage.removeToken();
         }
     }
-    
-    const bz = [ data.bazi.year || "  ", data.bazi.month || "  ", data.bazi.day || "  ", data.bazi.hour || "  " ];
-    const baziTable = document.getElementById('baziTable');
-    if (baziTable) {
-        baziTable.innerHTML = `<div class="flex flex-col gap-1 text-center font-bold text-xs"><div class="grid grid-cols-4 gap-2 text-slate-400 border-b border-slate-200 dark:border-slate-700 pb-1"><span>年</span><span>月</span><span>日</span><span>時</span></div><div class="grid grid-cols-4 gap-2 text-sm md:text-lg">${bz.map(v => `<span class="${getWuxingClass(v[0])}">${v[0] || ' '}</span>`).join('')}</div><div class="grid grid-cols-4 gap-2 text-sm md:text-lg">${bz.map(v => `<span class="${getWuxingClass(v[1])}">${v[1] || ' '}</span>`).join('')}</div></div>`;
+
+    async function logout() { 
+        await SecurityStorage.removeToken();
+        showToast("已安全登出");
+        location.reload();
     }
 
-    if (gridContainer && currentMatrixData) {
-        gridContainer.innerHTML = '';
-        currentMatrixData.forEach(p => {
-            const s = p.logic_states || {}; 
-            let marksHtml = (s.is_empty?'空 ':'') + (s.is_horse?'🐎 ':'');
-            let doorWarn = p.door_strength === '迫' ? `<span class="tiny-tag-door">迫</span>` : `<span class="text-[0.5rem] opacity-50 ml-0.5">${p.door_strength || ''}</span>`;
-            let firstPattern = p.pattern ? p.pattern.split('、')[0] : '';
-            let bottomBadgeHtml = firstPattern ? `<span class="bg-indigo-100 dark:bg-indigo-900/80 text-indigo-700 dark:text-indigo-200 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-700 shadow-sm">${firstPattern}</span>` : '';
-            let marksBadgeHtml = marksHtml ? `<span class="text-rose-500">${marksHtml}</span>` : '';
-            let combinedBottom = (bottomBadgeHtml || marksBadgeHtml) ? `<div class="absolute bottom-1 left-1/2 transform -translate-x-1/2 text-[0.55rem] font-bold whitespace-nowrap flex items-center gap-1 z-20">${marksBadgeHtml}${bottomBadgeHtml}</div>` : '';
-            gridContainer.innerHTML += `
-                <div class="palace-card ${p.palace_id === '中宮' ? 'bg-center' : ''} relative" style="grid-area: ${areaMap[p.palace_id] || ''};" onclick="triggerVibration(); openModal('${p.palace_id}')">
-                    <div class="flex justify-between items-start w-full leading-none z-10">
-                        <div class="font-black text-lg md:text-xl ${getWuxingClass(p.deity)}">${p.deity || ''}</div>
-                        <div class="flex flex-col items-end text-right"><div class="flex items-baseline gap-0.5"><span class="text-[0.6rem] text-slate-400 font-bold">${p.heaven_stem_state || ''}</span><span class="font-black text-2xl ${getWuxingClass(p.heaven_stem)}">${colorizeStem(p.heaven_stem)}</span></div></div>
-                    </div>
-                    <div class="flex flex-col items-center justify-center flex-grow w-full py-1 z-10">
-                        <div class="font-black text-xl md:text-2xl ${getWuxingClass(p.star)} flex items-center gap-0.5 leading-none">${(p.star || "").replace('星','')}</div>
-                        <div class="text-[0.7rem] font-bold text-slate-400 mt-1">${colorizeStem(p.hidden_stem)}</div>
-                    </div>
-                    <div class="flex justify-between items-end w-full mb-1 leading-none z-10">
-                        <div class="flex flex-col items-start">
-                            <div class="text-[0.6rem] text-slate-400 font-bold mb-0.5">${numMap[p.palace_id] || ''}</div>
-                            <div class="font-black text-lg md:text-xl ${getWuxingClass(p.door)} flex items-center">${p.door || ''}${doorWarn}</div>
+    // ==========================================
+    // 🔮 5. 核心排盤與渲染
+    // ==========================================
+    async function fetchData(keepMasterBox = false, isSilent = false) {
+        const timeEl = document.getElementById('timeInput');
+        if (!timeEl || !timeEl.value) { initTime(); }
+        const rawTime = timeEl.value;
+        const btn = document.getElementById('calcNowBtn');
+        if (!isSilent && btn) { btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 推演中...'; btn.disabled = true; }
+        if (!isSilent) showLoading("排盤中...");
+
+        try {
+            const response = await fetch('https://kenttangtel-qimen-api.hf.space/api/v1/divination/calculate', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ time: rawTime.replace('T', ' ') }) 
+            });
+            const data = await response.json();
+            
+            const dirMap = { "坎宮":"正北", "艮宮":"東北", "震宮":"正東", "巽宮":"東南", "離宮":"正南", "坤宮":"西南", "兌宮":"正西", "乾宮":"西北" };
+            let gridItems = '';
+            if(data.qimen_matrix) {
+                data.qimen_matrix.forEach(p => {
+                    const dir = dirMap[p.palace_id] || '中宮';
+                    
+                    const getActionText = (purpose, dirName) => `
+                        <div class="space-y-4 text-left mt-3">
+                            <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                                <strong>📍 奇門原理：</strong>出門見客取的是「當下時辰」的空間吉氣。此時【${dirName}】正是最能助旺您<strong>${purpose}</strong>的方位。
+                            </p>
+                            <div class="bg-rose-50 dark:bg-rose-900/20 p-4 rounded-xl border border-rose-100 dark:border-rose-800/30">
+                                <p class="font-black text-rose-600 dark:text-rose-400 mb-2">🚶‍♂️ 實戰出行訣（折返借氣法）：</p>
+                                <ul class="list-disc pl-5 space-y-1.5 text-sm text-rose-700 dark:text-rose-300 font-medium">
+                                    <li>出門第一步，請先向<strong>【${dirName}】</strong>步行或開車前進 10-15 分鐘。</li>
+                                    <li>在當地的咖啡廳或路邊稍作停留（約 5-10 分鐘），喝口水定神，此謂「納吉氣」。</li>
+                                    <li>吸收吉氣後，再前往客戶實際所在地。就算客戶在凶方，您也已完成了「借方奪氣」，能讓事情事半功倍！</li>
+                                </ul>
+                            </div>
                         </div>
-                        <div class="flex flex-col items-end text-right"><div class="flex items-baseline gap-0.5"><span class="text-[0.6rem] text-slate-400 font-bold">${p.earth_stem_state || ''}</span><span class="font-black text-xl text-slate-700 dark:text-slate-300">${p.earth_stem || ''}</span></div></div>
+                    `;
+                    const addGridItem = (icon, title, purpose, coreDesc) => {
+                        const fullDesc = `<p class="text-sm font-bold text-indigo-700 dark:text-indigo-400 mb-2">${coreDesc}</p>` + getActionText(purpose, dir);
+                        const safeDesc = encodeURIComponent(fullDesc); 
+                        gridItems += `
+                            <div onclick="triggerVibration(); window.showFdDetail('${icon} ${title}', '${dir}', '${safeDesc}')" class="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-800/30 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-800/50 active:scale-95 transition shadow-sm">
+                                <div class="text-4xl mb-2">${icon}</div>
+                                <div class="text-[0.95rem] font-black text-slate-700 dark:text-slate-200">${title}</div>
+                                <div class="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-2 bg-white dark:bg-slate-800 px-3 py-1 rounded-lg shadow-sm border border-indigo-100 dark:border-indigo-700">${dir}</div>
+                            </div>
+                        `;
+                    };
+
+                    if ((p.door || "").includes("生門")) {
+                        addGridItem("💰", "生門・求財", "直接談錢、利潤與資產", `此時【生門】落於 ${dir} (${p.palace_id})。利於直接談錢、爭取利潤、資產或產值評估。`);
+                    }
+                    if ((p.door || "").includes("開門")) {
+                        addGridItem("💼", "開門・事業", "談公司業務、簽約與展現專業", `此時【開門】落於 ${dir} (${p.palace_id})。利於談公司業務、簽署重要合同、展現專業度與拓展事業。`);
+                    }
+                    if ((p.door || "").includes("休門")) {
+                        addGridItem("❤️", "休門・和合", "拉近關係、和諧溝通與化解敵意", `此時【休門】落於 ${dir} (${p.palace_id})。極度利於拉近關係、和諧溝通、吃茶敘舊、化解雙方敵意。`);
+                    }
+                    if ((p.deity || "").includes("六合")) {
+                        addGridItem("🤝", "六合・談判", "尋求共識、談判與締結盟約", `此時【六合】貴神落於 ${dir} (${p.palace_id})。在此方位進行溝通、談判或尋求雙方共識最為有利。`);
+                    }
+                });
+            }
+
+            const fdC = document.getElementById('fdContainer');
+            if(fdC) {
+                fdC.innerHTML = `
+                    <div id="fdGrid" class="grid grid-cols-2 gap-3">${gridItems}</div>
+                    <div id="fdDetail" class="hidden flex-col items-center justify-center text-center animate-[fadeIn_0.2s_ease-out]">
+                        <h4 id="fdDetailTitle" class="text-xl font-black text-slate-800 dark:text-slate-200 mb-3"></h4>
+                        <div class="bg-indigo-100 dark:bg-indigo-900/50 w-full py-4 rounded-2xl mb-4 border border-indigo-200 dark:border-indigo-800">
+                            <div class="text-xs font-bold text-indigo-500 mb-1">大吉方位</div>
+                            <div id="fdDetailDir" class="text-4xl font-black text-indigo-700 dark:text-indigo-400 tracking-wider"></div>
+                        </div>
+                        <div id="fdDetailText" class="w-full"></div>
+                        <button onclick="triggerVibration(); document.getElementById('fdDetail').classList.add('hidden'); document.getElementById('fdGrid').classList.remove('hidden');" class="mt-6 text-sm font-black text-slate-500 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 px-8 py-3 rounded-full active:scale-95 transition shadow-sm"><i class="fa-solid fa-arrow-left mr-1"></i> 返回選單</button>
                     </div>
-                    ${combinedBottom}
-                </div>`;
-        });
-    }
-}
+                `;
+            }
 
-function openModal(id) {
-    const p = currentMatrixData.find(x => x.palace_id === id);
-    if (!p) return;
-    document.getElementById('modalTitle').innerHTML = `📍 ${p.palace_id}`;
-    
-    let harmsArr = (p.logic_states && p.logic_states.description !== '正常') ? p.logic_states.description.split('，') : [];
-    let harmsHtml = harmsArr.map(h => `<span class="bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-300 px-2 py-0.5 rounded text-xs font-bold border border-rose-200 dark:border-rose-800">${h}</span>`).join('');
-    let patternArr = p.pattern ? p.pattern.split('、') : [];
-    let patternHtml = patternArr.map(pt => `<span class="bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded text-xs font-bold border border-purple-200 dark:border-purple-800">${pt}</span>`).join('');
-    let topBadges = `<div class="col-span-2 flex flex-wrap justify-center gap-2 mb-3">${harmsHtml}${patternHtml}</div>`;
-    let modalDoorWarn = p.door_strength === '迫' ? `<span class="bg-rose-200 dark:bg-rose-800 text-rose-800 dark:text-rose-200 text-[0.6rem] px-1 rounded font-bold">迫</span>` : `<span class="bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 text-[0.6rem] px-1 rounded">${p.door_strength || ''}</span>`;
-    let html = `${(harmsArr.length > 0 || patternArr.length > 0) ? topBadges : ''}
-        <div class="grid grid-cols-2 gap-3 shrink-0">
-            <div class="bg-slate-50 dark:bg-slate-700 p-3 rounded-2xl text-center flex flex-col justify-center"><div class="text-[0.65rem] text-slate-400 font-bold mb-1">八神</div><div class="font-black text-indigo-700 dark:text-indigo-400 text-lg">${p.deity || ''}</div><div class="text-[0.65rem] text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">${qimenDict[p.deity] || ''}</div></div>
-            <div class="bg-slate-50 dark:bg-slate-700 p-3 rounded-2xl text-center flex flex-col justify-center"><div class="text-[0.65rem] text-slate-400 font-bold mb-1">九星</div><div class="font-black text-emerald-700 dark:text-emerald-400 text-lg flex justify-center items-center gap-1">${p.star || ''} <span class="bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-[0.6rem] px-1 rounded">${p.star_strength || ''}</span></div><div class="text-[0.65rem] text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">${qimenDict[p.star] || ''}</div></div>
-            <div class="bg-slate-50 dark:bg-slate-700 p-3 rounded-2xl text-center flex flex-col justify-center"><div class="text-[0.65rem] text-slate-400 font-bold mb-1">八門</div><div class="font-black text-amber-700 dark:text-amber-400 text-lg flex justify-center items-center gap-1">${p.door || ''} ${modalDoorWarn}</div><div class="text-[0.65rem] text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">${qimenDict[p.door] || ''}</div></div>
-            <div class="bg-slate-50 dark:bg-slate-700 p-3 rounded-2xl text-center flex flex-col justify-center"><div class="text-[0.65rem] text-slate-400 font-bold mb-1">天盤</div><div class="font-black text-rose-700 dark:text-rose-400 text-lg flex justify-center items-center gap-1">${p.heaven_stem || ''} <span class="bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 text-[0.6rem] px-1 rounded">${p.heaven_stem_state || ''}</span></div><div class="text-[0.65rem] text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">${qimenDict[p.heaven_stem] || ''}</div></div>
-            <div class="bg-slate-100 dark:bg-slate-900 p-3 rounded-2xl text-center col-span-2 flex flex-col justify-center"><div class="text-[0.65rem] text-slate-500 font-bold mb-1">地盤</div><div class="font-black text-slate-800 dark:text-slate-300 text-lg flex justify-center items-center gap-1">${p.earth_stem || ''} <span class="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-400 text-[0.6rem] px-1 rounded">${p.earth_stem_state || ''}</span></div><div class="text-[0.65rem] text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">${qimenDict[p.earth_stem] || ''}</div></div>
-        </div>`;
-    document.getElementById('modalContent').innerHTML = html;
-    document.getElementById('palaceModal').classList.remove('hidden');
-}
-function closeModal() { document.getElementById('palaceModal').classList.add('hidden'); }
-
-// ==========================================
-// 📜 6. 歷史紀錄與本命人管理
-// ==========================================
-async function fetchHistoryAndSync(isSilent = false) {
-    const t = await getAuthToken(); // 升級 await
-    if(!t) return;
-    try {
-        if (!isSilent) {
-            document.getElementById('destinyHistoryList').innerHTML = '<div class="text-center text-slate-400 py-10 text-sm font-bold"><i class="fa-solid fa-spinner fa-spin"></i> 載入中...</div>';
-            document.getElementById('reportHistoryList').innerHTML = '<div class="text-center text-slate-400 py-10 text-sm font-bold"><i class="fa-solid fa-spinner fa-spin"></i> 載入中...</div>';
+            const baziEl = document.getElementById('freeDailyBazi');
+            if(data.bazi && baziEl) baziEl.innerText = `今日干支：${data.bazi.year} ${data.bazi.month} ${data.bazi.day}`;
+            renderUI(data);
+        } catch (e) {
+            if (!isSilent) showToast("排盤失敗，請檢查網路", true);
+        } finally {
+            if(!isSilent) hideLoading();
+            if(!isSilent && btn) { btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 立即排盤'; btn.disabled = false; }
         }
-
-        const res = await fetch('/api/v1/history/list', { method: 'POST', headers: buildAuthorizedHeaders(t) });
-        const d = await res.json();
-
-        const rawList = Array.isArray(d) ? d : (d.data || []);
-        const dbDestinyRecords = rawList.filter(h => h.category && (h.category.startsWith('「命盤」') || h.category.startsWith('「命盤」 ')));
-        window.destinySeekers = dbDestinyRecords.map(r => {
-            let sName = r.category.replace('「命盤」 ', '').replace('「命盤」', '').trim();
-            return { id: r.id, name: sName, time: r.record_time };
-        });
-        let pid = localStorage.getItem('qimen_primary_id');
-        if (!window.destinySeekers.find(s => s.id === pid) && window.destinySeekers.length > 0) {
-            pid = window.destinySeekers[0].id;
-            localStorage.setItem('qimen_primary_id', pid);
-        }
-
-        renderHistoryList('divination', rawList.filter(h => !h.category || (!h.category.startsWith('「命盤」') && !h.category.startsWith('「命盤」 '))));
-        renderHistoryList('destiny', dbDestinyRecords, pid);
-
-    } catch(e) { console.error("同步失敗", e); }
-}
-
-function renderHistoryList(type, dataList, pid = null) {
-    const targetId = type === 'destiny' ? 'destinyHistoryList' : 'reportHistoryList';
-    const container = document.getElementById(targetId);
-    if (dataList.length === 0) { 
-        container.innerHTML = '<div class="text-center py-10 opacity-30">尚無紀錄</div>';
-        return; 
     }
 
-    let batchBar = `
-        <div class="flex justify-end items-center mb-4 px-2 h-8">
-            <div id="edit-controls-${type}" class="hidden flex items-center gap-4 w-full justify-between animate-[fadeIn_0.2s_ease-out]">
-                <label class="text-xs font-bold text-slate-500 flex items-center gap-2 cursor-pointer py-2">
-                    <input type="checkbox" class="w-4 h-4 rounded border-slate-300 dark:border-slate-600" onclick="window.toggleSelectAll('${type}', this.checked)"> 全選
-                </label>
-                <button id="batch-del-btn-${type}" onclick="window.deleteSelected('${type}')" class="text-xs bg-rose-500/10 text-rose-500 px-3 py-1.5 rounded-lg font-black border border-rose-500/20 active:scale-95 transition opacity-50 pointer-events-none">確認刪除</button>
-            </div>
-            <button id="toggle-edit-btn-${type}" onclick="window.toggleEditMode('${type}')" class="text-xs text-slate-400 hover:text-rose-500 px-2 py-2 rounded-lg font-black transition whitespace-nowrap"><i class="fa-solid fa-trash-can"></i> 刪除</button>
-        </div>`;
-    let items = dataList.map(h => {
-        let cbHtml = `
-            <div class="cb-item-${type}-wrapper w-12 h-12 flex items-center justify-center shrink-0 -ml-3 mr-1 hidden cursor-pointer" onclick="event.stopPropagation(); const cb = this.querySelector('input'); cb.checked = !cb.checked; window.checkSelectStatus('${type}');">
-                <input type="checkbox" value="${h.id}" class="cb-item-${type} w-5 h-5 rounded border-slate-300 dark:border-slate-600 pointer-events-none" tabindex="-1">
-            </div>`;
-
-        if (type === 'destiny') {
-            let sName = (h.category || "").replace('「命盤」', '').trim();
-            const isPrimary = (h.id === pid);
-            const primaryBtn = `<button onclick="event.stopPropagation(); triggerVibration(); window.setPrimarySeeker('${h.id}')" class="text-[11px] font-bold ${isPrimary ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 dark:bg-slate-700 text-slate-400 hover:text-indigo-500'} px-3 py-2 rounded-lg transition shadow-sm whitespace-nowrap"><i class="fa-solid fa-user"></i> ${isPrimary ? '本命人' : '設為本命人'}</button>`;
-            return `
-                <div class="bg-white dark:bg-slate-800 p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center transition cursor-pointer mb-3" onclick="viewHistoryDetail('${h.id}')">
-                    ${cbHtml}
-                    <div class="flex-grow min-w-0"><div class="font-black text-slate-700 dark:text-slate-200 text-lg truncate">${sName}</div></div>
-                    <div class="flex items-center ml-2">${primaryBtn}</div>
-                </div>`;
-        } else {
-            let displayCategory = h.category || "未分類";
-            if (displayCategory.startsWith('「事盤」')) displayCategory = displayCategory.replace('「事盤」', '').trim();
-            let extractedQ = "";
-            if (h.report_text) { const qMatch = h.report_text.match(/<div class="[^"]*q-preview[^"]*">(.*?)<\/div>/); if (qMatch) extractedQ = qMatch[1]; }
-            let qDisplay = extractedQ ? `<div class="text-[0.75rem] text-slate-500 dark:text-slate-400 mt-1 truncate">${extractedQ}</div>` : '';
-            return `
-                <div class="bg-white dark:bg-slate-800 p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center transition cursor-pointer mb-3" onclick="viewHistoryDetail('${h.id}')">
-                    ${cbHtml}
-                    <div class="flex-grow min-w-0"><div class="font-black text-slate-700 dark:text-slate-200 text-lg">${displayCategory}</div>${qDisplay}<div class="text-[11px] font-bold text-slate-400 mt-1">${h.record_time}</div></div>
-                    <div class="flex items-center ml-2"><i class="fa-solid fa-chevron-right text-slate-300"></i></div>
-                </div>`;
-        }
-    }).join('');
-    container.innerHTML = batchBar + items;
-}
-
-window.toggleEditMode = function(type) {
-    const controls = document.getElementById(`edit-controls-${type}`);
-    const toggleBtn = document.getElementById(`toggle-edit-btn-${type}`);
-    const checkboxes = document.querySelectorAll(`.cb-item-${type}`);
-    const wrappers = document.querySelectorAll(`.cb-item-${type}-wrapper`);
-    
-    if (controls.classList.contains('hidden')) {
-        controls.classList.remove('hidden'); 
-        toggleBtn.innerHTML = '取消'; 
-        toggleBtn.classList.add('text-slate-500');
-        wrappers.forEach(w => w.classList.remove('hidden'));
-    } else {
-        controls.classList.add('hidden'); 
-        toggleBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i> 刪除';
-        toggleBtn.classList.remove('text-slate-500'); 
-        checkboxes.forEach(cb => { cb.checked = false; }); 
-        wrappers.forEach(w => w.classList.add('hidden')); 
-        window.checkSelectStatus(type);
-    }
-};
-window.toggleSelectAll = function(type, isChecked) { document.querySelectorAll(`.cb-item-${type}`).forEach(cb => cb.checked = isChecked); window.checkSelectStatus(type); };
-window.checkSelectStatus = function(type) {
-    const checkedCount = document.querySelectorAll(`.cb-item-${type}:checked`).length;
-    const delBtn = document.getElementById(`batch-del-btn-${type}`);
-    if (delBtn) {
-        if (checkedCount > 0) { delBtn.classList.remove('opacity-50', 'pointer-events-none'); delBtn.innerHTML = `<i class="fa-solid fa-trash-can"></i> 確認刪除 (${checkedCount})`; } 
-        else { delBtn.classList.add('opacity-50', 'pointer-events-none'); delBtn.innerHTML = `確認刪除`; }
-    }
-};
-
-window.deleteSelected = async function(type) {
-    const selectedItems = Array.from(document.querySelectorAll(`.cb-item-${type}:checked`));
-    if (selectedItems.length === 0) return;
-    if (!confirm(`確定要刪除這 ${selectedItems.length} 筆紀錄嗎？`)) return;
-    
-    const t = await getAuthToken(); // 升級 await
-    let currentPid = localStorage.getItem('qimen_primary_id');
-    for (let cb of selectedItems) {
-        const id = (cb.value && cb.value !== 'on') ? cb.value : (cb.dataset.id || cb.id || cb.getAttribute('data-id'));
-        await fetch('/api/v1/history/delete', { 
-            method: 'POST', 
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + t
-            }, 
-            body: JSON.stringify({ id: id, record_id: id }) 
-        });
-        if (currentPid === id) localStorage.removeItem('qimen_primary_id');
-    }
-    showToast(`已成功刪除 ${selectedItems.length} 筆紀錄`); 
-    fetchHistoryAndSync();
-};
-window.setPrimarySeeker = function(id) {
-    if (window.isVipUser === false) { showToast("「本命人」為月費專屬功能，請先開通", true); setTimeout(openTopupModal, 1500); return; }
-    localStorage.setItem('qimen_primary_id', id); fetchHistoryAndSync(); showToast("已成功設定為本命人");
-};
-
-window.renderModalSeekerList = function() {
-    const container = document.getElementById('seekerSelectionList');
-    if (!container || !window.destinySeekers || window.destinySeekers.length === 0) return;
-    const pid = localStorage.getItem('qimen_primary_id');
-    let sortedSeekers = [...window.destinySeekers].sort((a, b) => (b.id === pid ? 1 : 0) - (a.id === pid ? 1 : 0));
-    container.innerHTML = sortedSeekers.map((s) => {
-        const isSelected = s.id === tempSelectedSeekerId;
-        return `
-            <div onclick="triggerVibration(); window.toggleSeekerSelection('${s.id}')" class="cursor-pointer flex justify-between items-center p-3 rounded-xl border transition mb-2 ${isSelected ? 'ring-2 ring-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-700' : 'border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600'}">
-                <div class="flex items-center gap-2"><div class="font-black ${isSelected ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-200'}">${s.name}</div>${s.id === pid ? `<span class="text-[0.65rem] font-bold bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full"><i class="fa-solid fa-crown"></i> 本命人</span>` : ``}</div>
-                <div class="w-5 h-5 rounded flex items-center justify-center transition-all ${isSelected ? 'border-2 border-indigo-500 bg-indigo-500' : 'border-2 border-slate-300 dark:border-slate-500'}">${isSelected ? '<i class="fa-solid fa-check text-white text-xs"></i>' : ''}</div>
-            </div>`;
-    }).join('');
-};
-
-window.toggleSeekerSelection = function(id) {
-    if (tempSelectedSeekerId === id) tempSelectedSeekerId = null; else tempSelectedSeekerId = id;
-    window.renderModalSeekerList();
-};
-
-async function openSeekerSelectionModal(type) {
-    const token = await getAuthToken(); // 升級 await
-    if (!token) { openAuthModal(); return; }
-    
-    pendingInterpretationType = type;
-    const container = document.getElementById('seekerSelectionList'); 
-    const catArea = document.getElementById('categorySelectionArea');
-    if (type === 'divination') { catArea.classList.remove('hidden'); } else { catArea.classList.add('hidden'); selectedCategory = "專屬每日運程"; } 
-    
-    document.getElementById('seekerSelectionModal').classList.remove('hidden');
-
-    if (!window.isVipUser) {
-        if(container) {
-            container.innerHTML = `
-                <div class="text-center py-5 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl border border-indigo-100 dark:border-indigo-800 shadow-inner">
-                    <i class="fa-solid fa-lock text-indigo-400 text-3xl mb-2"></i>
-                    <div class="text-sm font-black text-indigo-800 dark:text-indigo-300">專屬本命人功能</div>
-                    <div class="text-[0.7rem] font-bold text-indigo-600 dark:text-indigo-400 mt-1 px-4 leading-relaxed">
-                        加入本命人八字，能加強大師推演深度。<br>升級 VIP 即可解鎖無限綁定。
-                    </div>
-                    <button onclick="triggerVibration(); closeSeekerSelectionModal(); openTopupModal();" class="mt-4 text-xs font-black bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-full active:scale-95 transition shadow-md">
-                        了解 VIP 特權
-                    </button>
-                </div>
-            `;
-        }
-        tempSelectedSeekerId = null; 
-    } else {
-        if (!window.destinySeekers || window.destinySeekers.length === 0) { 
-            if(container) container.innerHTML = '<div class="text-center text-slate-400 py-6 text-sm font-bold"><i class="fa-solid fa-spinner fa-spin text-indigo-500 text-2xl mb-3"></i><br>正在同步命盤資料...</div>';
-            await fetchHistoryAndSync(true); 
+    function renderUI(data) {
+        if (!data) return;
+        currentMatrixData = data.qimen_matrix || [];
+        currentBazi = data.bazi || {};
+        const infoBox = document.getElementById('infoBox'); if(infoBox) infoBox.classList.remove('hidden'); 
+        const gridContainer = document.getElementById('gridContainer'); if(gridContainer) gridContainer.classList.remove('hidden');
+        const legendBox = document.getElementById('legendBox'); if(legendBox) legendBox.classList.remove('hidden'); 
+        const askTriggerBox = document.getElementById('askTriggerBox'); if(askTriggerBox) askTriggerBox.classList.remove('hidden');
+        if (data.qimen_info) {
+            const qimenGrid = document.getElementById('qimenInfoGrid');
+            if (qimenGrid) {
+                qimenGrid.innerHTML = `<div class="flex items-center"><span class="text-slate-400 w-10">選局:</span><span class="text-indigo-700 dark:text-indigo-400 font-black ml-1">${data.qimen_info.description || ''}</span></div><div class="flex items-center"><span class="text-slate-400 w-10">值符:</span><span class="font-black dark:text-slate-200 ml-1">${data.qimen_info.zhi_fu || ''}</span></div><div class="flex items-center"><span class="text-slate-400 w-10">旬首:</span><span class="font-black dark:text-slate-200 ml-1">${data.qimen_info.hour_xun || ''}</span></div><div class="flex items-center"><span class="text-slate-400 w-10">值使:</span><span class="font-black dark:text-slate-200 ml-1">${data.qimen_info.zhi_shi || ''}</span></div><div class="flex items-center col-span-1"><span class="text-slate-400 w-10">空亡:</span><span class="text-rose-500 font-bold ml-1 text-[0.7rem]">時:<span>${data.bazi.day_empty || ''}</span> 日:<span>${data.qimen_info.ri_kong || ''}</span></span></div><div class="flex items-center"><span class="text-slate-400 w-10">節氣:</span><span class="font-black dark:text-slate-200 ml-1">${data.qimen_info.solar_term || ''}</span></div>`;
+            }
         }
         
-        if(!window.destinySeekers || window.destinySeekers.length === 0) {
-            if(container) container.innerHTML = '<div class="text-center text-slate-400 py-4 text-xs font-bold">尚未建立任何命盤，本次將以純局勢推演。<br>算過「終身命盤」後即可於此處選擇。</div>'; 
-            tempSelectedSeekerId = null;
-        } else { 
-            tempSelectedSeekerId = null;
-            window.renderModalSeekerList(); 
+        const bz = [ data.bazi.year || "  ", data.bazi.month || "  ", data.bazi.day || "  ", data.bazi.hour || "  " ];
+        const baziTable = document.getElementById('baziTable');
+        if (baziTable) {
+            baziTable.innerHTML = `<div class="flex flex-col gap-1 text-center font-bold text-xs"><div class="grid grid-cols-4 gap-2 text-slate-400 border-b border-slate-200 dark:border-slate-700 pb-1"><span>年</span><span>月</span><span>日</span><span>時</span></div><div class="grid grid-cols-4 gap-2 text-sm md:text-lg">${bz.map(v => `<span class="${getWuxingClass(v[0])}">${v[0] || ' '}</span>`).join('')}</div><div class="grid grid-cols-4 gap-2 text-sm md:text-lg">${bz.map(v => `<span class="${getWuxingClass(v[1])}">${v[1] || ' '}</span>`).join('')}</div></div>`;
+        }
+
+        if (gridContainer && currentMatrixData) {
+            gridContainer.innerHTML = '';
+            currentMatrixData.forEach(p => {
+                const s = p.logic_states || {}; 
+                let marksHtml = (s.is_empty?'空 ':'') + (s.is_horse?'🐎 ':'');
+                let doorWarn = p.door_strength === '迫' ? `<span class="tiny-tag-door">迫</span>` : `<span class="text-[0.5rem] opacity-50 ml-0.5">${p.door_strength || ''}</span>`;
+                let firstPattern = p.pattern ? p.pattern.split('、')[0] : '';
+                let bottomBadgeHtml = firstPattern ? `<span class="bg-indigo-100 dark:bg-indigo-900/80 text-indigo-700 dark:text-indigo-200 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-700 shadow-sm">${firstPattern}</span>` : '';
+                let marksBadgeHtml = marksHtml ? `<span class="text-rose-500">${marksHtml}</span>` : '';
+                let combinedBottom = (bottomBadgeHtml || marksBadgeHtml) ? `<div class="absolute bottom-1 left-1/2 transform -translate-x-1/2 text-[0.55rem] font-bold whitespace-nowrap flex items-center gap-1 z-20">${marksBadgeHtml}${bottomBadgeHtml}</div>` : '';
+                gridContainer.innerHTML += `
+                    <div class="palace-card ${p.palace_id === '中宮' ? 'bg-center' : ''} relative" style="grid-area: ${areaMap[p.palace_id] || ''};" onclick="triggerVibration(); openModal('${p.palace_id}')">
+                        <div class="flex justify-between items-start w-full leading-none z-10">
+                            <div class="font-black text-lg md:text-xl ${getWuxingClass(p.deity)}">${p.deity || ''}</div>
+                            <div class="flex flex-col items-end text-right"><div class="flex items-baseline gap-0.5"><span class="text-[0.6rem] text-slate-400 font-bold">${p.heaven_stem_state || ''}</span><span class="font-black text-2xl ${getWuxingClass(p.heaven_stem)}">${colorizeStem(p.heaven_stem)}</span></div></div>
+                        </div>
+                        <div class="flex flex-col items-center justify-center flex-grow w-full py-1 z-10">
+                            <div class="font-black text-xl md:text-2xl ${getWuxingClass(p.star)} flex items-center gap-0.5 leading-none">${(p.star || "").replace('星','')}</div>
+                            <div class="text-[0.7rem] font-bold text-slate-400 mt-1">${colorizeStem(p.hidden_stem)}</div>
+                        </div>
+                        <div class="flex justify-between items-end w-full mb-1 leading-none z-10">
+                            <div class="flex flex-col items-start">
+                                <div class="text-[0.6rem] text-slate-400 font-bold mb-0.5">${numMap[p.palace_id] || ''}</div>
+                                <div class="font-black text-lg md:text-xl ${getWuxingClass(p.door)} flex items-center">${p.door || ''}${doorWarn}</div>
+                            </div>
+                            <div class="flex flex-col items-end text-right"><div class="flex items-baseline gap-0.5"><span class="text-[0.6rem] text-slate-400 font-bold">${p.earth_stem_state || ''}</span><span class="font-black text-xl text-slate-700 dark:text-slate-300">${p.earth_stem || ''}</span></div></div>
+                        </div>
+                        ${combinedBottom}
+                    </div>`;
+            });
         }
     }
-    
-    const catGrid = document.getElementById('catGrid');
-    if (catGrid) {
-        const cats = ['財運與投資', '事業與升遷', '婚姻與感情', '健康與疾病', '學業與考試', '官司與訴訟', '出行與旅遊', '尋物與尋人', '其他'];
-        catGrid.innerHTML = cats.map(c => `<button onclick="triggerVibration(); selectCategory(this, '${c}')" class="cat-btn py-2.5 bg-slate-50 text-slate-600 dark:bg-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 rounded-xl font-bold text-sm shadow-sm active:scale-95 transition whitespace-nowrap overflow-hidden text-ellipsis">${c}</button>`).join('');
+
+    function openModal(id) {
+        const p = currentMatrixData.find(x => x.palace_id === id);
+        if (!p) return;
+        document.getElementById('modalTitle').innerHTML = `📍 ${p.palace_id}`;
+        
+        let harmsArr = (p.logic_states && p.logic_states.description !== '正常') ? p.logic_states.description.split('，') : [];
+        let harmsHtml = harmsArr.map(h => `<span class="bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-300 px-2 py-0.5 rounded text-xs font-bold border border-rose-200 dark:border-rose-800">${h}</span>`).join('');
+        let patternArr = p.pattern ? p.pattern.split('、') : [];
+        let patternHtml = patternArr.map(pt => `<span class="bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded text-xs font-bold border border-purple-200 dark:border-purple-800">${pt}</span>`).join('');
+        let topBadges = `<div class="col-span-2 flex flex-wrap justify-center gap-2 mb-3">${harmsHtml}${patternHtml}</div>`;
+        let modalDoorWarn = p.door_strength === '迫' ? `<span class="bg-rose-200 dark:bg-rose-800 text-rose-800 dark:text-rose-200 text-[0.6rem] px-1 rounded font-bold">迫</span>` : `<span class="bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 text-[0.6rem] px-1 rounded">${p.door_strength || ''}</span>`;
+        let html = `${(harmsArr.length > 0 || patternArr.length > 0) ? topBadges : ''}
+            <div class="grid grid-cols-2 gap-3 shrink-0">
+                <div class="bg-slate-50 dark:bg-slate-700 p-3 rounded-2xl text-center flex flex-col justify-center"><div class="text-[0.65rem] text-slate-400 font-bold mb-1">八神</div><div class="font-black text-indigo-700 dark:text-indigo-400 text-lg">${p.deity || ''}</div><div class="text-[0.65rem] text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">${qimenDict[p.deity] || ''}</div></div>
+                <div class="bg-slate-50 dark:bg-slate-700 p-3 rounded-2xl text-center flex flex-col justify-center"><div class="text-[0.65rem] text-slate-400 font-bold mb-1">九星</div><div class="font-black text-emerald-700 dark:text-emerald-400 text-lg flex justify-center items-center gap-1">${p.star || ''} <span class="bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-[0.6rem] px-1 rounded">${p.star_strength || ''}</span></div><div class="text-[0.65rem] text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">${qimenDict[p.star] || ''}</div></div>
+                <div class="bg-slate-50 dark:bg-slate-700 p-3 rounded-2xl text-center flex flex-col justify-center"><div class="text-[0.65rem] text-slate-400 font-bold mb-1">八門</div><div class="font-black text-amber-700 dark:text-amber-400 text-lg flex justify-center items-center gap-1">${p.door || ''} ${modalDoorWarn}</div><div class="text-[0.65rem] text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">${qimenDict[p.door] || ''}</div></div>
+                <div class="bg-slate-50 dark:bg-slate-700 p-3 rounded-2xl text-center flex flex-col justify-center"><div class="text-[0.65rem] text-slate-400 font-bold mb-1">天盤</div><div class="font-black text-rose-700 dark:text-rose-400 text-lg flex justify-center items-center gap-1">${p.heaven_stem || ''} <span class="bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 text-[0.6rem] px-1 rounded">${p.heaven_stem_state || ''}</span></div><div class="text-[0.65rem] text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">${qimenDict[p.heaven_stem] || ''}</div></div>
+                <div class="bg-slate-100 dark:bg-slate-900 p-3 rounded-2xl text-center col-span-2 flex flex-col justify-center"><div class="text-[0.65rem] text-slate-500 font-bold mb-1">地盤</div><div class="font-black text-slate-800 dark:text-slate-300 text-lg flex justify-center items-center gap-1">${p.earth_stem || ''} <span class="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-400 text-[0.6rem] px-1 rounded">${p.earth_stem_state || ''}</span></div><div class="text-[0.65rem] text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">${qimenDict[p.earth_stem] || ''}</div></div>
+            </div>`;
+        document.getElementById('modalContent').innerHTML = html;
+        document.getElementById('palaceModal').classList.remove('hidden');
     }
-}
+    function closeModal() { document.getElementById('palaceModal').classList.add('hidden'); }
 
-function closeSeekerSelectionModal() { 
-    document.getElementById('seekerSelectionModal').classList.add('hidden'); 
-}
-
-function selectCategory(b,c){ selectedCategory=c; document.querySelectorAll('.cat-btn').forEach(x=>{ x.classList.remove('bg-purple-600','text-white','border-purple-600'); x.classList.add('bg-slate-50','text-slate-600','dark:bg-slate-700','dark:text-slate-300','dark:border-slate-600'); }); b.classList.remove('bg-slate-50','text-slate-600','dark:bg-slate-700','dark:text-slate-300','dark:border-slate-600'); b.classList.add('bg-purple-600','text-white','border-purple-600'); }
-
-function confirmSeekerAndPrepare() {
-    if (pendingInterpretationType === 'divination' && (!selectedCategory || selectedCategory === '')) { showToast("請選擇一個問測主題！", true); return; }
-    closeSeekerSelectionModal(); prepareInterpretation(pendingInterpretationType, tempSelectedSeekerId);
-}
-
-async function prepareInterpretation(type, selectedSeekerId = null) { // 升級 async
-    const t = await getAuthToken(); // 升級 await
-    if (!t) { openAuthModal(); return; }
-    if (type === 'destiny') {
-        const n = document.getElementById('d_name').value;
-        const dt = document.getElementById('d_date').value;
-        if (!n || !dt) { showToast("請填寫姓名與出生日期！", true); return; }
-    }
-    if (selectedSeekerId) tempSelectedSeekerId = selectedSeekerId;
-    pendingInterpretationType = type;
-    if (type === 'destiny') { executeInterpretation(); } else { document.getElementById('confirmCalcModal').classList.remove('hidden'); }
-}
-function closeConfirmModal() { document.getElementById('confirmCalcModal').classList.add('hidden'); }
-
-// ==========================================
-// 🧠 7. 大師 AI 深度推演
-// ==========================================
-async function executeInterpretation() {
-    showLoading("大師推演中...");
-    const masterResultBox = document.getElementById('masterResultBoxContainer');
-    const masterContent = document.getElementById('masterContent');
-    const resultActions = document.getElementById('resultActions');
-    const reportHistoryList = document.getElementById('reportHistoryList');
-    const destinyHistoryList = document.getElementById('destinyHistoryList');
-    if (masterResultBox) masterResultBox.classList.remove('hidden');
-    if (masterContent) {
-        masterContent.innerHTML = `<div class='text-center py-20 text-slate-400 font-bold'><i class='fa-solid fa-spinner fa-spin text-4xl mb-3 opacity-30'></i><p>大師正在推演中，請稍候片刻...</p></div>`;
-    }
-    if (resultActions) resultActions.classList.add('hidden');
-    if (reportHistoryList) { reportHistoryList.classList.add('hidden'); reportHistoryList.innerHTML = ''; }
-    if (destinyHistoryList) { destinyHistoryList.classList.add('hidden'); destinyHistoryList.innerHTML = ''; }
-    await new Promise(resolve => setTimeout(resolve, 50));
-    closeConfirmModal();
-    
-    const type = pendingInterpretationType;
-    const t = await getAuthToken(); // 升級 await
-    if (!t) { openAuthModal(); return; }
-    let req = { token: t };
-    let targetSeeker = (window.destinySeekers && tempSelectedSeekerId) ? window.destinySeekers.find(s => s.id === tempSelectedSeekerId) : null;
-    let sName = targetSeeker ? targetSeeker.name : "";
-    let shortQ = "";
-
-    if (type === 'divination') {
-        req.time = document.getElementById('timeInput').value.replace('T', ' ');
-        req.category = `「事盤」${selectedCategory}`;
-        let rawQ = document.getElementById('userQuestion').value.trim(); shortQ = rawQ ? rawQ.substring(0, 20) : '未提供細節';
-        req.question = targetSeeker ? `(求測人：${sName}) ${rawQ}` : rawQ; req.main_title = '奇門大師深度推演';
-    } else if (type === 'daily') {
-        req.time = document.getElementById('timeInput').value.replace('T', ' ');
-        req.category = `「事盤」專屬每日運程`;
-        req.question = targetSeeker ? `(求測人：${sName}) 今日運程建議` : "今日整體運程建議"; req.main_title = '奇門大師深度推演';
-    } else if (type === 'destiny') {
-        const n = document.getElementById('d_name').value;
-        let d = document.getElementById('d_date').value; let tv = document.getElementById('d_time_select').value;
-        if (tv === 'unknown') tv = document.getElementById('d_random_num').value;
-        req.time = d + " " + tv; req.category = `「命盤」${n}`; req.gender = document.getElementById('destinyGender').value; req.status = document.getElementById('destinyStatus').value; req.main_title = '命理深度解析報告';
-        sName = n;
-        closeDestinyModal();
-    }
-            
-    try {
-        const calcRes = await fetch('/api/v1/divination/calculate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ time: req.time }) });
-        const calcData = await calcRes.json(); renderUI(calcData); 
-    } catch (e) { console.error("盤局抓取失敗", e); }
-
-    if (type === 'destiny') { 
-        switchView('view-destiny', document.querySelectorAll('.tab-btn')[2]);
-        if(window.moveResultBoxTo) window.moveResultBoxTo('view-destiny');
-    }
-    else { 
-        switchView('view-report', document.querySelectorAll('.tab-btn')[1]); 
-        if(window.moveResultBoxTo) window.moveResultBoxTo('view-report');
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(async () => {
+    // ==========================================
+    // 📜 6. 歷史紀錄與本命人管理
+    // ==========================================
+    async function fetchHistoryAndSync(isSilent = false) {
+        const t = await getAuthToken(); 
+        if(!t) return;
         try {
-            const res = await fetch('/api/v1/divination/interpret', { method: 'POST', headers: buildAuthorizedHeaders(t), body: JSON.stringify(req) });
-            console.debug('interpret request status', res.status, res.ok);
-            if (!res.ok) {
-                const errText = await res.text();
-                throw new Error(`Interpret request failed: ${res.status} ${errText}`);
+            if (!isSilent) {
+                document.getElementById('destinyHistoryList').innerHTML = '<div class="text-center text-slate-400 py-10 text-sm font-bold"><i class="fa-solid fa-spinner fa-spin"></i> 載入中...</div>';
+                document.getElementById('reportHistoryList').innerHTML = '<div class="text-center text-slate-400 py-10 text-sm font-bold"><i class="fa-solid fa-spinner fa-spin"></i> 載入中...</div>';
             }
-            const reader = res.body.getReader(); const decoder = new TextDecoder(); let full = "";
-            while(true){
-                const {done,value} = await reader.read(); if(done) break;
-                full += decoder.decode(value);
-    
-                console.debug('interpret stream progress', { len: full.length });
-                
-                let goldenText = '磁場感應中...';
-                let rawHtml = marked.parse(full).replace(/[\u{1F000}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
-                let gsMatch = rawHtml.match(/<h[23][^>]*>.*?斷語.*?<\/h[23]>\s*<blockquote[^>]*>([\s\S]*?)<\/blockquote>/i);
-                if (gsMatch) { goldenText = gsMatch[1].replace(/<[^>]+>/g, '').trim(); rawHtml = rawHtml.replace(/<h[23][^>]*>.*?斷語.*?<\/h[23]>\s*<blockquote[^>]*>[\s\S]*?<\/blockquote>/i, ''); } 
-                else { let altMatch = full.match(/斷語.*?\n> (.*)/); if (altMatch && altMatch[1]) { goldenText = altMatch[1].replace(/（.*?）/g, '').replace(/\(.*?\)/g, '').trim(); rawHtml = rawHtml.replace(/<h[23][^>]*>.*?斷語.*?<\/h[23]>/i, ''); } }
 
-                let sections = rawHtml.split(/(?=<h2)/i);
-                let formattedBody = sections.map(sec => `<div style="page-break-inside: avoid; margin-bottom: 15px;">${sec}</div>`).join('');
-                let qHtml = shortQ ? `<div style="margin-top:5px; border-top:1px dashed #cbd5e1; padding-top:5px;"><b>所問：</b>${shortQ}</div>` : '';
-                
-                let rawInfoBox = document.getElementById('infoBox') ? document.getElementById('infoBox').innerHTML : '';
-                let rawGrid = document.getElementById('gridContainer') ? document.getElementById('gridContainer').innerHTML : '';
-                const cleanForPrint = (html) => { return html.replace(/dark:[^\s"']+/g, '').replace(/text-slate-400/g, 'text-slate-600').replace(/text-slate-300/g, 'text-slate-800').replace(/text-slate-200/g, 'text-slate-800').replace(/text-indigo-400/g, 'text-indigo-700'); };
-                let infoBoxHtml = cleanForPrint(rawInfoBox); let gridHtml = cleanForPrint(rawGrid); let finalReportHtml = "";
+            const res = await fetch(`${API_BASE_URL}/api/v1/history/list`, { method: 'POST', headers: buildAuthorizedHeaders(t) });
+            const d = await res.json();
 
-                if (type === 'destiny') {
-                    let bzYear = currentBazi.year || "未知"; let bzMonth = currentBazi.month || "未知"; let bzDay = currentBazi.day || "未知"; let bzHour = currentBazi.hour || "未知";
-                    let destinyStyle = `<style>@media (min-width: 640px) { .destiny-report-wrapper { padding: 40px 20px !important; box-shadow: inset 0 0 0 1px #e5dfd3, inset 0 0 0 10px #fdfbf7, inset 0 0 0 11px #e5dfd3 !important; } } .destiny-report-wrapper h1, .destiny-report-wrapper h2, .destiny-report-wrapper h3 { font-family: 'Noto Serif TC', serif; } .destiny-report-wrapper .chinese-seal { font-family: 'Noto Serif TC', serif; color: #8b2626; border: 2px solid #8b2626; border-radius: 4px; padding: 4px 8px; display: inline-block; font-weight: bold; letter-spacing: 2px; transform: rotate(-3deg); opacity: 0.85; } #aiInterpretationText h2 { color: #8b2626; border-bottom: 2px solid #8b2626; display: inline-block; padding-bottom: 4px; margin-bottom: 1.5rem; position: relative; font-size: 1.4rem; margin-top: 2rem; border-left: none !important; background: transparent !important;} #aiInterpretationText h2::after { content: ''; position: absolute; bottom: -6px; left: 0; width: 30px; height: 2px; background-color: #c4a661; } #aiInterpretationText p { margin-bottom: 1rem; line-height: 1.8; text-align: justify; } #aiInterpretationText ul { list-style: none; padding-left: 1rem; border-left: 2px solid #e5dfd3; margin-bottom: 1.5rem; } #aiInterpretationText li { margin-bottom: 0.75rem; } #aiInterpretationText strong { color: #8b2626; } #aiInterpretationText table { width: 100%; text-align: left; border-collapse: collapse; background: white; margin-top: 1rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 0.9rem; } #aiInterpretationText th { background-color: #f4f0e6; color: #8b2626; border-bottom: 2px solid #c4a661; padding: 12px; font-family: 'Noto Serif TC', serif; } #aiInterpretationText td { padding: 12px; border-bottom: 1px solid #e5dfd3; vertical-align: top; }</style>`;
-                    let coverHtml = `
-                    <div class="pdf-cover-page" style="padding-bottom: 15px;">
-                        <header style="text-align: center; margin-bottom: 30px;">
-                            <div style="margin-bottom: 20px; display: flex; justify-content: center;"><span class="chinese-seal" style="font-size: 1rem;">知命<br>造運</span></div>
-                            <h1 style="font-size: 1.7rem; font-weight: bold; letter-spacing: 0.05em; color: #2b2b2b; margin-bottom: 12px; line-height: 1.3;">${req.main_title}</h1>
-                            <p style="font-size: 0.95rem; color: #4b5563; margin-bottom: 24px; text-align: center; width: 100%; display: block;">${req.gender}命・生於 ${req.time} (香港)</p>
-                            <div style="display: flex; justify-content: center; gap: 16px; margin-bottom: 24px;">
-                                <div style="text-align: center;"><div style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 2px;">時柱</div><div style="font-weight: bold; color: #2b2b2b; font-size: 1.1rem; font-family: 'Noto Serif TC', serif;">${bzHour}</div></div>
-                                <div style="text-align: center;"><div style="font-size: 0.75rem; color: #8b2626; font-weight: bold; margin-bottom: 2px;">日主</div><div style="font-weight: bold; color: #8b2626; font-size: 1.1rem; font-family: 'Noto Serif TC', serif;">${bzDay}</div></div>
-                                <div style="text-align: center;"><div style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 2px;">月柱</div><div style="font-weight: bold; color: #2b2b2b; font-size: 1.1rem; font-family: 'Noto Serif TC', serif;">${bzMonth}</div></div>
-                                <div style="text-align: center;"><div style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 2px;">年柱</div><div style="font-weight: bold; color: #2b2b2b; font-size: 1.1rem; font-family: 'Noto Serif TC', serif;">${bzYear}</div></div>
-                            </div>
-                            <div style="width: 64px; height: 1px; background-color: #c4a661; margin: 0 auto;"></div>
-                        </header>
-                        
-                        <div style="margin-bottom: 10px; padding: 20px 10px 15px; background: #fff; border: 1px solid #c4a661; border-radius: 8px; position: relative;">
-                            <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #fdfbf7; padding: 0 10px; color: #c4a661; font-weight: bold; font-family: 'Noto Serif TC', serif; font-size: 0.9rem;">奇門盤局</div>
-                            <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: stretch; margin-top: 10px;">
-                                <div style="flex: 1 1 200px; min-width: 30%;">
-                                    ${infoBoxHtml}
+            const rawList = Array.isArray(d) ? d : (d.data || []);
+            const dbDestinyRecords = rawList.filter(h => h.category && (h.category.startsWith('「命盤」') || h.category.startsWith('「命盤」 ')));
+            window.destinySeekers = dbDestinyRecords.map(r => {
+                let sName = r.category.replace('「命盤」 ', '').replace('「命盤」', '').trim();
+                return { id: r.id, name: sName, time: r.record_time };
+            });
+            let pid = localStorage.getItem('qimen_primary_id');
+            if (!window.destinySeekers.find(s => s.id === pid) && window.destinySeekers.length > 0) {
+                pid = window.destinySeekers[0].id;
+                localStorage.setItem('qimen_primary_id', pid);
+            }
+
+            renderHistoryList('divination', rawList.filter(h => !h.category || (!h.category.startsWith('「命盤」') && !h.category.startsWith('「命盤」 '))));
+            renderHistoryList('destiny', dbDestinyRecords, pid);
+
+        } catch(e) { console.error("同步失敗", e); }
+    }
+
+    function renderHistoryList(type, dataList, pid = null) {
+        const targetId = type === 'destiny' ? 'destinyHistoryList' : 'reportHistoryList';
+        const container = document.getElementById(targetId);
+        if (dataList.length === 0) { 
+            container.innerHTML = '<div class="text-center py-10 opacity-30">尚無紀錄</div>';
+            return; 
+        }
+
+        let batchBar = `
+            <div class="flex justify-end items-center mb-4 px-2 h-8">
+                <div id="edit-controls-${type}" class="hidden flex items-center gap-4 w-full justify-between animate-[fadeIn_0.2s_ease-out]">
+                    <label class="text-xs font-bold text-slate-500 flex items-center gap-2 cursor-pointer py-2">
+                        <input type="checkbox" class="w-4 h-4 rounded border-slate-300 dark:border-slate-600" onclick="window.toggleSelectAll('${type}', this.checked)"> 全選
+                    </label>
+                    <button id="batch-del-btn-${type}" onclick="window.deleteSelected('${type}')" class="text-xs bg-rose-500/10 text-rose-500 px-3 py-1.5 rounded-lg font-black border border-rose-500/20 active:scale-95 transition opacity-50 pointer-events-none">確認刪除</button>
+                </div>
+                <button id="toggle-edit-btn-${type}" onclick="window.toggleEditMode('${type}')" class="text-xs text-slate-400 hover:text-rose-500 px-2 py-2 rounded-lg font-black transition whitespace-nowrap"><i class="fa-solid fa-trash-can"></i> 刪除</button>
+            </div>`;
+        let items = dataList.map(h => {
+            let cbHtml = `
+                <div class="cb-item-${type}-wrapper w-12 h-12 flex items-center justify-center shrink-0 -ml-3 mr-1 hidden cursor-pointer" onclick="event.stopPropagation(); const cb = this.querySelector('input'); cb.checked = !cb.checked; window.checkSelectStatus('${type}');">
+                    <input type="checkbox" value="${h.id}" class="cb-item-${type} w-5 h-5 rounded border-slate-300 dark:border-slate-600 pointer-events-none" tabindex="-1">
+                </div>`;
+
+            if (type === 'destiny') {
+                let sName = (h.category || "").replace('「命盤」', '').trim();
+                const isPrimary = (h.id === pid);
+                const primaryBtn = `<button onclick="event.stopPropagation(); triggerVibration(); window.setPrimarySeeker('${h.id}')" class="text-[11px] font-bold ${isPrimary ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 dark:bg-slate-700 text-slate-400 hover:text-indigo-500'} px-3 py-2 rounded-lg transition shadow-sm whitespace-nowrap"><i class="fa-solid fa-user"></i> ${isPrimary ? '本命人' : '設為本命人'}</button>`;
+                return `
+                    <div class="bg-white dark:bg-slate-800 p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center transition cursor-pointer mb-3" onclick="viewHistoryDetail('${h.id}')">
+                        ${cbHtml}
+                        <div class="flex-grow min-w-0"><div class="font-black text-slate-700 dark:text-slate-200 text-lg truncate">${sName}</div></div>
+                        <div class="flex items-center ml-2">${primaryBtn}</div>
+                    </div>`;
+            } else {
+                let displayCategory = h.category || "未分類";
+                if (displayCategory.startsWith('「事盤」')) displayCategory = displayCategory.replace('「事盤」', '').trim();
+                let extractedQ = "";
+                if (h.report_text) { const qMatch = h.report_text.match(/<div class="[^"]*q-preview[^"]*">(.*?)<\/div>/); if (qMatch) extractedQ = qMatch[1]; }
+                let qDisplay = extractedQ ? `<div class="text-[0.75rem] text-slate-500 dark:text-slate-400 mt-1 truncate">${extractedQ}</div>` : '';
+                return `
+                    <div class="bg-white dark:bg-slate-800 p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center transition cursor-pointer mb-3" onclick="viewHistoryDetail('${h.id}')">
+                        ${cbHtml}
+                        <div class="flex-grow min-w-0"><div class="font-black text-slate-700 dark:text-slate-200 text-lg">${displayCategory}</div>${qDisplay}<div class="text-[11px] font-bold text-slate-400 mt-1">${h.record_time}</div></div>
+                        <div class="flex items-center ml-2"><i class="fa-solid fa-chevron-right text-slate-300"></i></div>
+                    </div>`;
+            }
+        }).join('');
+        container.innerHTML = batchBar + items;
+    }
+
+    window.toggleEditMode = function(type) {
+        const controls = document.getElementById(`edit-controls-${type}`);
+        const toggleBtn = document.getElementById(`toggle-edit-btn-${type}`);
+        const checkboxes = document.querySelectorAll(`.cb-item-${type}`);
+        const wrappers = document.querySelectorAll(`.cb-item-${type}-wrapper`);
+        
+        if (controls.classList.contains('hidden')) {
+            controls.classList.remove('hidden'); 
+            toggleBtn.innerHTML = '取消'; 
+            toggleBtn.classList.add('text-slate-500');
+            wrappers.forEach(w => w.classList.remove('hidden'));
+        } else {
+            controls.classList.add('hidden'); 
+            toggleBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i> 刪除';
+            toggleBtn.classList.remove('text-slate-500'); 
+            checkboxes.forEach(cb => { cb.checked = false; }); 
+            wrappers.forEach(w => w.classList.add('hidden')); 
+            window.checkSelectStatus(type);
+        }
+    };
+    window.toggleSelectAll = function(type, isChecked) { document.querySelectorAll(`.cb-item-${type}`).forEach(cb => cb.checked = isChecked); window.checkSelectStatus(type); };
+    window.checkSelectStatus = function(type) {
+        const checkedCount = document.querySelectorAll(`.cb-item-${type}:checked`).length;
+        const delBtn = document.getElementById(`batch-del-btn-${type}`);
+        if (delBtn) {
+            if (checkedCount > 0) { delBtn.classList.remove('opacity-50', 'pointer-events-none'); delBtn.innerHTML = `<i class="fa-solid fa-trash-can"></i> 確認刪除 (${checkedCount})`; } 
+            else { delBtn.classList.add('opacity-50', 'pointer-events-none'); delBtn.innerHTML = `確認刪除`; }
+        }
+    };
+
+    window.deleteSelected = async function(type) {
+        const selectedItems = Array.from(document.querySelectorAll(`.cb-item-${type}:checked`));
+        if (selectedItems.length === 0) return;
+        if (!confirm(`確定要刪除這 ${selectedItems.length} 筆紀錄嗎？`)) return;
+        
+        const t = await getAuthToken(); 
+        let currentPid = localStorage.getItem('qimen_primary_id');
+        for (let cb of selectedItems) {
+            const id = (cb.value && cb.value !== 'on') ? cb.value : (cb.dataset.id || cb.id || cb.getAttribute('data-id'));
+            await fetch(`${API_BASE_URL}/api/v1/history/delete`, { 
+                method: 'POST', 
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + t
+                }, 
+                body: JSON.stringify({ id: id, record_id: id }) 
+            });
+            if (currentPid === id) localStorage.removeItem('qimen_primary_id');
+        }
+        showToast(`已成功刪除 ${selectedItems.length} 筆紀錄`); 
+        fetchHistoryAndSync();
+    };
+    window.setPrimarySeeker = function(id) {
+        if (window.isVipUser === false) { showToast("「本命人」為月費專屬功能，請先開通", true); setTimeout(openTopupModal, 1500); return; }
+        localStorage.setItem('qimen_primary_id', id); fetchHistoryAndSync(); showToast("已成功設定為本命人");
+    };
+
+    window.renderModalSeekerList = function() {
+        const container = document.getElementById('seekerSelectionList');
+        if (!container || !window.destinySeekers || window.destinySeekers.length === 0) return;
+        const pid = localStorage.getItem('qimen_primary_id');
+        let sortedSeekers = [...window.destinySeekers].sort((a, b) => (b.id === pid ? 1 : 0) - (a.id === pid ? 1 : 0));
+        container.innerHTML = sortedSeekers.map((s) => {
+            const isSelected = s.id === tempSelectedSeekerId;
+            return `
+                <div onclick="triggerVibration(); window.toggleSeekerSelection('${s.id}')" class="cursor-pointer flex justify-between items-center p-3 rounded-xl border transition mb-2 ${isSelected ? 'ring-2 ring-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-700' : 'border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600'}">
+                    <div class="flex items-center gap-2"><div class="font-black ${isSelected ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-200'}">${s.name}</div>${s.id === pid ? `<span class="text-[0.65rem] font-bold bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full"><i class="fa-solid fa-crown"></i> 本命人</span>` : ``}</div>
+                    <div class="w-5 h-5 rounded flex items-center justify-center transition-all ${isSelected ? 'border-2 border-indigo-500 bg-indigo-500' : 'border-2 border-slate-300 dark:border-slate-500'}">${isSelected ? '<i class="fa-solid fa-check text-white text-xs"></i>' : ''}</div>
+                </div>`;
+        }).join('');
+    };
+
+    window.toggleSeekerSelection = function(id) {
+        if (tempSelectedSeekerId === id) tempSelectedSeekerId = null; else tempSelectedSeekerId = id;
+        window.renderModalSeekerList();
+    };
+
+    async function openSeekerSelectionModal(type) {
+        const token = await getAuthToken(); 
+        if (!token) { openAuthModal(); return; }
+        
+        pendingInterpretationType = type;
+        const container = document.getElementById('seekerSelectionList'); 
+        const catArea = document.getElementById('categorySelectionArea');
+        if (type === 'divination') { catArea.classList.remove('hidden'); } else { catArea.classList.add('hidden'); selectedCategory = "專屬每日運程"; } 
+        
+        document.getElementById('seekerSelectionModal').classList.remove('hidden');
+
+        if (!window.isVipUser) {
+            if(container) {
+                container.innerHTML = `
+                    <div class="text-center py-5 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl border border-indigo-100 dark:border-indigo-800 shadow-inner">
+                        <i class="fa-solid fa-lock text-indigo-400 text-3xl mb-2"></i>
+                        <div class="text-sm font-black text-indigo-800 dark:text-indigo-300">專屬本命人功能</div>
+                        <div class="text-[0.7rem] font-bold text-indigo-600 dark:text-indigo-400 mt-1 px-4 leading-relaxed">
+                            加入本命人八字，能加強大師推演深度。<br>升級 VIP 即可解鎖無限綁定。
+                        </div>
+                        <button onclick="triggerVibration(); closeSeekerSelectionModal(); openTopupModal();" class="mt-4 text-xs font-black bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-full active:scale-95 transition shadow-md">
+                            了解 VIP 特權
+                        </button>
+                    </div>
+                `;
+            }
+            tempSelectedSeekerId = null; 
+        } else {
+            if (!window.destinySeekers || window.destinySeekers.length === 0) { 
+                if(container) container.innerHTML = '<div class="text-center text-slate-400 py-6 text-sm font-bold"><i class="fa-solid fa-spinner fa-spin text-indigo-500 text-2xl mb-3"></i><br>正在同步命盤資料...</div>';
+                await fetchHistoryAndSync(true); 
+            }
+            
+            if(!window.destinySeekers || window.destinySeekers.length === 0) {
+                if(container) container.innerHTML = '<div class="text-center text-slate-400 py-4 text-xs font-bold">尚未建立 any 命盤，本次將以純局勢推演。<br>算過「終身命盤」後即可於此處選擇。</div>'; 
+                tempSelectedSeekerId = null;
+            } else { 
+                tempSelectedSeekerId = null;
+                window.renderModalSeekerList(); 
+            }
+        }
+        
+        const catGrid = document.getElementById('catGrid');
+        if (catGrid) {
+            const cats = ['財運與投資', '事業與升遷', '婚姻與感情', '健康與疾病', '學業與考試', '官司與訴訟', '出行與旅遊', '尋物與尋人', '其他'];
+            catGrid.innerHTML = cats.map(c => `<button onclick="triggerVibration(); selectCategory(this, '${c}')" class="cat-btn py-2.5 bg-slate-50 text-slate-600 dark:bg-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 rounded-xl font-bold text-sm shadow-sm active:scale-95 transition whitespace-nowrap overflow-hidden text-ellipsis">${c}</button>`).join('');
+        }
+    }
+
+    function closeSeekerSelectionModal() { 
+        document.getElementById('seekerSelectionModal').classList.add('hidden'); 
+    }
+
+    function selectCategory(b,c){ selectedCategory=c; document.querySelectorAll('.cat-btn').forEach(x=>{ x.classList.remove('bg-purple-600','text-white','border-purple-600'); x.classList.add('bg-slate-50','text-slate-600','dark:bg-slate-700','dark:text-slate-300','dark:border-slate-600'); }); b.classList.remove('bg-slate-50','text-slate-600','dark:bg-slate-700','dark:text-slate-300','dark:border-slate-600'); b.classList.add('bg-purple-600','text-white','border-purple-600'); }
+
+    function confirmSeekerAndPrepare() {
+        if (pendingInterpretationType === 'divination' && (!selectedCategory || selectedCategory === '')) { showToast("請選擇一個問測主題！", true); return; }
+        closeSeekerSelectionModal(); prepareInterpretation(pendingInterpretationType, tempSelectedSeekerId);
+    }
+
+    async function prepareInterpretation(type, selectedSeekerId = null) { 
+        const t = await getAuthToken(); 
+        if (!t) { openAuthModal(); return; }
+        if (type === 'destiny') {
+            const n = document.getElementById('d_name').value;
+            const dt = document.getElementById('d_date').value;
+            if (!n || !dt) { showToast("請填寫姓名與出生日期！", true); return; }
+        }
+        if (selectedSeekerId) tempSelectedSeekerId = selectedSeekerId;
+        pendingInterpretationType = type;
+        if (type === 'destiny') { executeInterpretation(); } else { document.getElementById('confirmCalcModal').classList.remove('hidden'); }
+    }
+    function closeConfirmModal() { document.getElementById('confirmCalcModal').classList.add('hidden'); }
+
+    // ==========================================
+    // 🧠 7. 大師 AI 深度推演
+    // ==========================================
+    async function executeInterpretation() {
+        showLoading("大師推演中...");
+        const masterResultBox = document.getElementById('masterResultBoxContainer');
+        const masterContent = document.getElementById('masterContent');
+        const resultActions = document.getElementById('resultActions');
+        const reportHistoryList = document.getElementById('reportHistoryList');
+        const destinyHistoryList = document.getElementById('destinyHistoryList');
+        if (masterResultBox) masterResultBox.classList.remove('hidden');
+        if (masterContent) {
+            masterContent.innerHTML = `<div class='text-center py-20 text-slate-400 font-bold'><i class='fa-solid fa-spinner fa-spin text-4xl mb-3 opacity-30'></i><p>大師正在推演中，請稍候片刻...</p></div>`;
+        }
+        if (resultActions) resultActions.classList.add('hidden');
+        if (reportHistoryList) { reportHistoryList.classList.add('hidden'); reportHistoryList.innerHTML = ''; }
+        if (destinyHistoryList) { destinyHistoryList.classList.add('hidden'); destinyHistoryList.innerHTML = ''; }
+        await new Promise(resolve => setTimeout(resolve, 50));
+        closeConfirmModal();
+        
+        const type = pendingInterpretationType;
+        const t = await getAuthToken(); 
+        if (!t) { openAuthModal(); return; }
+        let req = { token: t };
+        let targetSeeker = (window.destinySeekers && tempSelectedSeekerId) ? window.destinySeekers.find(s => s.id === tempSelectedSeekerId) : null;
+        let sName = targetSeeker ? targetSeeker.name : "";
+        let shortQ = "";
+
+        if (type === 'divination') {
+            req.time = document.getElementById('timeInput').value.replace('T', ' ');
+            req.category = `「事盤」${selectedCategory}`;
+            let rawQ = document.getElementById('userQuestion').value.trim(); shortQ = rawQ ? rawQ.substring(0, 20) : '未提供細節';
+            req.question = targetSeeker ? `(求測人：${sName}) ${rawQ}` : rawQ; req.main_title = '奇門大師深度推演';
+        } else if (type === 'daily') {
+            req.time = document.getElementById('timeInput').value.replace('T', ' ');
+            req.category = `「事盤」專屬每日運程`;
+            req.question = targetSeeker ? `(求測人：${sName}) 今日運程建議` : "今日整體運程建議"; req.main_title = '奇門大師深度推演';
+        } else if (type === 'destiny') {
+            const n = document.getElementById('d_name').value;
+            let d = document.getElementById('d_date').value; let tv = document.getElementById('d_time_select').value;
+            if (tv === 'unknown') tv = document.getElementById('d_random_num').value;
+            req.time = d + " " + tv; req.category = `「命盤」${n}`; req.gender = document.getElementById('destinyGender').value; req.status = document.getElementById('destinyStatus').value; req.main_title = '命理深度解析報告';
+            sName = n;
+            closeDestinyModal();
+        }
+                
+        try {
+            const calcRes = await fetch('https://kenttangtel-qimen-api.hf.space/api/v1/divination/calculate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ time: req.time }) });
+            const calcData = await calcRes.json(); renderUI(calcData); 
+        } catch (e) { console.error("盤局抓取失敗", e); }
+
+        if (type === 'destiny') { 
+            switchView('view-destiny', document.querySelectorAll('.tab-btn')[2]);
+            if(window.moveResultBoxTo) window.moveResultBoxTo('view-destiny');
+        }
+        else { 
+            switchView('view-report', document.querySelectorAll('.tab-btn')[1]); 
+            if(window.moveResultBoxTo) window.moveResultBoxTo('view-report');
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/v1/divination/interpret`, { method: 'POST', headers: buildAuthorizedHeaders(t), body: JSON.stringify(req) });
+                console.debug('interpret request status', res.status, res.ok);
+                if (!res.ok) {
+                    const errText = await res.text();
+                    throw new Error(`Interpret request failed: ${res.status} ${errText}`);
+                }
+                const reader = res.body.getReader(); const decoder = new TextDecoder(); let full = "";
+                while(true){
+                    const {done,value} = await reader.read(); if(done) break;
+                    full += decoder.decode(value);
+        
+                    console.debug('interpret stream progress', { len: full.length });
+                    
+                    let goldenText = '磁場感應中...';
+                    let rawHtml = marked.parse(full).replace(/[\u{1F000}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+                    let gsMatch = rawHtml.match(/<h[23][^>]*>.*?斷語.*?<\/h[23]>\s*<blockquote[^>]*>([\s\S]*?)<\/blockquote>/i);
+                    if (gsMatch) { goldenText = gsMatch[1].replace(/<[^>]+>/g, '').trim(); rawHtml = rawHtml.replace(/<h[23][^>]*>.*?斷語.*?<\/h[23]>\s*<blockquote[^>]*>[\s\S]*?<\/blockquote>/i, ''); } 
+                    else { let altMatch = full.match(/斷語.*?\n> (.*)/); if (altMatch && altMatch[1]) { goldenText = altMatch[1].replace(/（.*?）/g, '').replace(/\(.*?\)/g, '').trim(); rawHtml = rawHtml.replace(/<h[23][^>]*>.*?斷語.*?<\/h[23]>/i, ''); } }
+
+                    let sections = rawHtml.split(/(?=<h2)/i);
+                    let formattedBody = sections.map(sec => `<div style="page-break-inside: avoid; margin-bottom: 15px;">${sec}</div>`).join('');
+                    let qHtml = shortQ ? `<div style="margin-top:5px; border-top:1px dashed #cbd5e1; padding-top:5px;"><b>所問：</b>${shortQ}</div>` : '';
+                    
+                    let rawInfoBox = document.getElementById('infoBox') ? document.getElementById('infoBox').innerHTML : '';
+                    let rawGrid = document.getElementById('gridContainer') ? document.getElementById('gridContainer').innerHTML : '';
+                    const cleanForPrint = (html) => { return html.replace(/dark:[^\s"']+/g, '').replace(/text-slate-400/g, 'text-slate-600').replace(/text-slate-300/g, 'text-slate-800').replace(/text-slate-200/g, 'text-slate-800').replace(/text-indigo-400/g, 'text-indigo-700'); };
+                    let infoBoxHtml = cleanForPrint(rawInfoBox); let gridHtml = cleanForPrint(rawGrid); let finalReportHtml = "";
+
+                    if (type === 'destiny') {
+                        let bzYear = currentBazi.year || "未知"; let bzMonth = currentBazi.month || "未知"; let bzDay = currentBazi.day || "未知"; let bzHour = currentBazi.hour || "未知";
+                        let destinyStyle = `<style>@media (min-width: 640px) { .destiny-report-wrapper { padding: 40px 20px !important; box-shadow: inset 0 0 0 1px #e5dfd3, inset 0 0 0 10px #fdfbf7, inset 0 0 0 11px #e5dfd3 !important; } } .destiny-report-wrapper h1, .destiny-report-wrapper h2, .destiny-report-wrapper h3 { font-family: 'Noto Serif TC', serif; } .destiny-report-wrapper .chinese-seal { font-family: 'Noto Serif TC', serif; color: #8b2626; border: 2px solid #8b2626; border-radius: 4px; padding: 4px 8px; display: inline-block; font-weight: bold; letter-spacing: 2px; transform: rotate(-3deg); opacity: 0.85; } #aiInterpretationText h2 { color: #8b2626; border-bottom: 2px solid #8b2626; display: inline-block; padding-bottom: 4px; margin-bottom: 1.5rem; position: relative; font-size: 1.4rem; margin-top: 2rem; border-left: none !important; background: transparent !important;} #aiInterpretationText h2::after { content: ''; position: absolute; bottom: -6px; left: 0; width: 30px; height: 2px; background-color: #c4a661; } #aiInterpretationText p { margin-bottom: 1rem; line-height: 1.8; text-align: justify; } #aiInterpretationText ul { list-style: none; padding-left: 1rem; border-left: 2px solid #e5dfd3; margin-bottom: 1.5rem; } #aiInterpretationText li { margin-bottom: 0.75rem; } #aiInterpretationText strong { color: #8b2626; } #aiInterpretationText table { width: 100%; text-align: left; border-collapse: collapse; background: white; margin-top: 1rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 0.9rem; } #aiInterpretationText th { background-color: #f4f0e6; color: #8b2626; border-bottom: 2px solid #c4a661; padding: 12px; font-family: 'Noto Serif TC', serif; } #aiInterpretationText td { padding: 12px; border-bottom: 1px solid #e5dfd3; vertical-align: top; }</style>`;
+                        let coverHtml = `
+                        <div class="pdf-cover-page" style="padding-bottom: 15px;">
+                            <header style="text-align: center; margin-bottom: 30px;">
+                                <div style="margin-bottom: 20px; display: flex; justify-content: center;"><span class="chinese-seal" style="font-size: 1rem;">知命<br>造運</span></div>
+                                <h1 style="font-size: 1.7rem; font-weight: bold; letter-spacing: 0.05em; color: #2b2b2b; margin-bottom: 12px; line-height: 1.3;">${req.main_title}</h1>
+                                <p style="font-size: 0.95rem; color: #4b5563; margin-bottom: 24px; text-align: center; width: 100%; display: block;">${req.gender}命・生於 ${req.time} (香港)</p>
+                                <div style="display: flex; justify-content: center; gap: 16px; margin-bottom: 24px;">
+                                    <div style="text-align: center;"><div style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 2px;">時柱</div><div style="font-weight: bold; color: #2b2b2b; font-size: 1.1rem; font-family: 'Noto Serif TC', serif;">${bzHour}</div></div>
+                                    <div style="text-align: center;"><div style="font-size: 0.75rem; color: #8b2626; font-weight: bold; margin-bottom: 2px;">日主</div><div style="font-weight: bold; color: #8b2626; font-size: 1.1rem; font-family: 'Noto Serif TC', serif;">${bzDay}</div></div>
+                                    <div style="text-align: center;"><div style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 2px;">月柱</div><div style="font-weight: bold; color: #2b2b2b; font-size: 1.1rem; font-family: 'Noto Serif TC', serif;">${bzMonth}</div></div>
+                                    <div style="text-align: center;"><div style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 2px;">年柱</div><div style="font-weight: bold; color: #2b2b2b; font-size: 1.1rem; font-family: 'Noto Serif TC', serif;">${bzYear}</div></div>
                                 </div>
-                                <div style="flex: 2 1 350px; min-width: 60%;">
-                                    <div class="qimen-grid" style="pointer-events: none; border-color: #c4a661 !important; background-color: #f4f0e6 !important; height: 100%;">
-                                        ${gridHtml}
+                                <div style="width: 64px; height: 1px; background-color: #c4a661; margin: 0 auto;"></div>
+                            </header>
+                            
+                            <div style="margin-bottom: 10px; padding: 20px 10px 15px; background: #fff; border: 1px solid #c4a661; border-radius: 8px; position: relative;">
+                                <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #fdfbf7; padding: 0 10px; color: #c4a661; font-weight: bold; font-family: 'Noto Serif TC', serif; font-size: 0.9rem;">奇門盤局</div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: stretch; margin-top: 10px;">
+                                    <div style="flex: 1 1 200px; min-width: 30%;">
+                                        ${infoBoxHtml}
+                                    </div>
+                                    <div style="flex: 2 1 350px; min-width: 60%;">
+                                        <div class="qimen-grid" style="pointer-events: none; border-color: #c4a661 !important; background-color: #f4f0e6 !important; height: 100%;">
+                                            ${gridHtml}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>`;
+                        </div>`;
 
-                    finalReportHtml = `
-                    <div class="destiny-report-wrapper" style="background-color: #fdfbf7; color: #2b2b2b; font-family: 'Noto Sans TC', sans-serif; padding: 20px 10px; border-radius: 12px; position: relative; overflow: hidden; box-shadow: inset 0 0 0 1px #e5dfd3, inset 0 0 0 6px #fdfbf7, inset 0 0 0 7px #e5dfd3;">
-                        ${destinyStyle}
-                        ${coverHtml}
-                        <div id="aiInterpretationText">${formattedBody}</div>
-                        <footer style="margin-top: 50px; text-align: center;"><div style="width: 64px; height: 1px; background-color: #c4a661; margin: 0 auto 16px;"></div><p style="font-size: 0.7rem; color: #9ca3af; letter-spacing: 0.1em; text-transform: uppercase;">Destiny Analysis Report</p></footer>
-                    </div>`;
-                } else {
-                    let visualBoardHtml = `<div class="report-board-section" style="padding: 12px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;"><h3 style="color:#1e3a8a; font-size: 1rem; font-weight: 900; margin-bottom: 12px; text-align: center; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px;">【 盤局參數與九宮圖 】</h3><div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: stretch;"><div style="flex: 1 1 200px; min-width: 30%;">${infoBoxHtml}</div><div style="flex: 2 1 350px; min-width: 60%;"><div class="qimen-grid" style="pointer-events: none; height: 100%;">${gridHtml}</div></div></div></div>`;
-                    let headerHtml = `<div style="border-bottom:2px solid #cbd5e1; padding-bottom:12px; margin-bottom:12px;"><h1 style="color:#1e3a8a; margin-bottom:10px; text-align:center; font-size: 1.4rem;">${req.main_title}</h1><div style="display:flex; gap:12px; text-align:left;"><div style="flex:1; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:12px;"><b>主題：</b>${req.category}<br><b>求測：</b>${sName}<br><b>時間：</b>${req.time}${qHtml}</div><div style="flex:1; background:#fffbeb; padding:10px; border-radius:8px; border:1px solid #fde68a; font-size:13px; color:#78350f;"><b style="color:#b45309; display:block; margin-bottom:4px;">斷語金句</b>${goldenText}</div></div></div>`;
-                    finalReportHtml = `<div class="pdf-cover-page">${headerHtml}${visualBoardHtml}</div><div id="aiInterpretationText">${formattedBody}</div>`;
+                        finalReportHtml = `
+                        <div class="destiny-report-wrapper" style="background-color: #fdfbf7; color: #2b2b2b; font-family: 'Noto Sans TC', sans-serif; padding: 20px 10px; border-radius: 12px; position: relative; overflow: hidden; box-shadow: inset 0 0 0 1px #e5dfd3, inset 0 0 0 6px #fdfbf7, inset 0 0 0 7px #e5dfd3;">
+                            ${destinyStyle}
+                            ${coverHtml}
+                            <div id="aiInterpretationText">${formattedBody}</div>
+                            <footer style="margin-top: 50px; text-align: center;"><div style="width: 64px; height: 1px; background-color: #c4a661; margin: 0 auto 16px;"></div><p style="font-size: 0.7rem; color: #9ca3af; letter-spacing: 0.1em; text-transform: uppercase;">Destiny Analysis Report</p></footer>
+                        </div>`;
+                    } else {
+                        let visualBoardHtml = `<div class="report-board-section" style="padding: 12px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;"><h3 style="color:#1e3a8a; font-size: 1rem; font-weight: 900; margin-bottom: 12px; text-align: center; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px;">【 盤局參數與九宮圖 】</h3><div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: stretch;"><div style="flex: 1 1 200px; min-width: 30%;">${infoBoxHtml}</div><div style="flex: 2 1 350px; min-width: 60%;"><div class="qimen-grid" style="pointer-events: none; height: 100%;">${gridHtml}</div></div></div></div>`;
+                        let headerHtml = `<div style="border-bottom:2px solid #cbd5e1; padding-bottom:12px; margin-bottom:12px;"><h1 style="color:#1e3a8a; margin-bottom:10px; text-align:center; font-size: 1.4rem;">${req.main_title}</h1><div style="display:flex; gap:12px; text-align:left;"><div style="flex:1; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:12px;"><b>主題：</b>${req.category}<br><b>求測：</b>${sName}<br><b>時間：</b>${req.time}${qHtml}</div><div style="flex:1; background:#fffbeb; padding:10px; border-radius:8px; border:1px solid #fde68a; font-size:13px; color:#78350f;"><b style="color:#b45309; display:block; margin-bottom:4px;">斷語金句</b>${goldenText}</div></div></div>`;
+                        finalReportHtml = `<div class="pdf-cover-page">${headerHtml}${visualBoardHtml}</div><div id="aiInterpretationText">${formattedBody}</div>`;
+                    }
+                    document.getElementById('masterContent').innerHTML = beautifyQimenText(finalReportHtml);
                 }
-                document.getElementById('masterContent').innerHTML = beautifyQimenText(finalReportHtml);
+                document.getElementById('resultActions').classList.remove('hidden');
+                
+                try {
+                    const saveRes = await fetch(`${API_BASE_URL}/api/v1/history/save`, {
+                        method: 'POST',
+                        headers: buildAuthorizedHeaders(t),
+                        body: JSON.stringify({
+                            category: req.category,
+                            record_time: req.time,
+                            report_text: document.getElementById('masterContent').innerHTML,
+                            is_pinned: false
+                        })
+                    });
+                    if (!saveRes.ok) {
+                        const err = await saveRes.text();
+                        console.error('history save failed', saveRes.status, err);
+                    }
+                } catch (saveErr) {
+                    console.error('history save failed', saveErr);
+                }
+                fetchUserInfo(); fetchHistoryAndSync();
+            } catch(e) { 
+                console.error('executeInterpretation error:', e);
+                if (masterContent) masterContent.innerHTML = `<div class='text-center py-20 text-rose-500 font-bold'><i class='fa-solid fa-triangle-exclamation text-4xl mb-3'></i><p>推演失敗，請稍後重試。</p></div>`;
+                showToast("連線或推演異常，請重試", true);
+            } finally {
+                hideLoading();
             }
-            document.getElementById('resultActions').classList.remove('hidden');
+        }, 1000);
+    }
+
+    // ==========================================
+    // 🔗 8. 分享、匯出與 PDF 功能
+    // ==========================================
+    async function sharePrediction() {
+        const igContainer = document.getElementById('igCardContainer');
+        const titleEl = document.getElementById('igCardTitle'); const contentEl = document.getElementById('igCardContent'); const btn = document.getElementById('igBtn');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 準備分享...';
+        btn.disabled = true; titleEl.innerText = `主題 : ${currentReportTitle}`;
+        
+        const rawHTML = document.getElementById('masterContent').innerHTML; const tempDiv = document.createElement("div"); tempDiv.innerHTML = rawHTML;
+        let goldenSentence = "大吉，吉星高照，凡事順遂。"; 
+        const headers = Array.from(tempDiv.querySelectorAll('h1, h2, h3, h4, h5')); const targetHeader = headers.find(h => h.innerText.includes('斷語'));
+        if (targetHeader && targetHeader.nextElementSibling) { goldenSentence = targetHeader.nextElementSibling.innerText; } else { let blockquotes = tempDiv.getElementsByTagName('blockquote'); if (blockquotes.length > 0) goldenSentence = blockquotes[0].innerText; }
+        goldenSentence = goldenSentence.replace(/[\n\r]/g, ' ').replace(/（.*?）/g, '').replace(/\(.*?\)/g, '').replace('斷語金句：', '').trim();
+        if (goldenSentence.length > 35) goldenSentence = goldenSentence.substring(0, 35) + "...";
+        contentEl.innerText = `測文 : ${goldenSentence}`; window.currentShareText = `【奇門大師推演】\n主題：${currentReportTitle}\n測文：${goldenSentence}\n\n👉 立即推演你的專屬運勢：${window.location.href}`;
+        try {
+            const canvas = await html2canvas(igContainer, { scale: 1.5, useCORS: true, backgroundColor: null });
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+            canvas.toBlob(async (blob) => {
+                const file = new File([blob], 'qimen_share.jpg', { type: 'image/jpeg' }); const isInAppBrowser = /MicroMessenger|Line|FBAN|FBAV/i.test(navigator.userAgent);
+                if (!isInAppBrowser && navigator.share && navigator.canShare({ files: [file] })) {
+                    try { await navigator.share({ title: '奇門推演', files: [file] }); btn.innerHTML = '<i class="fa-solid fa-share-nodes"></i> 分享預測'; btn.disabled = false; } catch (err) { openShareFallbackModal(dataUrl); btn.innerHTML = '<i class="fa-solid fa-share-nodes"></i> 分享預測'; btn.disabled = false; }
+                } else { openShareFallbackModal(dataUrl); btn.innerHTML = '<i class="fa-solid fa-share-nodes"></i> 分享預測'; btn.disabled = false; }
+            }, 'image/jpeg', 0.95);
+        } catch (err) { showToast("分享失敗，請稍後再試", true); btn.innerHTML = '<i class="fa-solid fa-share-nodes"></i> 分享預測'; btn.disabled = false; }
+    }
+
+    function shareToApp(app) { triggerVibration(); copyShareText(); if (app === 'ig') { showToast("已為您複製測文！正在前往 IG...", false); setTimeout(() => window.open('https://www.instagram.com/', '_blank'), 1500); } else if (app === 'wechat') { showToast("已複製測文！請開啟 WeChat 貼上分享。", false); } }
+    function openShareFallbackModal(dataUrl) { document.getElementById('shareImagePreview').src = dataUrl; document.getElementById('downloadShareBtn').href = dataUrl; const url = encodeURIComponent(window.location.href); const text = encodeURIComponent(window.currentShareText); document.getElementById('shareLineBtn').href = `https://social-plugins.line.me/lineit/share?url=${url}&text=${text}`; document.getElementById('shareFbBtn').href = `https://www.facebook.com/sharer/sharer.php?u=${url}`; document.getElementById('shareXBtn').href = `https://twitter.com/intent/tweet?text=${text}&url=${url}`; document.getElementById('shareThreadsBtn').href = `https://threads.net/intent/post?text=${text}&url=${url}`; document.getElementById('shareFallbackModal').classList.remove('hidden'); }
+    function closeShareModal() { document.getElementById('shareFallbackModal').classList.add('hidden'); }
+    function copyShareText() { navigator.clipboard.writeText(window.currentShareText).then(() => showToast("已複製測文！")); }
+
+    function downloadPDF() { 
+        const e = document.getElementById('masterResultBox'); const btn1 = document.getElementById('pdfBtn'); const btn2 = document.getElementById('igBtn'); const actions = document.getElementById('resultActions');
+        if (btn1) { btn1.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...'; btn1.disabled = true; }
+        if (btn2) btn2.style.display = 'none'; if (actions) actions.style.display = 'none'; 
+        e.classList.add('report-print-mode');
+        html2pdf().set({ margin: [15, 10, 15, 10], filename: '奇門大師_鑑定報告.pdf', image: { type: 'jpeg', quality: 1.0 }, html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: 'css' } }).from(e).save().then(() => { 
+            if(btn1) { btn1.innerHTML = '<i class="fa-solid fa-file-pdf"></i> 儲存為 PDF'; btn1.disabled = false; }
+            if(btn2) btn2.style.display = 'flex'; if(actions) actions.style.display = 'flex'; e.classList.remove('report-print-mode');
+        });
+    }
+
+    // ==========================================
+    // 🛒 9. 商城、排版與語音播報
+    // ==========================================
+    async function buyProduct(planType) {
+        const token = await getAuthToken(); 
+        if (!token) { showToast("請先登入大師系統喔！", true); return; }
+        showToast("開啟專屬結帳通道中...");
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/payment/create-checkout-session`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ token: token, plan: planType })
+            });
+            const data = await response.json();
+            if (data.status === 'success' && data.url) { window.location.href = data.url; } else { showToast("通道開啟失敗：" + (data.message || "未知錯誤"), true); }
+        } catch (error) { showToast("磁場連線異常，請稍後再試。", true); }
+    }
+
+    function openTopupModal() { document.getElementById('topupModal').classList.remove('hidden'); }
+    function closeTopupModal() { document.getElementById('topupModal').classList.add('hidden'); }
+    function openFreeDailyModal() { document.getElementById('freeDailyDate').innerText = document.getElementById('displayTimeText').innerText; document.getElementById('freeDailyModal').classList.remove('hidden'); }
+    function closeFreeDailyModal() { document.getElementById('freeDailyModal').classList.add('hidden'); }
+    function openDestinyModal() { 
+        document.getElementById('destinyModal').classList.remove('hidden');
+        const dDateInput = document.getElementById('d_date');
+        const dTimeSelect = document.getElementById('d_time_select');
+        if (dDateInput && !dDateInput.value) { 
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            dDateInput.value = `${year}-${month}-${day}`;
+            if (dTimeSelect) {
+                const hour = now.getHours();
+                let targetHour = 0;
+                if (hour === 23) { targetHour = 0; } 
+                else {
+                    targetHour = Math.floor((hour + 1) / 2) * 2;
+                    if (targetHour >= 24) targetHour = 0;
+                }
+                dTimeSelect.value = String(targetHour).padStart(2, '0') + ":00";
+                const unknownBox = document.getElementById('d_unknown_box');
+                if (unknownBox) unknownBox.style.display = 'none';
+            }
+        } 
+    }
+    function closeDestinyModal() { document.getElementById('destinyModal').classList.add('hidden'); }
+    function beautifyQimenText(rawText) {
+        if (!rawText) return ""; let htmlText = rawText;
+        htmlText = htmlText.replace(/木/g, '<span style="color:#15803d;" class="font-bold text-lg mx-0.5">木</span>'); htmlText = htmlText.replace(/火/g, '<span style="color:#dc2626;" class="font-bold text-lg mx-0.5">火</span>');
+        htmlText = htmlText.replace(/土/g, '<span style="color:#8b4513;" class="font-bold text-lg mx-0.5">土</span>'); htmlText = htmlText.replace(/金/g, '<span style="color:#d97706;" class="font-bold text-lg mx-0.5">金</span>');
+        htmlText = htmlText.replace(/水/g, '<span style="color:#2563eb;" class="font-bold text-lg mx-0.5">水</span>');
+        htmlText = htmlText.replace(/(大吉|吉|順利|貴人)/g, '<span style="color: #b91c1c; background-color: #fee2e2; border: 1px solid #fca5a5; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.95em;">$&</span>');
+        htmlText = htmlText.replace(/(大凶|凶|阻礙|小人)/g, '<span style="color: #334155; background-color: #f1f5f9; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.95em;">$&</span>');
+        return htmlText;
+    }
+
+    let isSpeaking = false; let masterUtterance = null;
+    setTimeout(() => { const savedLang = localStorage.getItem('qimen_voice_lang'); if (savedLang && document.getElementById('voiceLang')) { document.getElementById('voiceLang').value = savedLang; } }, 500);
+    function saveVoiceLang() { const lang = document.getElementById('voiceLang').value; localStorage.setItem('qimen_voice_lang', lang); if (isSpeaking) toggleVoice(); }
+
+    function toggleVoice() {
+        if (!('speechSynthesis' in window)) { showToast("您的瀏覽器不支援語音播報功能", true); return; }
+        const btn = document.getElementById('voiceBtn'); const group = document.getElementById('voiceBtnGroup'); const langSelect = document.getElementById('voiceLang');
+        if (isSpeaking) { window.speechSynthesis.cancel(); isSpeaking = false; btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> 語音播報'; group.classList.remove('animate-pulse', 'bg-indigo-700'); group.classList.add('bg-indigo-500'); return; }
+        let aiTextContainer = document.getElementById('aiInterpretationText'); let textToRead = aiTextContainer ? aiTextContainer.innerText : document.getElementById('masterContent').innerText;
+        if (!textToRead) return;
+        textToRead = textToRead.replace(/推演報告生成中.../g, '');
+        masterUtterance = new SpeechSynthesisUtterance(textToRead); masterUtterance.lang = langSelect.value; masterUtterance.rate = 0.95; masterUtterance.pitch = 1.0;
+        const voices = window.speechSynthesis.getVoices();
+        if (langSelect.value === 'zh-HK') { const hkVoice = voices.find(v => v.lang === 'zh-HK' || v.lang === 'yue-HK'); if (hkVoice) masterUtterance.voice = hkVoice; } else { const twVoice = voices.find(v => v.lang === 'zh-TW' || v.lang === 'zh-CN'); if (twVoice) masterUtterance.voice = twVoice; }
+        masterUtterance.onend = function() { isSpeaking = false; if (btn) { btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> 語音播報'; group.classList.remove('animate-pulse', 'bg-indigo-700'); group.classList.add('bg-indigo-500'); } };
+        if (voices.length === 0) { window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.speak(masterUtterance); } else { window.speechSynthesis.speak(masterUtterance); }
+        isSpeaking = true; btn.innerHTML = '<i class="fa-solid fa-stop"></i> 停止播報'; group.classList.add('animate-pulse', 'bg-indigo-700'); group.classList.remove('bg-indigo-500');
+    }
+
+    async function handleDeleteAccount() {
+        const firstConfirm = confirm("⚠️ 警告：這將會永久物理刪除您的帳號，包括您所有的奇門推演記錄與剩餘點數，且此操作無法復原！您確定要繼續嗎？");
+        if (!firstConfirm) return;
+
+        const secondConfirm = confirm("🔥 最後確認：您真的決定要完全抹除您在【奇門大師】的所有磁場數據嗎？");
+        if (!secondConfirm) return;
+
+        const token = await SecurityStorage.getToken(); 
+        if (!token) {
+            alert("未偵測到登入狀態");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/auth/delete-account`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const resData = await response.json();
+            if (response.ok) {
+                alert("🧹 您的帳號及所有推演數據已完全抹除。");
+                await SecurityStorage.removeToken(); 
+                window.location.reload();
+            } else {
+                alert("❌ 註銷帳號失敗: " + (resData.detail || "未知錯誤"));
+            }
+        } catch (error) {
+            console.error("Delete account error:", error);
+            alert("❌ 網路異常，無法連接伺服器，請稍後再試。");
+        }
+    }
+
+    async function handleTodayFortuneClick() {
+        document.getElementById('todayFortuneInitialContainer').classList.add('hidden');
+        document.getElementById('todayFortuneResultSection').classList.remove('hidden');
+        
+        if (typeof calculateNow === "function") {
+            console.log("正在自動依據當前時間進行奇門盤局天體磁場校準...");
+            await calculateNow(); 
+        }
+        
+        setTimeout(() => {
+            const originModal = document.getElementById('freeDailyModal');
+            const targetContainer = document.getElementById('dailyFortuneGridContent');
             
-            try {
-                const saveRes = await fetch('/api/v1/history/save', {
-                    method: 'POST',
-                    headers: buildAuthorizedHeaders(t),
-                    body: JSON.stringify({
-                        category: req.category,
-                        record_time: req.time,
-                        report_text: document.getElementById('masterContent').innerHTML,
-                        is_pinned: false
-                    })
-                });
-                if (!saveRes.ok) {
-                    const err = await saveRes.text();
-                    console.error('history save failed', saveRes.status, err);
-                }
-            } catch (saveErr) {
-                console.error('history save failed', saveErr);
+            if (originModal && targetContainer) {
+                const contentBox = originModal.querySelector('.bg-white') || originModal.querySelector('div[class*="bg-"]') || originModal;
+                const clonedContent = contentBox.cloneNode(true);
+                
+                clonedContent.className = clonedContent.className
+                    .replace(/\bfixed\b/g, '')
+                    .replace(/\babsolute\b/g, '')
+                    .replace(/\binset-0\b/g, '')
+                    .replace(/\bz-\d+\b/g, '')
+                    .replace(/\bhidden\b/g, '');
+                
+                const closeBtn = clonedContent.querySelector('button[onclick*="closeFreeDailyModal"]') || clonedContent.querySelector('.fa-xmark')?.parentElement;
+                if (closeBtn) closeBtn.style.display = 'none';
+                targetContainer.innerHTML = '';
+                targetContainer.appendChild(clonedContent);
             }
-            fetchUserInfo(); fetchHistoryAndSync();
-        } catch(e) { 
-            console.error('executeInterpretation error:', e);
-            if (masterContent) masterContent.innerHTML = `<div class='text-center py-20 text-rose-500 font-bold'><i class='fa-solid fa-triangle-exclamation text-4xl mb-3'></i><p>推演失敗，請稍後重試。</p></div>`;
-            showToast("連線或推演異常，請重試", true);
+        }, 400); 
+    }
+
+    window.moveResultBoxTo = function(targetViewId) {
+        const box = document.getElementById('masterResultBoxContainer');
+        const targetView = document.getElementById(targetViewId);
+        if (box && targetView) {
+            targetView.appendChild(box); 
+        }
+    };
+
+    window.viewHistoryDetail = async function(id) {
+        const t = await getAuthToken(); 
+        if (!t) { openAuthModal(); return; }
+        
+        showLoading("讀取過往卷宗...");
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/v1/history/detail`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + t
+                },
+                body: JSON.stringify({ record_id: id }) 
+            });
+            const d = await res.json();
+            
+            if (d.status === 'success') {
+                const r = d.data;
+                document.getElementById('masterContent').innerHTML = r.report_text || "<div class='text-center py-10 text-slate-400'>無法解析紀錄內容</div>";
+                document.getElementById('masterResultBoxContainer').classList.remove('hidden');
+                document.getElementById('resultActions').classList.remove('hidden');
+                if (r.category && r.category.startsWith('「命盤」')) {
+                    switchView('view-destiny', document.querySelectorAll('.tab-btn')[2]);
+                    if(window.moveResultBoxTo) window.moveResultBoxTo('view-destiny');
+                } else {
+                    switchView('view-report', document.querySelectorAll('.tab-btn')[1]);
+                    if(window.moveResultBoxTo) window.moveResultBoxTo('view-report');
+                }
+                
+                setTimeout(() => {
+                    document.getElementById('masterResultBoxContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 300);
+            } else {
+                showToast("無法讀取紀錄，可能已被刪除", true);
+            }
+        } catch (e) {
+            showToast("伺服器連線異常", true);
         } finally {
             hideLoading();
         }
-    }, 1000);
-}
+    };
 
-// ==========================================
-// 🔗 8. 分享、匯出與 PDF 功能
-// ==========================================
-async function sharePrediction() {
-    const igContainer = document.getElementById('igCardContainer');
-    const titleEl = document.getElementById('igCardTitle'); const contentEl = document.getElementById('igCardContent'); const btn = document.getElementById('igBtn');
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 準備分享...';
-    btn.disabled = true; titleEl.innerText = `主題 : ${currentReportTitle}`;
-    
-    const rawHTML = document.getElementById('masterContent').innerHTML; const tempDiv = document.createElement("div"); tempDiv.innerHTML = rawHTML;
-    let goldenSentence = "大吉，吉星高照，凡事順遂。"; 
-    const headers = Array.from(tempDiv.querySelectorAll('h1, h2, h3, h4, h5')); const targetHeader = headers.find(h => h.innerText.includes('斷語'));
-    if (targetHeader && targetHeader.nextElementSibling) { goldenSentence = targetHeader.nextElementSibling.innerText; } else { let blockquotes = tempDiv.getElementsByTagName('blockquote'); if (blockquotes.length > 0) goldenSentence = blockquotes[0].innerText; }
-    goldenSentence = goldenSentence.replace(/[\n\r]/g, ' ').replace(/（.*?）/g, '').replace(/\(.*?\)/g, '').replace('斷語金句：', '').trim();
-    if (goldenSentence.length > 35) goldenSentence = goldenSentence.substring(0, 35) + "...";
-    contentEl.innerText = `測文 : ${goldenSentence}`; window.currentShareText = `【奇門大師推演】\n主題：${currentReportTitle}\n測文：${goldenSentence}\n\n👉 立即推演你的專屬運勢：${window.location.href}`;
-    try {
-        const canvas = await html2canvas(igContainer, { scale: 1.5, useCORS: true, backgroundColor: null });
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-        canvas.toBlob(async (blob) => {
-            const file = new File([blob], 'qimen_share.jpg', { type: 'image/jpeg' }); const isInAppBrowser = /MicroMessenger|Line|FBAN|FBAV/i.test(navigator.userAgent);
-            if (!isInAppBrowser && navigator.share && navigator.canShare({ files: [file] })) {
-                try { await navigator.share({ title: '奇門推演', files: [file] }); btn.innerHTML = '<i class="fa-solid fa-share-nodes"></i> 分享預測'; btn.disabled = false; } catch (err) { openShareFallbackModal(dataUrl); btn.innerHTML = '<i class="fa-solid fa-share-nodes"></i> 分享預測'; btn.disabled = false; }
-            } else { openShareFallbackModal(dataUrl); btn.innerHTML = '<i class="fa-solid fa-share-nodes"></i> 分享預測'; btn.disabled = false; }
-        }, 'image/jpeg', 0.95);
-    } catch (err) { showToast("分享失敗，請稍後再試", true); btn.innerHTML = '<i class="fa-solid fa-share-nodes"></i> 分享預測'; btn.disabled = false; }
-}
-
-function shareToApp(app) { triggerVibration(); copyShareText(); if (app === 'ig') { showToast("已為您複製測文！正在前往 IG...", false); setTimeout(() => window.open('https://www.instagram.com/', '_blank'), 1500); } else if (app === 'wechat') { showToast("已複製測文！請開啟 WeChat 貼上分享。", false); } }
-function openShareFallbackModal(dataUrl) { document.getElementById('shareImagePreview').src = dataUrl; document.getElementById('downloadShareBtn').href = dataUrl; const url = encodeURIComponent(window.location.href); const text = encodeURIComponent(window.currentShareText); document.getElementById('shareLineBtn').href = `https://social-plugins.line.me/lineit/share?url=${url}&text=${text}`; document.getElementById('shareFbBtn').href = `https://www.facebook.com/sharer/sharer.php?u=${url}`; document.getElementById('shareXBtn').href = `https://twitter.com/intent/tweet?text=${text}&url=${url}`; document.getElementById('shareThreadsBtn').href = `https://threads.net/intent/post?text=${text}&url=${url}`; document.getElementById('shareFallbackModal').classList.remove('hidden'); }
-function closeShareModal() { document.getElementById('shareFallbackModal').classList.add('hidden'); }
-function copyShareText() { navigator.clipboard.writeText(window.currentShareText).then(() => showToast("已複製測文！")); }
-
-function downloadPDF() { 
-    const e = document.getElementById('masterResultBox'); const btn1 = document.getElementById('pdfBtn'); const btn2 = document.getElementById('igBtn'); const actions = document.getElementById('resultActions');
-    if (btn1) { btn1.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...'; btn1.disabled = true; }
-    if (btn2) btn2.style.display = 'none'; if (actions) actions.style.display = 'none'; 
-    e.classList.add('report-print-mode');
-    html2pdf().set({ margin: [15, 10, 15, 10], filename: '奇門大師_鑑定報告.pdf', image: { type: 'jpeg', quality: 1.0 }, html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: 'css' } }).from(e).save().then(() => { 
-        if(btn1) { btn1.innerHTML = '<i class="fa-solid fa-file-pdf"></i> 儲存為 PDF'; btn1.disabled = false; }
-        if(btn2) btn2.style.display = 'flex'; if(actions) actions.style.display = 'flex'; e.classList.remove('report-print-mode');
-    });
-}
-
-// ==========================================
-// 🛒 9. 商城、排版與語音播報
-// ==========================================
-async function buyProduct(planType) {
-    const token = await getAuthToken(); // 升級 await
-    if (!token) { showToast("請先登入大師系統喔！", true); return; }
-    showToast("開啟專屬結帳通道中...");
-    try {
-        const response = await fetch('/api/v1/payment/create-checkout-session', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ token: token, plan: planType })
-        });
-        const data = await response.json();
-        if (data.status === 'success' && data.url) { window.location.href = data.url; } else { showToast("通道開啟失敗：" + (data.message || "未知錯誤"), true); }
-    } catch (error) { showToast("磁場連線異常，請稍後再試。", true); }
-}
-
-function openTopupModal() { document.getElementById('topupModal').classList.remove('hidden'); }
-function closeTopupModal() { document.getElementById('topupModal').classList.add('hidden'); }
-function openFreeDailyModal() { document.getElementById('freeDailyDate').innerText = document.getElementById('displayTimeText').innerText; document.getElementById('freeDailyModal').classList.remove('hidden'); }
-function closeFreeDailyModal() { document.getElementById('freeDailyModal').classList.add('hidden'); }
-function openDestinyModal() { 
-    document.getElementById('destinyModal').classList.remove('hidden');
-    const dDateInput = document.getElementById('d_date');
-    const dTimeSelect = document.getElementById('d_time_select');
-    if (dDateInput && !dDateInput.value) { 
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        dDateInput.value = `${year}-${month}-${day}`;
-        if (dTimeSelect) {
-            const hour = now.getHours();
-            let targetHour = 0;
-            if (hour === 23) { targetHour = 0; } 
-            else {
-                targetHour = Math.floor((hour + 1) / 2) * 2;
-                if (targetHour >= 24) targetHour = 0;
-            }
-            dTimeSelect.value = String(targetHour).padStart(2, '0') + ":00";
-            const unknownBox = document.getElementById('d_unknown_box');
-            if (unknownBox) unknownBox.style.display = 'none';
-        }
-    } 
-}
-function closeDestinyModal() { document.getElementById('destinyModal').classList.add('hidden'); }
-function beautifyQimenText(rawText) {
-    if (!rawText) return ""; let htmlText = rawText;
-    htmlText = htmlText.replace(/木/g, '<span style="color:#15803d;" class="font-bold text-lg mx-0.5">木</span>'); htmlText = htmlText.replace(/火/g, '<span style="color:#dc2626;" class="font-bold text-lg mx-0.5">火</span>');
-    htmlText = htmlText.replace(/土/g, '<span style="color:#8b4513;" class="font-bold text-lg mx-0.5">土</span>'); htmlText = htmlText.replace(/金/g, '<span style="color:#d97706;" class="font-bold text-lg mx-0.5">金</span>');
-    htmlText = htmlText.replace(/水/g, '<span style="color:#2563eb;" class="font-bold text-lg mx-0.5">水</span>');
-    htmlText = htmlText.replace(/(大吉|吉|順利|貴人)/g, '<span style="color: #b91c1c; background-color: #fee2e2; border: 1px solid #fca5a5; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.95em;">$&</span>');
-    htmlText = htmlText.replace(/(大凶|凶|阻礙|小人)/g, '<span style="color: #334155; background-color: #f1f5f9; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.95em;">$&</span>');
-    return htmlText;
-}
-
-let isSpeaking = false; let masterUtterance = null;
-setTimeout(() => { const savedLang = localStorage.getItem('qimen_voice_lang'); if (savedLang && document.getElementById('voiceLang')) { document.getElementById('voiceLang').value = savedLang; } }, 500);
-function saveVoiceLang() { const lang = document.getElementById('voiceLang').value; localStorage.setItem('qimen_voice_lang', lang); if (isSpeaking) toggleVoice(); }
-
-function toggleVoice() {
-    if (!('speechSynthesis' in window)) { showToast("您的瀏覽器不支援語音播報功能", true); return; }
-    const btn = document.getElementById('voiceBtn'); const group = document.getElementById('voiceBtnGroup'); const langSelect = document.getElementById('voiceLang');
-    if (isSpeaking) { window.speechSynthesis.cancel(); isSpeaking = false; btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> 語音播報'; group.classList.remove('animate-pulse', 'bg-indigo-700'); group.classList.add('bg-indigo-500'); return; }
-    let aiTextContainer = document.getElementById('aiInterpretationText'); let textToRead = aiTextContainer ? aiTextContainer.innerText : document.getElementById('masterContent').innerText;
-    if (!textToRead) return;
-    textToRead = textToRead.replace(/推演報告生成中.../g, '');
-    masterUtterance = new SpeechSynthesisUtterance(textToRead); masterUtterance.lang = langSelect.value; masterUtterance.rate = 0.95; masterUtterance.pitch = 1.0;
-    const voices = window.speechSynthesis.getVoices();
-    if (langSelect.value === 'zh-HK') { const hkVoice = voices.find(v => v.lang === 'zh-HK' || v.lang === 'yue-HK'); if (hkVoice) masterUtterance.voice = hkVoice; } else { const twVoice = voices.find(v => v.lang === 'zh-TW' || v.lang === 'zh-CN'); if (twVoice) masterUtterance.voice = twVoice; }
-    masterUtterance.onend = function() { isSpeaking = false; if (btn) { btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> 語音播報'; group.classList.remove('animate-pulse', 'bg-indigo-700'); group.classList.add('bg-indigo-500'); } };
-    if (voices.length === 0) { window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.speak(masterUtterance); } else { window.speechSynthesis.speak(masterUtterance); }
-    isSpeaking = true; btn.innerHTML = '<i class="fa-solid fa-stop"></i> 停止播報'; group.classList.add('animate-pulse', 'bg-indigo-700'); group.classList.remove('bg-indigo-500');
-}
-
-// ⚠️ Apple 審核強制合規：一鍵註銷並物理抹除帳號
-async function handleDeleteAccount() {
-    // 1. 二次強確認，防止用戶手殘誤觸
-    const firstConfirm = confirm("⚠️ 警告：這將會永久物理刪除您的帳號，包括您所有的奇門推演記錄與剩餘點數，且此操作無法復原！您確定要繼續嗎？");
-    if (!firstConfirm) return;
-
-    const secondConfirm = confirm("🔥 最後確認：您真的決定要完全抹除您在【奇門大師】的所有磁場數據嗎？");
-    if (!secondConfirm) return;
-
-    const token = await SecurityStorage.getToken(); // 兩棲讀取升級
-    if (!token) {
-        alert("未偵測到登入狀態");
-        return;
-    }
-
-    try {
-        // 2. 向後端發射 DELETE 物理抹除請求
-        const response = await fetch('https://qimen-app-xwie.onrender.com/api/v1/auth/delete-account', {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        const resData = await response.json();
-        if (response.ok) {
-            alert("🧹 您的帳號及所有推演數據已完全抹除。");
-            // 3. 成功後，立刻清除本地緩存並強制重整，退回登入/註冊畫面
-            await SecurityStorage.removeToken(); // 兩棲刪除升級
-            window.location.reload();
-        } else {
-            alert("❌ 註銷帳號失敗: " + (resData.detail || "未知錯誤"));
-        }
-    } catch (error) {
-        console.error("Delete account error:", error);
-        alert("❌ 網路異常，無法連接伺服器，請稍後再試。");
-    }
-}
-
-// 🌟 升級完全體：處理「今日運程預測」點擊事件
-async function handleTodayFortuneClick() {
-    document.getElementById('todayFortuneInitialContainer').classList.add('hidden');
-    document.getElementById('todayFortuneResultSection').classList.remove('hidden');
-    
-    if (typeof calculateNow === "function") {
-        console.log("正在自動依據當前時間進行奇門盤局天體磁場校準...");
-        await calculateNow(); 
-    }
-    
-    setTimeout(() => {
-        const originModal = document.getElementById('freeDailyModal');
-        const targetContainer = document.getElementById('dailyFortuneGridContent');
-        
-        if (originModal && targetContainer) {
-            const contentBox = originModal.querySelector('.bg-white') || originModal.querySelector('div[class*="bg-"]') || originModal;
-            const clonedContent = contentBox.cloneNode(true);
-            
-            clonedContent.className = clonedContent.className
-                .replace(/\bfixed\b/g, '')
-                .replace(/\babsolute\b/g, '')
-                .replace(/\binset-0\b/g, '')
-                .replace(/\bz-\d+\b/g, '')
-                .replace(/\bhidden\b/g, '');
-            
-            const closeBtn = clonedContent.querySelector('button[onclick*="closeFreeDailyModal"]') || clonedContent.querySelector('.fa-xmark')?.parentElement;
-            if (closeBtn) closeBtn.style.display = 'none';
-            targetContainer.innerHTML = '';
-            targetContainer.appendChild(clonedContent);
-        }
-    }, 400); 
-}
-
-// ==========================================
-// 🚑 大師修補包：歷史紀錄與視圖隔離路由
-// ==========================================
-
-window.moveResultBoxTo = function(targetViewId) {
-    const box = document.getElementById('masterResultBoxContainer');
-    const targetView = document.getElementById(targetViewId);
-    if (box && targetView) {
-        targetView.appendChild(box); 
-    }
-};
-
-window.viewHistoryDetail = async function(id) {
-    const t = await getAuthToken(); // 升級 await
-    if (!t) { openAuthModal(); return; }
-    
-    showLoading("讀取過往卷宗...");
-    try {
-        const res = await fetch('/api/v1/history/detail', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + t
-            },
-            body: JSON.stringify({ record_id: id }) 
-        });
-        const d = await res.json();
-        
-        if (d.status === 'success') {
-            const r = d.data;
-            document.getElementById('masterContent').innerHTML = r.report_text || "<div class='text-center py-10 text-slate-400'>無法解析紀錄內容</div>";
-            document.getElementById('masterResultBoxContainer').classList.remove('hidden');
-            document.getElementById('resultActions').classList.remove('hidden');
-            if (r.category && r.category.startsWith('「命盤」')) {
-                switchView('view-destiny', document.querySelectorAll('.tab-btn')[2]);
-                if(window.moveResultBoxTo) window.moveResultBoxTo('view-destiny');
-            } else {
-                switchView('view-report', document.querySelectorAll('.tab-btn')[1]);
-                if(window.moveResultBoxTo) window.moveResultBoxTo('view-report');
-            }
-            
-            setTimeout(() => {
-                document.getElementById('masterResultBoxContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 300);
-        } else {
-            showToast("無法讀取紀錄，可能已被刪除", true);
-        }
-    } catch (e) {
-        showToast("伺服器連線異常", true);
-    } finally {
+    window.forceWakeUp = function() {
         hideLoading();
-    }
-};
+        const initialLoading = document.getElementById('initialLoading');
+        if (initialLoading) initialLoading.classList.add('hidden');
+        const timeEl = document.getElementById('timeInput');
+        if (timeEl && !timeEl.value) { initTime(); }
+    };
+    window.addEventListener('load', forceWakeUp);
 
-window.forceWakeUp = function() {
-    hideLoading();
-    const initialLoading = document.getElementById('initialLoading');
-    if (initialLoading) initialLoading.classList.add('hidden');
-    const timeEl = document.getElementById('timeInput');
-    if (timeEl && !timeEl.value) { initTime(); }
-};
-window.addEventListener('load', forceWakeUp);
+    window.showFdDetail = function(title, dir, encodedDesc) {
+        document.getElementById('fdDetailTitle').innerText = title;
+        document.getElementById('fdDetailDir').innerText = dir;
+        document.getElementById('fdDetailText').innerHTML = decodeURIComponent(encodedDesc);
+        
+        document.getElementById('fdGrid').classList.add('hidden');
+        document.getElementById('fdDetail').classList.remove('hidden');
+        document.getElementById('fdDetail').style.display = 'flex';
+    };
 
-window.showFdDetail = function(title, dir, encodedDesc) {
-    document.getElementById('fdDetailTitle').innerText = title;
-    document.getElementById('fdDetailDir').innerText = dir;
-    document.getElementById('fdDetailText').innerHTML = decodeURIComponent(encodedDesc);
-    
-    document.getElementById('fdGrid').classList.add('hidden');
-    document.getElementById('fdDetail').classList.remove('hidden');
-    document.getElementById('fdDetail').style.display = 'flex';
-};
-
-window.closeFreeDailyModal = function() { 
-    document.getElementById('freeDailyModal').classList.add('hidden');
-    const fdGrid = document.getElementById('fdGrid');
-    const fdDetail = document.getElementById('fdDetail');
-    if (fdGrid && fdDetail) {
-        fdGrid.classList.remove('hidden');
-        fdDetail.classList.add('hidden');
-        fdDetail.style.display = 'none';
-    }
-};
-    
-</script> </body>
+    window.closeFreeDailyModal = function() { 
+        document.getElementById('freeDailyModal').classList.add('hidden');
+        const fdGrid = document.getElementById('fdGrid');
+        const fdDetail = document.getElementById('fdDetail');
+        if (fdGrid && fdDetail) {
+            fdGrid.classList.remove('hidden');
+            fdDetail.classList.add('hidden');
+            fdDetail.style.display = 'none';
+        }
+    };
+    </script>
+</body>
 </html>

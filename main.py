@@ -13,20 +13,13 @@ from routers import auth, divination, history, payment, debug
 app = FastAPI()
 
 # 🌟 新增跨域白名單，徹底打通網頁端與手機 iOS / Android 原生端
-origins = [
-    "https://qimen-app-xwie.onrender.com",  # 您的 Render 前端網頁
-    "http://localhost",                    # Android 原生域名 & 本地調試
-    "http://localhost:5173",               # Vite 本地預設
-    "http://localhost:3000",               # 其它前端本地預設
-    "capacitor://localhost",               # iOS 原生網域 (App Store 上架必備)
-]
-
+# 🟢 首席架構師優化版：全面解放跨域限制，專為行動端外殼打造
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["*"],       # 允許所有網域（徹底根治手機端 localhost 各種協議撞牆）
+    allow_credentials=False,   # 關閉 Cookie 認證（我們用 Bearer Token，關閉後才可啟用 "*" 萬用字元）
+    allow_methods=["*"],       # 允許所有請求方法 (POST, GET, OPTIONS 等)
+    allow_headers=["*"],       # 允許所有請求標頭
 )
 
 # # global logger (下面原本的第 16 行保持不變...)
