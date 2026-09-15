@@ -65,7 +65,7 @@ def is_rate_limited(user_id: int, limit: int = 5, window_minutes: int = 1) -> bo
 
 def verify_and_deduct_credits(user, category: str, db):
     """
-    🌟 奇門大師核心商業權限驗證閘門 (完全還原業務邏輯版)
+    🌟 奇門大師核心商業權限驗證閘門 (已修正時區相減衝突版)
     """
     current_time = datetime.now()
     today_date = current_time.date()
@@ -94,6 +94,10 @@ def verify_and_deduct_credits(user, category: str, db):
                     user_last_daily = datetime.fromisoformat(user_last_daily.replace(" ", "T"))
                 except Exception:
                     pass
+            # 🛡️ 抹去時區資訊，防止時區相減衝突
+            if isinstance(user_last_daily, datetime) and user_last_daily.tzinfo is not None:
+                user_last_daily = user_last_daily.replace(tzinfo=None)
+
             if hasattr(user_last_daily, "date") and user_last_daily.date() == today_date:
                 raise HTTPException(
                     status_code=403, 
@@ -144,6 +148,10 @@ def verify_and_deduct_credits(user, category: str, db):
                     user_last_weekly = datetime.fromisoformat(user_last_weekly.replace(" ", "T"))
                 except Exception:
                     pass
+            # 🛡️ 抹去時區資訊，防止相減時拋出 offset-naive vs offset-aware 異常
+            if isinstance(user_last_weekly, datetime) and user_last_weekly.tzinfo is not None:
+                user_last_weekly = user_last_weekly.replace(tzinfo=None)
+
             is_free_weekly_available = (
                 user_last_weekly is None or 
                 (current_time - user_last_weekly) >= timedelta(days=7)
