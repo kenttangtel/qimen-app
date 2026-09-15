@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 if not logger.handlers:
     logging.basicConfig(level=logging.INFO)
 
-# 🛡️ 全域記憶體限流閘：防止惡意腳本刷爆 DeepSeek 餘額
+# 🛡️ 全域記憶體限流閘：防止惡意腳本頻繁發起推演
 user_request_timestamps = defaultdict(list)
 
 def is_rate_limited(user_id: int, limit: int = 5, window_minutes: int = 1) -> bool:
@@ -78,7 +78,7 @@ def verify_and_deduct_credits(user, category: str, db):
     user_credits = getattr(user, "credits", 0) if hasattr(user, "credits") else get_user_field(user, "credits", 0)
 
     # -------------------------------------------------------------------------
-    # 核心邏輯 A1：個人專屬深度推演 (舊版的 綜合運勢 / 個人運程) -> 僅限 VIP
+    # 核心邏輯 A1：個人專屬深度推演 -> 僅限 VIP
     # -------------------------------------------------------------------------
     if category in ["綜合運勢", "個人運程"]:
         if not is_vip:
@@ -114,7 +114,6 @@ def verify_and_deduct_credits(user, category: str, db):
     elif "專屬每日運程" in category or "運程" in category or "運勢" in category:
         is_free = False
         if is_vip:
-            # VIP 查詢本日是否有過專屬每日運程歷史紀錄
             result = db.execute(
                 text("SELECT count(*) AS cnt FROM history WHERE user_id=:user_id AND category LIKE :category AND created_at LIKE :created_at"),
                 {
@@ -140,7 +139,6 @@ def verify_and_deduct_credits(user, category: str, db):
     # 核心邏輯 B：事盤推演
     # -------------------------------------------------------------------------
     elif "事盤" in category:
-        # 永久會員每 7 天可以免費推演一次
         if membership == "lifetime":
             user_last_weekly = getattr(user, "last_weekly_shipan_at", None) if hasattr(user, "last_weekly_shipan_at") else get_user_field(user, "last_weekly_shipan_at")
             if isinstance(user_last_weekly, str):
@@ -148,7 +146,6 @@ def verify_and_deduct_credits(user, category: str, db):
                     user_last_weekly = datetime.fromisoformat(user_last_weekly.replace(" ", "T"))
                 except Exception:
                     pass
-            # 🛡️ 抹去時區資訊，防止相減時拋出 offset-naive vs offset-aware 異常
             if isinstance(user_last_weekly, datetime) and user_last_weekly.tzinfo is not None:
                 user_last_weekly = user_last_weekly.replace(tzinfo=None)
 
@@ -176,9 +173,7 @@ def verify_and_deduct_credits(user, category: str, db):
     # -------------------------------------------------------------------------
     elif "命盤" in category:
         is_free = False
-        # VIP 會員每個月第一次看命盤免費
         if is_vip:
-            # 查詢本月是否有過命盤歷史紀錄
             result = db.execute(
                 text("SELECT count(*) AS cnt FROM history WHERE user_id=:user_id AND category LIKE :category AND created_at LIKE :created_at"),
                 {
@@ -211,6 +206,7 @@ def clean_stream_content(text: str) -> str:
         (r"人工智慧", "數理邏輯"),
         (r"OpenAI", "天體資料庫"),
         (r"GPT", "星盤程式"),
+        (r"模型", "演算法"),
     ]
     for p, r in patterns:
         text = re.sub(p, r, text, flags=re.IGNORECASE)
@@ -423,27 +419,26 @@ async def interpret_matrix(
 ):
     try:
         if not client:
-            return StreamingResponse(iter(["**❌ 磁場連接異常**"]), media_type="text/event-stream")
+            return StreamingResponse(iter(["**❌ 天體磁場連線異常，大師稍後重新起卦**"]), media_type="text/event-stream")
         
         if not user:
             raise HTTPException(status_code=401, detail="Unauthorized")
             
-        # 🌟 0. 安全提取區域變數，徹底防禦 db.commit() 的 DetachedInstanceError 地雷
         user_id = getattr(user, "id", None) if hasattr(user, "id") else get_user_field(user, "id")
         user_membership = getattr(user, "membership_type", "free") if hasattr(user, "membership_type") else get_user_field(user, "membership_type", "free")
         is_vip = user_membership in ("monthly", "lifetime")
 
-        # 🛡️ 【新增限流檢查】限制每位用戶每分鐘最多只能發起 5 次深度解盤，防禦惡意攻擊
+        # 🛡️ 限制每位用戶每分鐘最多只能發起 5 次深度解盤
         if is_rate_limited(user_id, limit=5, window_minutes=1):
             raise HTTPException(
                 status_code=429, 
                 detail="🔮 您求測得太頻繁了，天體磁場需要時間沉澱。請隔 1 分鐘後再試。"
             )
 
-        # 🌟 1. 統一在閘門安全判斷「雙軌制扣點」！
+        # 🌟 驗證與扣點
         verify_and_deduct_credits(user, request.category, db)
 
-        # 🌟 2. 歷史紀錄交叉分析，全線使用區域變數防過期
+        # 🌟 歷史紀錄交叉分析
         seeker_info_prompt = ""
         is_destiny = "「命盤」" in request.category
 
@@ -485,7 +480,7 @@ async def interpret_matrix(
                 status_code=exc.status_code,
             )
         except Exception as exc:
-            logger.exception("build_matrix_response failed")
+            logger.exception("build_matrix_response failed: %s", exc)
             return StreamingResponse(
                 iter(["**❌ 盤象產生失敗**"]),
                 media_type="text/event-stream",
@@ -499,11 +494,11 @@ async def interpret_matrix(
         try:
             bazi_eval = QuantityEvaluator.evaluate(matrix_data.bazi)
         except Exception as exc:
-            logger.exception("QuantityEvaluator failed")
+            logger.exception("QuantityEvaluator failed: %s", exc)
             return StreamingResponse(iter(["**❌ 盤象量化失敗**"]), media_type="text/event-stream", status_code=500)
 
         eval_text = f"""
-\n【⚖️ 核心數據：五行量化能量分析 (LLM 必讀)】
+\n【⚖️ 核心數據：五行量化能量分析 (大師必讀)】
 - 日主旺衰基準：{bazi_eval['day_master_strength']}
 - 五行細分得分：{bazi_eval['scores']}
 - 喜用五行（必須生旺）：{', '.join(bazi_eval['xi_yong'])}
@@ -549,7 +544,7 @@ async def interpret_matrix(
 3. 動態校準演算法：
    - Step 1：獲取八字底色（確認求測人八字喜用神，如：喜水木、忌土金）。
    - Step 2：解讀奇門局部（找出當前盤中帶吉門吉星的奇門五行）。
-   - Step 3：交叉過濾。若奇門五行是八字忌神，【必須強行校準】。AI 必須尋找奇門盤中「既符合吉方，又能生旺八字喜用」的次強五行。
+   - Step 3：交叉過濾。若奇門五行是八字忌神，【必須強行校準】。必須尋找奇門盤中「既符合吉方，又能生旺八字喜用」的次強五行。
 4. 顏色轉譯規則（通關法）：若奇門利「金」（白）但八字忌金喜水。不可輸出白色，應輸出黑色/藍色（水），取「金生水」之意轉化能量。
 """
 
@@ -644,11 +639,9 @@ async def interpret_matrix(
 ### 💡 大師解讀
 """
 
-        # 🛡️ 建立非同步通訊佇列，用於雙軌防超時防禦機制
         token_queue = asyncio.Queue()
 
         async def generate():
-            # 🚀 背景生產者任務：負責向 DeepSeek 索取串流並壓入佇列
             async def fetch_deepseek_stream():
                 try:
                     stream = await client.chat.completions.create(
@@ -656,7 +649,7 @@ async def interpret_matrix(
                         messages=[
                             {
                                 "role": "system",
-                                "content": "你是香港頂級奇門遁甲大師，語氣莊重專業、客觀權威。請務必全程使用「香港繁體中文的書面語」進行解答（符合香港人的閱讀習慣，避免內地網絡用語，但保持高級命理顯問的質感）。絕對禁止透露 AI 身份。",
+                                "content": "你是香港頂級奇門遁甲大師，語氣莊重專業、客觀權威。請務必全程使用「香港繁體中文的書面語」進行解答（符合香港人的閱讀習慣，避免內地網絡用語，但保持高級命理顯問的質感）。絕對禁止透露機器人或技術身份。",
                             },
                             {"role": "user", "content": prompt},
                         ],
@@ -671,42 +664,38 @@ async def interpret_matrix(
                         except Exception:
                             continue
                         if content:
-                            # 經過字詞清洗後，火速壓入佇列
                             await token_queue.put(clean_stream_content(content))
-                    # 生產結束，塞入 None 作為終端信號
                     await token_queue.put(None)
                 except Exception as exc:
-                    logger.exception("AI stream generation/iteration failed")
+                    logger.exception("DeepSeek Stream Generation Failed: %s", exc)
                     await token_queue.put(exc)
 
-            # 啟動背景生產者工作，讓它去跟 DeepSeek 連線
             asyncio.create_task(fetch_deepseek_stream())
 
-            # 👑 主消費者迴圈：智能監聽佇列，2.5 秒超時就自動朝前端發射隱形 HTML 心跳
             while True:
                 try:
                     chunk = await asyncio.wait_for(token_queue.get(), timeout=2.5)
                     
                     if chunk is None:
-                        break # 順利收工
+                        break
                         
                     if isinstance(chunk, Exception):
-                        yield "**❌ AI 解盤發生異常，請稍後再試**"
+                        # 🌟 徹底杜絕 AI 字眼，改以玄學語彙回覆
+                        yield "**❌ 天體磁場共振暫時紊亂，大師稍後重新起卦**"
                         break
                         
                     yield chunk
                     
                 except asyncio.TimeoutError:
-                    # 💥 觸發防超時核心：向前端發射隱形 HTML 註解，維持 Render 網道連線暢通！
                     yield "<!-- keepalive -->"
 
         return StreamingResponse(generate(), media_type="text/event-stream")
     except HTTPException:
         raise
     except Exception as exc:
-        logger.exception("interpret_matrix unexpected error")
+        logger.exception("interpret_matrix unexpected error: %s", exc)
         return StreamingResponse(
-            iter([f"**❌ Internal Server Error: {str(exc)}**"]),
+            iter(["**❌ 天體連線感應異常，請稍後重新起卦**"]),
             media_type="text/event-stream",
             status_code=500,
         )
