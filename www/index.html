@@ -1175,7 +1175,7 @@ async function triggerVibration() {
                         addGridItem("💼", "開門・事業", "談公司業務、簽約與展現專業", `此時【開門】落於 ${dir} (${p.palace_id})。利於談公司業務、簽署重要合同、展現專業度與拓展事業。`);
                     }
                     if ((p.door || "").includes("休門")) {
-                        addGridItem("❤️", "休門・和合", "拉近關係、和諧溝通與化解敵意", `此時【休門】落於 ${dir} (${p.palace_id})。極度利於拉近關係、和諧溝通、吃茶敘舊、化解雙方敵意。`);
+                        addGridItem("❤️", "休門・貴人", "拉近關係、和諧溝通與化解敵意", `此時【休門】落於 ${dir} (${p.palace_id})。極度利於拉近關係、和諧溝通、吃茶敘舊、化解雙方敵意。`);
                     }
                     if ((p.deity || "").includes("六合")) {
                         addGridItem("🤝", "六合・談判", "尋求共識、談判與締結盟約", `此時【六合】貴神落於 ${dir} (${p.palace_id})。在此方位進行溝通、談判或尋求雙方共識最為有利。`);
@@ -1493,7 +1493,7 @@ async function triggerVibration() {
         
         const catGrid = document.getElementById('catGrid');
         if (catGrid) {
-            const cats = ['財運與投資', '事業與升遷', '婚姻與感情', '健康與疾病', '學業與考試', '官司與訴訟', '出行與旅遊', '尋物與尋人', '其他'];
+            const cats = ['財運/投資', '事業/升遷', '婚姻/感情', '健康/疾病', '學業/考試', '官司/訴訟', '出行/旅遊', '失物/尋人', '其他'];
             catGrid.innerHTML = cats.map(c => `<button onclick="triggerVibration(); selectCategory(this, '${c}')" class="cat-btn py-2.5 bg-slate-50 text-slate-600 dark:bg-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 rounded-xl font-bold text-sm shadow-sm active:scale-95 transition whitespace-nowrap overflow-hidden text-ellipsis">${c}</button>`).join('');
         }
     }

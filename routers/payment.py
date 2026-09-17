@@ -313,3 +313,65 @@ async def webhook(request: Request):
         return {"status": "error", "message": str(exc)}
     finally:
         db.close()
+
+# ==========================================
+# 🌟 RevenueCat (App 雙平台 IAP) 金流 Webhook
+# ==========================================
+from fastapi import Header # (如果頂部沒有 import Header，請確保有這項)
+
+@router.post("/api/v1/payment/webhook/revenuecat")
+async def revenuecat_webhook(request: Request, authorization: str = Header(None)):
+    """
+    接收來自 RevenueCat 的伺服器對伺服器 (S2S) 付款成功通知
+    """
+    # 1. 取得我們設定在系統環境變數中的 Webhook 密碼
+    WEBHOOK_TOKEN = os.getenv("REVENUECAT_WEBHOOK_TOKEN", "my_super_secret_token_123")
+    
+    # 2. 安全驗證：確認這封密報真的是 RevenueCat 發來的
+    expected_auth = f"Bearer {WEBHOOK_TOKEN}"
+    if authorization != expected_auth:
+        logger.error(f"Webhook 安全驗證失敗！收到的 Auth: {authorization}")
+        raise HTTPException(status_code=401, detail="Unauthorized webhook call")
+        
+    try:
+        # 3. 解析 RevenueCat 傳來的 JSON 訂單資料
+        payload = await request.json()
+        event = payload.get("event", {})
+        
+        event_type = event.get("type") 
+        app_user_id = event.get("app_user_id") # 這是我們系統中用戶的 ID
+        product_id = event.get("product_id") # 例如: topup_15
+        
+        logger.info(f"收到 App 金流事件: {event_type} | 用戶: {app_user_id} | 購買商品: {product_id}")
+        
+        # 4. 連線資料庫，為用戶加值
+        db = SessionLocal()
+        try:
+            # 確認是購買成功的事件
+            if event_type in ["INITIAL_PURCHASE", "NON_RENEWING_PURCHASE"]:
+                user = db.query(User).filter(User.id == app_user_id).first()
+                if user:
+                    # TODO: 這裡可以根據 product_id 來決定加幾點，這裡先示範 +10
+                    added_credits = 10 
+                    if product_id == "topup_15":
+                        added_credits = 15
+                    elif product_id == "topup_5":
+                        added_credits = 5
+                        
+                    user.credits = (user.credits or 0) + added_credits
+                    db.commit()
+                    logger.info(f"App 儲值成功！已為用戶 {app_user_id} 增加 {added_credits} 點")
+                else:
+                    logger.error(f"找不到對應的用戶 ID: {app_user_id}")
+            
+            return {"status": "success"}
+        except Exception as db_exc:
+            db.rollback()
+            logger.error(f"資料庫更新失敗: {db_exc}")
+            raise HTTPException(status_code=500, detail="Database update failed")
+        finally:
+            db.close()
+
+    except Exception as e:
+        logger.exception("處理 RevenueCat Webhook 時發生錯誤")
+        raise HTTPException(status_code=500, detail="Internal Server Error")

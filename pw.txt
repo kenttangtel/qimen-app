@@ -1,0 +1,14 @@
+RevenueCat
+https://app.revenuecat.com/welcome
+qimenmaster2026@gmail.com
+Kk92815867
+
+
+Render 
+kenttangtel@gmail.com
+pw = 
+
+Render 我的個人暗號
+Environment > Environment Variables > Add Environment Variable
+REVENUECAT_WEBHOOK_TOKEN = qimen_app_super_secret_webhook_key_2026
+
