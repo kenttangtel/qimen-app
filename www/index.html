@@ -1118,8 +1118,9 @@ async function triggerVibration() {
             if (pName) pName.innerText = d.username;
             window.isVipUser = d.is_vip;
 
-            // 🌟 新增這行：將真實的資料庫 User ID 傳給原生金流系統
-            if (d.id) initNativeIAP(d.id);
+            // 🌟 將真實的資料庫 User ID 傳給原生金流系統
+            // 必須 await：否則 Purchases.configure() 還沒完成，用戶就可能按購買而失敗
+            if (d.id) await initNativeIAP(d.id);
             const vBadge = document.getElementById('vipBadge');
             if (vBadge) {
                 vBadge.innerText = d.membership_display || '緣起會員';
@@ -1797,8 +1798,16 @@ if (summaryMatch && summaryMatch[1]) {
             try {
                 // 呼叫 Apple Pay / Google Pay 原生結帳面板
                 // 這裡的 planType (如 'topup_15') 必須與 RevenueCat 上的 Product ID 一致
-                const { customerInfo } = await Purchases.purchaseStoreProduct({ productIdentifier: planType });
-                
+                // ⚠️ 此版本 plugin 的 purchaseStoreProduct 只接受 { product: <StoreProduct 物件> }，
+                //    不能直接傳 productIdentifier 字串，必須先向 RevenueCat 查詢商品。
+                const { products } = await Purchases.getProducts({ productIdentifiers: [planType] });
+                if (!products || products.length === 0) {
+                    hideLoading();
+                    showToast("找不到該商品，請稍後再試", true);
+                    return;
+                }
+                await Purchases.purchaseStoreProduct({ product: products[0] });
+
                 hideLoading();
                 showToast("付款成功！系統已為您補充能量 ⚡", false);
                 closeTopupModal();
