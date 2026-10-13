@@ -21,12 +21,18 @@ OPTIONAL_ENVIRONMENT = [
     "SUPABASE_URL",
     "SUPABASE_SERVICE_ROLE_KEY",
     "DEEPSEEK_API_KEY",
+    "RESEND_API_KEY",
+    "REVENUECAT_WEBHOOK_TOKEN",
 ]
 
 
 @router.get("/api/v1/debug/env")
-def debug_env():
+def debug_env(user=Depends(get_current_user)):
     """Return presence (True/False) of important environment variables.
+
+    Requires authentication: this endpoint enumerates which secrets are
+    configured on the server, which is useful reconnaissance for an attacker.
+
     This endpoint intentionally does NOT return secret values.
     """
     required_status = {}

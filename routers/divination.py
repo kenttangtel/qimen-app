@@ -199,17 +199,28 @@ def verify_and_deduct_credits(user, category: str, db):
 
 
 def clean_stream_content(text: str) -> str:
-    patterns = [
-        (r"AI", "本大師"),
+    """Replace model-branding terms with the desired persona wording.
+
+    The Chinese terms are safe as plain substring replacements. The ASCII terms
+    (AI, GPT, OpenAI, DeepSeek) MUST use word boundaries and be case-sensitive:
+    a bare case-insensitive "AI" turned "air flow" into "本大師r flow" and
+    "email" into "em本大師l".
+    """
+    chinese_patterns = [
         (r"語言模型", "推演系統"),
-        (r"DeepSeek", "玄學大腦"),
         (r"人工智慧", "數理邏輯"),
-        (r"OpenAI", "天體資料庫"),
-        (r"GPT", "星盤程式"),
         (r"模型", "演算法"),
     ]
-    for p, r in patterns:
-        text = re.sub(p, r, text, flags=re.IGNORECASE)
+    ascii_patterns = [
+        (r"\bAI\b", "本大師"),
+        (r"\bDeepSeek\b", "玄學大腦"),
+        (r"\bOpenAI\b", "天體資料庫"),
+        (r"\bGPT\b", "星盤程式"),
+    ]
+    for p, r in chinese_patterns:
+        text = re.sub(p, r, text)
+    for p, r in ascii_patterns:
+        text = re.sub(p, r, text)
     return text
 
 
@@ -419,7 +430,11 @@ async def interpret_matrix(
 ):
     try:
         if not client:
-            return StreamingResponse(iter(["**❌ 天體磁場連線異常，大師稍後重新起卦**"]), media_type="text/event-stream")
+            return StreamingResponse(
+                iter(["**❌ 天體磁場連線異常，大師稍後重新起卦**"]),
+                media_type="text/event-stream",
+                status_code=503,
+            )
         
         if not user:
             raise HTTPException(status_code=401, detail="Unauthorized")

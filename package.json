@@ -1,16 +1,16 @@
 {
+  "name": "qimen-app",
+  "version": "1.0.0",
+  "description": "奇門大師 - FastAPI backend + Capacitor mobile shell",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "dependencies": {
     "@capacitor/android": "^8.4.2",
     "@capacitor/cli": "^8.4.2",
     "@capacitor/core": "^8.4.2",
     "@revenuecat/purchases-capacitor": "^13.5.1"
-  },
-  "name": "qimen-app",
-  "version": "1.0.0",
-  "description": "--- title: Qimen Api emoji: 🐠 colorFrom: pink colorTo: red sdk: docker pinned: false ---",
-  "main": "sw.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",

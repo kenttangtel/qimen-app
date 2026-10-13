@@ -1,10 +1,10 @@
-from fastapi import APIRouter, HTTPException, Request, Query
+from fastapi import APIRouter, HTTPException, Request, Query, Header
 from pydantic import BaseModel
 import stripe
 from jose import jwt, JWTError
-from datetime import datetime
 import logging
-import os
+import hmac
+from sqlalchemy import text
 from supabase import create_client
 
 from config import (
@@ -18,7 +18,7 @@ from config import (
     SUPABASE_SERVICE_ROLE_KEY,
 )
 import config
-from models.db import SessionLocal, User, CheckoutSessionRecord
+from models.db import SessionLocal, User, CheckoutSessionRecord, RevenueCatEvent
 
 router = APIRouter()
 stripe.api_key = STRIPE_SECRET_KEY
@@ -33,6 +33,7 @@ def get_supabase_admin():
     if config.SUPABASE_URL.strip().startswith("https://your-project-ref.supabase.co"):
         raise RuntimeError("SUPABASE_URL is not configured correctly; replace the placeholder URL with your real Supabase project URL")
     return create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY)
+
 
 STRIPE_PRICE_PLAN_MAP = {
     STRIPE_PRICE_VIP: {
@@ -106,6 +107,43 @@ def _safe_session_metadata_value(session, key):
         return _safe_stripe_attr(metadata, key, None)
 
 
+def _extract_subscription_id(obj):
+    """Resolve a subscription id from either an Invoice or a Subscription object.
+
+    Stripe's newer API versions removed `Invoice.subscription`; the id now lives
+    under `invoice.parent.subscription_details.subscription`. A
+    `customer.subscription.*` event's data object IS the Subscription itself, so
+    its own `id` is the subscription id.
+    """
+    direct = _safe_stripe_attr(obj, "subscription", None)
+    if isinstance(direct, str):
+        return direct
+
+    parent = _safe_stripe_attr(obj, "parent", None)
+    details = _safe_stripe_attr(parent, "subscription_details", None)
+    nested = _safe_stripe_attr(details, "subscription", None)
+    if isinstance(nested, str):
+        return nested
+
+    # Fallback: the object may itself be a Subscription (customer.subscription.*)
+    if _safe_stripe_attr(obj, "object", None) == "subscription":
+        return _safe_stripe_attr(obj, "id", None)
+
+    return None
+
+
+def _apply_supabase_patch(user_id, update_payload):
+    """Best-effort mirror of the update into Supabase (the app's source of truth)."""
+    if not (SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY):
+        return
+    try:
+        supabase_admin = get_supabase_admin()
+        update_resp = supabase_admin.from_("users").update(update_payload).eq("id", user_id).execute()
+        logger.info("Supabase admin update response: %s", update_resp)
+    except Exception as e:
+        logger.error("Supabase admin update failed: %s", e)
+
+
 class CheckoutRequest(BaseModel):
     plan: str
     token: str | None = None
@@ -132,6 +170,24 @@ def is_checkout_session_processed(db, session_id: str) -> bool:
     return db.query(CheckoutSessionRecord).filter(CheckoutSessionRecord.id == session_id).first() is not None
 
 
+def _add_credits_atomic(db, user_id: str, amount: int) -> int:
+    """Increment credits with a single UPDATE ... SET credits = credits + :n.
+
+    A read-modify-write (user.credits = user.credits + n) loses credits when two
+    webhooks land concurrently. Returning the new value keeps the ORM object and
+    Supabase in sync without a second query.
+    """
+    result = db.execute(
+        text(
+            "UPDATE users SET credits = COALESCE(credits, 0) + :amount "
+            "WHERE id = :uid RETURNING credits"
+        ),
+        {"amount": amount, "uid": user_id},
+    )
+    row = result.first()
+    return int(row[0]) if row else 0
+
+
 def process_checkout_session(session, db):
     if not session or not _safe_stripe_attr(session, "id", None):
         return {"status": "error", "message": "invalid_session"}
@@ -143,19 +199,18 @@ def process_checkout_session(session, db):
     if not user:
         return {"status": "error", "message": "user_not_found"}
 
-    use_supabase_admin = SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY
     update_payload = {}
+    credits_to_add = 0
 
     session_mode = _safe_stripe_attr(session, "mode", "")
     if session_mode == "subscription":
         stripe_customer = _safe_stripe_attr(session, "customer", None)
         stripe_subscription = _safe_stripe_attr(session, "subscription", None)
         update_payload = {
-            **({"stripe_customer_id": stripe_customer} if stripe_customer else {}),
-            **({"stripe_subscription_id": stripe_subscription} if stripe_subscription else {}),
+            **(dict(stripe_customer_id=stripe_customer) if stripe_customer else {}),
+            **(dict(stripe_subscription_id=stripe_subscription) if stripe_subscription else {}),
             "subscription_status": "active",
             "membership_type": "monthly",
-            "is_vip": True,
         }
     else:
         price_id = _safe_session_metadata_value(session, "price_id")
@@ -167,36 +222,29 @@ def process_checkout_session(session, db):
             membership_type = plan["membership_type"]
             update_payload["membership_type"] = membership_type
             update_payload["subscription_status"] = "lifetime" if membership_type == "lifetime" else membership_type
-            if membership_type in ("monthly", "lifetime"):
-                update_payload["is_vip"] = True
-            
-            # 🌟 永久會員大禮包：自動加碼送 10 點
+
+            # 永久會員大禮包：自動加碼送 10 點
             if membership_type == "lifetime":
-                update_payload["credits"] = (user.credits or 0) + 10
+                credits_to_add += 10
 
         if plan.get("credits"):
-            update_payload["credits"] = (user.credits or 0) + plan["credits"]
+            credits_to_add += plan["credits"]
 
-    if update_payload:
-        if use_supabase_admin:
-            supabase_admin = get_supabase_admin()
-            try:
-                update_resp = supabase_admin.from_("users").update(update_payload).eq("id", user.id).execute()
-                logger.info("Supabase admin update response: %s", update_resp)
-            except Exception as e:
-                logger.error("Supabase admin update failed: %s", e)
-        if "stripe_customer_id" in update_payload:
-            user.stripe_customer_id = update_payload["stripe_customer_id"]
-        if "stripe_subscription_id" in update_payload:
-            user.stripe_subscription_id = update_payload["stripe_subscription_id"]
-        if "subscription_status" in update_payload:
-            user.subscription_status = update_payload["subscription_status"]
-        if "membership_type" in update_payload:
-            user.membership_type = update_payload["membership_type"]
-        if "credits" in update_payload:
-            user.credits = update_payload["credits"]
-        if "is_vip" in update_payload:
-            user.is_vip = update_payload["is_vip"]
+    # NOTE: `users.is_vip` exists in the database (and is maintained by Supabase),
+    # but it is NOT a mapped column on the SQLAlchemy `User` model. Setting
+    # `user.is_vip` therefore silently does nothing. `is_vip` is derived from
+    # `membership_type` everywhere in the API, so we only mirror it to Supabase.
+    if update_payload.get("membership_type") in ("monthly", "lifetime"):
+        update_payload["is_vip"] = True
+
+    _apply_supabase_patch(user.id, update_payload)
+
+    for field in ("stripe_customer_id", "stripe_subscription_id", "subscription_status", "membership_type"):
+        if field in update_payload:
+            setattr(user, field, update_payload[field])
+
+    if credits_to_add:
+        user.credits = _add_credits_atomic(db, user.id, credits_to_add)
 
     record = CheckoutSessionRecord(
         id=_safe_stripe_attr(session, "id", None),
@@ -293,85 +341,159 @@ async def webhook(request: Request):
             session = event.data.object
             result = process_checkout_session(session, db)
             if result.get("status") != "success":
-                return result
-        elif event.type == "invoice.payment_succeeded":
-            subscription = event.data.object.subscription
-            user = db.query(User).filter(User.stripe_subscription_id == subscription).first()
+                # Returning 200 here would tell Stripe the event was handled and
+                # suppress its retry. Surface a real error so the event is retried.
+                db.rollback()
+                raise HTTPException(status_code=500, detail=f"checkout session failed: {result.get('message')}")
+
+        elif event.type in ("invoice.payment_succeeded", "invoice.paid"):
+            obj = event.data.object
+            subscription_id = _extract_subscription_id(obj)
+            user = None
+            if subscription_id:
+                user = db.query(User).filter(User.stripe_subscription_id == subscription_id).first()
+            if not user:
+                customer_id = _safe_stripe_attr(obj, "customer", None)
+                if customer_id:
+                    user = db.query(User).filter(User.stripe_customer_id == customer_id).first()
             if user:
                 user.subscription_status = "active"
                 user.membership_type = "monthly"
-        elif event.type in ("customer.subscription.deleted", "invoice.payment_failed"):
-            subscription = event.data.object.subscription
-            user = db.query(User).filter(User.stripe_subscription_id == subscription).first()
+                _apply_supabase_patch(user.id, {"subscription_status": "active", "membership_type": "monthly", "is_vip": True})
+            else:
+                logger.warning("invoice.payment_succeeded: no user matched (subscription=%s)", subscription_id)
+
+        elif event.type in ("customer.subscription.deleted", "customer.subscription.updated", "invoice.payment_failed"):
+            obj = event.data.object
+            subscription_id = _extract_subscription_id(obj)
+            user = None
+            if subscription_id:
+                user = db.query(User).filter(User.stripe_subscription_id == subscription_id).first()
+            if not user:
+                customer_id = _safe_stripe_attr(obj, "customer", None)
+                if customer_id:
+                    user = db.query(User).filter(User.stripe_customer_id == customer_id).first()
+
             if user:
-                user.subscription_status = "past_due" if event.type == "invoice.payment_failed" else "inactive"
-                user.membership_type = "free"
+                if event.type == "invoice.payment_failed":
+                    status = "past_due"
+                elif event.type == "customer.subscription.updated":
+                    # Only downgrade when the subscription actually left a live state.
+                    stripe_status = _safe_stripe_attr(obj, "status", "")
+                    status = "active" if stripe_status in ("active", "trialing") else "inactive"
+                else:
+                    status = "inactive"
+
+                user.subscription_status = status
+                if status == "active":
+                    user.membership_type = "monthly"
+                else:
+                    user.membership_type = "free"
+                _apply_supabase_patch(
+                    user.id,
+                    {
+                        "subscription_status": status,
+                        "membership_type": user.membership_type,
+                        "is_vip": status == "active",
+                    },
+                )
+            else:
+                logger.warning("%s: no user matched (subscription=%s)", event.type, subscription_id)
+
         db.commit()
         return {"status": "success"}
+    except HTTPException:
+        db.rollback()
+        raise
     except Exception as exc:
         db.rollback()
-        return {"status": "error", "message": str(exc)}
+        logger.exception("Stripe webhook handling failed for event %s", getattr(event, "type", "?"))
+        raise HTTPException(status_code=500, detail=f"webhook processing failed: {exc}")
     finally:
         db.close()
 
+
 # ==========================================
-# 🌟 RevenueCat (App 雙平台 IAP) 金流 Webhook
+# RevenueCat (App 雙平台 IAP) 金流 Webhook
 # ==========================================
-from fastapi import Header # (如果頂部沒有 import Header，請確保有這項)
+def _credit_amount_for_product(product_id: str) -> int:
+    """Map a RevenueCat product id to the number of credits it grants."""
+    mapping = {
+        "topup_5": 5,
+        "topup_15": 15,
+    }
+    return mapping.get(product_id, 0)
+
 
 @router.post("/api/v1/payment/webhook/revenuecat")
 async def revenuecat_webhook(request: Request, authorization: str = Header(None)):
-    """
-    接收來自 RevenueCat 的伺服器對伺服器 (S2S) 付款成功通知
-    """
-    # 1. 取得我們設定在系統環境變數中的 Webhook 密碼
-    WEBHOOK_TOKEN = os.getenv("REVENUECAT_WEBHOOK_TOKEN", "my_super_secret_token_123")
-    
-    # 2. 安全驗證：確認這封密報真的是 RevenueCat 發來的
-    expected_auth = f"Bearer {WEBHOOK_TOKEN}"
-    if authorization != expected_auth:
-        logger.error(f"Webhook 安全驗證失敗！收到的 Auth: {authorization}")
-        raise HTTPException(status_code=401, detail="Unauthorized webhook call")
-        
-    try:
-        # 3. 解析 RevenueCat 傳來的 JSON 訂單資料
-        payload = await request.json()
-        event = payload.get("event", {})
-        
-        event_type = event.get("type") 
-        app_user_id = event.get("app_user_id") # 這是我們系統中用戶的 ID
-        product_id = event.get("product_id") # 例如: topup_15
-        
-        logger.info(f"收到 App 金流事件: {event_type} | 用戶: {app_user_id} | 購買商品: {product_id}")
-        
-        # 4. 連線資料庫，為用戶加值
-        db = SessionLocal()
-        try:
-            # 確認是購買成功的事件
-            if event_type in ["INITIAL_PURCHASE", "NON_RENEWING_PURCHASE"]:
-                user = db.query(User).filter(User.id == app_user_id).first()
-                if user:
-                    # TODO: 這裡可以根據 product_id 來決定加幾點，這裡先示範 +10
-                    added_credits = 10 
-                    if product_id == "topup_15":
-                        added_credits = 15
-                    elif product_id == "topup_5":
-                        added_credits = 5
-                        
-                    user.credits = (user.credits or 0) + added_credits
-                    db.commit()
-                    logger.info(f"App 儲值成功！已為用戶 {app_user_id} 增加 {added_credits} 點")
-                else:
-                    logger.error(f"找不到對應的用戶 ID: {app_user_id}")
-            
-            return {"status": "success"}
-        except Exception as db_exc:
-            db.rollback()
-            logger.error(f"資料庫更新失敗: {db_exc}")
-            raise HTTPException(status_code=500, detail="Database update failed")
-        finally:
-            db.close()
+    """接收來自 RevenueCat 的伺服器對伺服器 (S2S) 付款成功通知"""
+    # 1. 取得系統環境變數中的 Webhook 密碼
+    WEBHOOK_TOKEN = config.REVENUECAT_WEBHOOK_TOKEN
+    if not WEBHOOK_TOKEN:
+        # Fail closed. A default token would let anyone grant themselves credits.
+        logger.error("REVENUECAT_WEBHOOK_TOKEN 未設定，拒絕處理 RevenueCat webhook")
+        raise HTTPException(status_code=503, detail="RevenueCat webhook not configured")
 
-    except Exception as e:
-        logger.exception("處理 RevenueCat Webhook 時發生錯誤")
+    # 2. 安全驗證（constant-time 比對，避免時序側信道）
+    expected_auth = f"Bearer {WEBHOOK_TOKEN}"
+    if not authorization or not hmac.compare_digest(authorization, expected_auth):
+        logger.error("Webhook 安全驗證失敗")
+        raise HTTPException(status_code=401, detail="Unauthorized webhook call")
+
+    try:
+        payload = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON payload")
+
+    event = payload.get("event", {}) or {}
+    event_type = event.get("type")
+    event_id = event.get("id")
+    app_user_id = event.get("app_user_id")
+    product_id = event.get("product_id")
+
+    logger.info("收到 App 金流事件: %s | id: %s | 用戶: %s | 購買商品: %s", event_type, event_id, app_user_id, product_id)
+
+    db = SessionLocal()
+    try:
+        # 3. 冪等性：RevenueCat 會重試投遞，同一 event id 只能處理一次
+        if event_id:
+            already = db.query(RevenueCatEvent).filter(RevenueCatEvent.id == str(event_id)).first()
+            if already:
+                logger.info("RevenueCat 事件 %s 已處理過，略過重複投遞", event_id)
+                return {"status": "success", "message": "already_processed"}
+
+        if event_type in ("INITIAL_PURCHASE", "NON_RENEWING_PURCHASE"):
+            user = db.query(User).filter(User.id == app_user_id).first()
+            if user:
+                added_credits = _credit_amount_for_product(product_id)
+                if added_credits <= 0:
+                    logger.warning("未知的商品 ID '%s'，未加點 (用戶 %s)", product_id, app_user_id)
+                else:
+                    user.credits = _add_credits_atomic(db, user.id, added_credits)
+                    logger.info("App 儲值成功！已為用戶 %s 增加 %s 點", app_user_id, added_credits)
+            else:
+                logger.error("找不到對應的用戶 ID: %s", app_user_id)
+
+        if event_id:
+            db.add(
+                RevenueCatEvent(
+                    id=str(event_id),
+                    user_id=app_user_id,
+                    event_type=event_type,
+                    product_id=product_id,
+                )
+            )
+
+        db.commit()
+        return {"status": "success"}
+
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as db_exc:
+        db.rollback()
+        logger.exception("處理 RevenueCat Webhook 時發生錯誤: %s", db_exc)
         raise HTTPException(status_code=500, detail="Internal Server Error")
+    finally:
+        db.close()

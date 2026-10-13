@@ -623,6 +623,33 @@
     let pendingInterpretationType = '';
     let tempSelectedSeekerId = null;
 
+    // ==========================================
+    // 🌟 1.5 雙平台 App IAP 原生金流初始化 (RevenueCat)
+    // ==========================================
+    async function initNativeIAP(userId) {
+        if (!window.Capacitor || !window.Capacitor.isNativePlatform()) return; // 網頁版直接跳過
+        
+        const { Purchases } = window.Capacitor.Plugins;
+        if (!Purchases) return;
+
+        try {
+            // 替換為您的 RevenueCat Public API Key (我們之後去後台申請)
+            if (window.Capacitor.getPlatform() === 'ios') {
+                await Purchases.configure({ apiKey: "appl_YOUR_APPLE_KEY_HERE" });
+            } else if (window.Capacitor.getPlatform() === 'android') {
+                await Purchases.configure({ apiKey: "goog_YOUR_GOOGLE_KEY_HERE" });
+            }
+            
+            // 將用戶 ID 綁定到 RevenueCat，這是對接後端 Webhook 的關鍵！
+            if (userId) {
+                await Purchases.logIn({ appUserID: String(userId) });
+                console.log("RevenueCat 用戶綁定成功:", userId);
+            }
+        } catch (error) {
+            console.error("RevenueCat 初始化失敗:", error);
+        }
+    }
+
     const SecurityStorage = {
         async getToken() {
             try {
@@ -1090,6 +1117,9 @@ async function triggerVibration() {
             const pName = document.getElementById('profileUsername');
             if (pName) pName.innerText = d.username;
             window.isVipUser = d.is_vip;
+
+            // 🌟 新增這行：將真實的資料庫 User ID 傳給原生金流系統
+            if (d.id) initNativeIAP(d.id);
             const vBadge = document.getElementById('vipBadge');
             if (vBadge) {
                 vBadge.innerText = d.membership_display || '緣起會員';
@@ -1757,6 +1787,32 @@ if (summaryMatch && summaryMatch[1]) {
     async function buyProduct(planType) {
         const token = await getAuthToken(); 
         if (!token) { showToast("請先登入大師系統喔！", true); return; }
+
+        // 🌟 判斷 A：如果是在原生 App 環境 (iOS / Android)
+        if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+            const { Purchases } = window.Capacitor.Plugins;
+            if (!Purchases) { showToast("支付模組載入失敗，請重啟 App", true); return; }
+            
+            showLoading("正在喚醒安全支付...");
+            try {
+                // 呼叫 Apple Pay / Google Pay 原生結帳面板
+                // 這裡的 planType (如 'topup_15') 必須與 RevenueCat 上的 Product ID 一致
+                const { customerInfo } = await Purchases.purchaseStoreProduct({ productIdentifier: planType });
+                
+                hideLoading();
+                showToast("付款成功！系統已為您補充能量 ⚡", false);
+                closeTopupModal();
+                fetchUserInfo(true); // 重新整理用戶點數
+            } catch (error) {
+                hideLoading();
+                if (!error.userCancelled) {
+                    showToast("付款失敗：" + (error.message || "未知錯誤"), true);
+                }
+            }
+            return; // 原生 App 執行完畢，直接 Return，不走下方的網頁 Stripe 邏輯
+        }
+
+        // 🌐 判斷 B：如果是在網頁瀏覽器環境 (走 Stripe)
         showToast("開啟專屬結帳通道中...");
         try {
             const response = await fetch(`${API_BASE_URL}/api/v1/payment/create-checkout-session`, {
@@ -1768,8 +1824,14 @@ if (summaryMatch && summaryMatch[1]) {
                 body: JSON.stringify({ token: token, plan: planType })
             });
             const data = await response.json();
-            if (data.status === 'success' && data.url) { window.location.href = data.url; } else { showToast("通道開啟失敗：" + (data.message || "未知錯誤"), true); }
-        } catch (error) { showToast("磁場連線異常，請稍後再試。", true); }
+            if (data.status === 'success' && data.url) { 
+                window.location.href = data.url; 
+            } else { 
+                showToast("通道開啟失敗：" + (data.message || "未知錯誤"), true); 
+            }
+        } catch (error) { 
+            showToast("磁場連線異常，請稍後再試。", true); 
+        }
     }
 
     function openTopupModal() { document.getElementById('topupModal').classList.remove('hidden'); }

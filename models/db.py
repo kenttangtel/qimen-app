@@ -64,6 +64,23 @@ class CheckoutSessionRecord(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class RevenueCatEvent(Base):
+    """Idempotency ledger for RevenueCat webhooks.
+
+    RevenueCat retries webhook deliveries, so the same event id can arrive more
+    than once. Recording every processed event id lets us ignore replays instead
+    of granting credits twice.
+    """
+
+    __tablename__ = "revenuecat_events"
+
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, nullable=True)
+    event_type = Column(String, nullable=True)
+    product_id = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 def get_db():
     if not DATABASE_URL:
         raise Exception("請設定 DATABASE_URL！")

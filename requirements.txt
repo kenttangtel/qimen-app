@@ -1,13 +1,15 @@
-fastapi
-uvicorn
-pydantic
-lunar-python
-openai
-bcrypt<4.0.0
-psycopg2-binary
-stripe
-supabase
+# Pinned to the versions verified working in the local .venv (Python 3.11).
+fastapi==0.137.1
+starlette==1.3.1
+uvicorn==0.49.0
+pydantic==2.13.4
+lunar-python==1.4.8
+openai==2.42.0
+bcrypt==3.2.2
+psycopg2-binary==2.9.12
+stripe==15.2.1
+supabase==2.31.0
 pytz
-SQLAlchemy
-python-jose[cryptography]
+SQLAlchemy==2.0.51
+python-jose[cryptography]==3.5.0
 python-dotenv

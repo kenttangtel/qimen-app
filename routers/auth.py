@@ -24,9 +24,26 @@ security = HTTPBearer()
 ALGORITHM = config.JWT_ALGORITHM
 
 
-# 🌟 終極黑科技：全域記憶體金鑰保險箱！
+# 🌟 全域記憶體金鑰保險箱！
 # 用來繞過資料庫缺少 reset_code 欄位的死穴，直接安全存放在伺服器記憶體中
 RESET_CODES = {}  # 結構：{ "user_id": {"code": "123456", "expires": datetime} }
+
+# 防止濫用：同一帳號在視窗內只能索取有限次驗證碼
+RESET_REQUEST_LOG = {}  # 結構：{ "user_id": [datetime, ...] }
+RESET_REQUEST_LIMIT = 3
+RESET_REQUEST_WINDOW_MINUTES = 15
+
+
+def _reset_request_allowed(user_id: str) -> bool:
+    now = datetime.utcnow()
+    cutoff = now - timedelta(minutes=RESET_REQUEST_WINDOW_MINUTES)
+    history = [t for t in RESET_REQUEST_LOG.get(user_id, []) if t > cutoff]
+    if len(history) >= RESET_REQUEST_LIMIT:
+        RESET_REQUEST_LOG[user_id] = history
+        return False
+    history.append(now)
+    RESET_REQUEST_LOG[user_id] = history
+    return True
 
 
 def get_secret_key() -> str:
@@ -162,19 +179,20 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
     if not user or not user.email:
         raise HTTPException(status_code=404, detail="找不到該用戶或該帳號未綁定信箱")
 
+    if not _reset_request_allowed(user.id):
+        raise HTTPException(
+            status_code=429,
+            detail=f"索取驗證碼過於頻繁，請於 {RESET_REQUEST_WINDOW_MINUTES} 分鐘後再試",
+        )
+
     # 1. 生成 6 位數驗證碼
     code = "".join(secrets.choice(string.digits) for _ in range(6))
-    
-    # 🌟 修正點：改存入記憶體保險箱，用用戶的唯一 ID 當鑰匙
-    RESET_CODES[user.id] = {
-        "code": code,
-        "expires": datetime.utcnow() + timedelta(minutes=15)
-    }
 
-    resend_api_key = os.environ.get("RESEND_API_KEY")
+    resend_api_key = config.RESEND_API_KEY
     if not resend_api_key:
-        raise HTTPException(status_code=500, detail="後端未偵測到 RESEND_API_KEY 環境變數")
-    
+        # 這是伺服器設定問題，不是用戶的錯：回 503 而非 500
+        raise HTTPException(status_code=503, detail="伺服器未設定 RESEND_API_KEY，暫時無法發送驗證碼")
+
     print(f"⚡ [奇門發信] 準備透過 Resend HTTP API 發送驗證碼至: {user.email}")
 
     mail_body = f"""
@@ -186,7 +204,7 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
     
     try:
         payload = {
-            "from": "onboarding@resend.dev",
+            "from": config.RESEND_FROM_EMAIL,
             "to": [user.email],
             "subject": "【奇門大師】安全驗證碼",
             "html": mail_body
@@ -209,9 +227,15 @@ async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
         with urllib.request.urlopen(req, timeout=10) as response:
             res_body = response.read().decode("utf-8")
             print(f"⚡ [奇門發信] 🎉 Resend 響應成功: {res_body}")
-            
+
+        # 只有在信件確實送出後才存入保險箱，避免發信失敗卻留下可用驗證碼
+        RESET_CODES[user.id] = {
+            "code": code,
+            "expires": datetime.utcnow() + timedelta(minutes=15),
+        }
+
         return {"status": "success", "message": "驗證碼已成功送達您的信箱"}
-        
+
     except urllib.error.HTTPError as http_err:
         error_reply = http_err.read().decode("utf-8")
         print(f"❌ [奇門發信] Resend 拒絕連線！官方真實回應內容為: {error_reply}")
